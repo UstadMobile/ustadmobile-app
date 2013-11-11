@@ -1,0 +1,39 @@
+
+
+
+function checkBooksOK() {
+
+
+    test( "Book List Test", function() {
+        ok( booksFound.length > 0, "Found " + booksFound.length + " Books " );
+    });
+}
+
+function checkSomethingElse() {
+    test( "1 really is 1", function() {
+        ok( 1 == 1, "1 is 1");
+    });
+}
+
+function checkLoginOK(statusCode){
+    test("Login Test", function() {
+        ok ( statusCode == 200, "Login success");
+    });
+
+}
+
+
+setTimeout("checkSomethingElse()", 500);
+
+//setTimeout("checkLoginOK()", 500);
+
+currentEntriesIndex = 0;
+currentFolderIndex = 0;
+allBookFoundCallback = checkBooksOK;
+populateNextDir();
+
+umlogin("0974", "1234", checkLoginOK);
+
+
+
+

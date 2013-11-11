@@ -1,0 +1,29 @@
+//To be run at the start of app and at every page. (include it in the HeaderElement so that it is called on every page.
+
+//replace every string with this function. eg: alert(_(error) + value );
+function _(msgid) {
+    if (msgid in messages) {
+        return messages[msgid];
+    }else {
+        return msgid;
+    }
+}
+
+
+function loadLocale(localeCode) {
+    var imported = document.createElement('script');
+    imported.src = '/locale/en.js'; // to be changed.
+    document.head.appendChild(imported);
+}
+
+function gotFS(fileSystem){
+    window.rootFS = fileSystem.root;
+    //so the rootFS.fullPath is the app Path.< Use that (not tested).
+}
+
+document.addEventListener('deviceready', function(){
+        window.requestFileSystem  = window.requestFileSystem || window.webkitRequestFileSystem;
+        window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, gotFS, fail);
+            },
+     false);
+

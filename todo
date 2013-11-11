@@ -1,0 +1,21 @@
+1.  Git it
+2.  Test it
+3.  Wiki it
+Header and Footer does not stay put on Windows Phone. (ustadmobile.js)
+Add disclamer and license on all files.
+
+Windows Phone 8 cannot access www folder. so include them as new files as string.
+Login not loggin in bug in Windows Phone
+Books not scaling bug
+Books only looking at first directory bugg.
+
+Fix allBooksCallBack === function (its wrong)
+
+window.open("blah").trigger("create"); <Thats how you do it. Change and test all instances of it.
+Rename all .js files without version numbers
+Find a way to min and store a file as a string that it can write back into it.
+Write a function (first list all the functions) that will avoid code injection.
+Make sure your .html files start with a <!DOCTYPE html> at the first line, then follows your <html><head>...
+
+Do NOT use cordova.js call in the html more than ONCE!
+

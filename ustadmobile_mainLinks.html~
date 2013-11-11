@@ -1,0 +1,153 @@
+   <!DOCTYPE html>
+     <html>
+     <head>
+      <title>FileReader Example</title>
+
+    <script type="text/javascript" charset="utf-8" src="cordova.js"></script>
+    <script type="text/javascript" charset="utf-8">
+
+
+	var exeContentFileName = "index.html";
+
+    // Wait for PhoneGap to load
+    //
+    function onLoad() {
+        document.addEventListener("deviceready", onDeviceReady, false);
+    }
+
+    // PhoneGap is ready
+    //
+    function onDeviceReady() {
+        window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, gotFS, fail);
+	
+    }
+
+    function gotFS(fileSystem) {
+	console.log("Test1");
+	console.log(fileSystem.name);
+        fileSystem.root.getFile("test.html", {create: false}, gotFileEntry, fail);
+    }
+
+    function gotFileEntry(fileEntry) {
+	console.log("Test2");
+	console.log(fileEntry.name);
+	console.log(fileEntry.fullPath);
+	
+	console.log("end of Test2");
+	//window.open(fileEntry.fullPath);
+        fileEntry.file(gotFile, fail);
+    }
+
+    function gotFile(file){
+        readDataUrl(file);
+        readAsText(file);
+    }
+
+    function readDataUrl(file) {
+        var reader = new FileReader();
+        reader.onloadend = function(evt) {
+            console.log("Read as data URL");
+            console.log(evt.target.result);
+	    
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function readAsText(file) {
+	//alert("readAstext");
+        var reader = new FileReader();
+	
+        reader.onloadend = function(evt) {
+            console.log("Read as text");
+            console.log(evt.target.result);
+	    //alert("content :"+evt.target.result);
+        };
+        reader.readAsText(file);
+    }
+
+
+
+    function fail(evt) {
+        console.log(evt.target.error.code);
+	alert("Something went wrong");
+    }
+
+
+
+
+    function getFileSystem(){
+	window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, gotFS2, fail);
+    }
+
+    function gotFS2(fileSystem2) {
+	console.log("Test3");
+	console.log(fileSystem2.name);
+        fileSystem2.root.getFile("/ext_card/ustadmobile/Sorting/index.html", {create: false}, gotFileEntry2, fail);
+    }
+
+    function gotFileEntry2(fileEntry2) {
+	console.log("Test4");
+	console.log(fileEntry2.name);
+	console.log(fileEntry2.fullPath);
+	
+	console.log("end of Test4");
+	window.open(fileEntry2.fullPath);
+        
+    }
+   
+
+ 
+    function getFileSystemList(){
+	window.requestFileSystem(LocalFileSystem.PERSISTENT,0,gotFSL,fail);
+    }
+     
+    function gotFSL(filesystemList){
+	console.log("Root = " + filesystemList.root.fullPath);
+	//alert("Root = " + filesystemList.root.fullPath);
+	filesystemList.root.getDirectory("/ext_card/ustadmobile",{create: false, exclusive: false},createDirReader,fail);
+    }
+   
+    function createDirReader(filesystemList){
+            var directoryReader = filesystemList.createReader();
+	    alert("Directory: " + filesystemList.fullPath);
+            directoryReader.readEntries(snlList,fail);
+	
+    }  
+ 
+    function snlList(entries) {
+	var i;
+	var list;
+	for (i=0; i<entries.length; i++) {
+	    console.log(entries[i].name);
+	    list=list+entries[i].name+'\n';
+
+	}
+	alert("List:" + '\n' + list);
+
+     }
+
+
+
+    </script>
+  </head>
+  <body onload='onLoad();'>
+    <div data-role="header" data-position="fixed">
+            <p style="background-image:url('res/umres/banne1.png'); background-repeat:repeat-x;margin-top:-8px;" >.</p>
+    <h1>Ustad Mobile for Android</h1>
+    <p>Activities:</p>
+    <a href="http://www.toughra.com" target="_blank">Toughra</a>
+    <p></p>
+    <a onclick="getFileSystem();" href="javascript:void(0);">Sorting Exercise(SD card)</a>
+    <p></p>
+    <a onclick="getFileSystemList();" href="javascript:void(0);">List of files in directory</a>
+    <p></p>
+    <a href="ustadmobile_booklist.html">List of books</a>
+    <p></p>
+    <a href="jQueryUItest.html">jQuery Mobile demo</a>
+    <p></p>
+    <a href="ustadmobile_login.html">Login</a>
+    <p></p>
+    <a href="ustadmobile_tests.html">Ustad Mobile Tests</a>
+
+  </body>
+</html>

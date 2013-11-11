@@ -1,0 +1,187 @@
+<!-- This file is part of Ustad Mobile.  
+    
+    Ustad Mobile Copyright (C) 2011-2013 Toughra Technologies FZ LLC.
+
+    Ustad Mobile is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version with the following additional terms:
+    
+    All names, links, and logos of Ustad Mobile and Toughra Technologies FZ 
+    LLC must be kept as they are in the original distribution.  If any new
+    screens are added you must include the Ustad Mobile logo as it has been
+    used in the original distribution.  You may not create any new 
+    functionality whose purpose is to diminish or remove the Ustad Mobile 
+    Logo.  You must leave the Ustad Mobile logo as the logo for the 
+    application to be used with any launcher (e.g. the mobile app launcher).  
+    
+    If you want a commercial license to remove the above restriction you must
+    contact us.  
+    
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+    Ustad Mobile is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+
+
+
+This program is free software.  It is licensed under the GNU GENERAL PUBLIC LICENSE ( http://www.gnu.org/copyleft/gpl.html ) with the following 
+
+GPL License Additional Terms
+
+All names, links, and logos of Ustad Mobile and Toughra Technologies FZ LLC must be kept as they are in the original distribution.  If any new screens are added you must include the Ustad Mobile logo as it has been used in the original distribution.  You may not create any new functionality whose purpose is to diminish or remove the Ustad Mobile Logo.  You must leave the Ustad Mobile logo as the logo for the application to be used with any launcher (e.g. the mobile app launcher).  
+
+If you need a commercial license to remove these restrictions please contact us by emailing info@ustadmobile.com 
+
+-->
+
+<!--
+This will read the file created or any file specified in the code. For now, this was made for testing, and all it does is read the file creted from ustadmobile-create.html text/script.
+-->
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Ustad Mobile Create File</title>
+    <script type="text/javascript" charset="utf-8" src="cordova.js"></script>
+
+    <link rel='stylesheet' href='css/qunit-1.12.0.css' type='text/css'/>
+    <script type="text/javascript">
+      
+      function onErrorURI(){
+        alert("Something Wrong! with window.resolveLocalFileSystemURI");
+        console.log("Something wrong with window.resolveLocalFileSystemURI");
+      }
+	  
+	  function createFileTest(){
+		document.addEventListener('deviceready', createTest, fail);
+	}
+  
+	  function failReadTest(){
+		console.log("Create File fail");
+		alert("create file fail");
+	  }
+		
+		function readTest(){
+		//alert("In readTest()");
+		document.addEventListener('deviceready', readTestPass, fail);
+	  }
+	  
+	  function readTestPass(){
+		window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, gotReadTest, fail);
+	  }
+	  
+	  function gotReadTest(fileSystem){
+		alert("Attempting to get the file");
+			fileSystem.root.getFile("ustadmobileContent/um_create_test4.txt", {create: false, exclusive: false}, gotFileEntry, failReadTest);
+		}
+      
+      function gotFileEntry2(fileEntry){
+        alert("gotFileEntry2");
+        alert(fileEntry.fullPath);
+      }
+	  
+      function gotFileEntry(fileEntry) {
+		alert("File got successfully..");
+		fileEntry.file(gotFile, fail);
+		}
+
+      function gotFile(file){
+		alert("File ready to be read");
+        readDataUrl(file);
+        readAsText(file);
+		}
+
+    function readDataUrl(file) {
+		alert("Reading Data(File) URL");
+        var reader = new FileReader();
+        reader.onloadend = function(evt) {
+            console.log("Read as data URL");
+            console.log(evt.target.result);
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function readAsText(file) {
+		alert("Reading file as text");
+        var reader = new FileReader();
+        reader.onloadend = function(evt) {
+            console.log("Read as text");
+            console.log(evt.target.result);
+        };
+        reader.readAsText(file);
+    }
+
+      /*
+      Called when populateDir fails to get a reader for a given directory
+      */
+      function fail(evt) {
+        console.log(evt.target.error.code);
+        debugLog("Something went wrong");
+        alert("Something went wrong.");
+      }
+
+      function onError(error) {
+        console.log("unable to retrieve file system: " + error.code);
+      }
+
+      function getRootPath(){
+        console.log("In getRootPath()");
+        document.addEventListener('deviceready',getFileSystemRoot, fail);
+        console.log("Finish");
+      }
+
+      function getFileSystemRoot() {
+        var element = document.getElementById('deviceProperties');
+        element.innerHTML = 'Device Model: '    + device.model    + '<br />' +
+                            'Device Cordova: '  + device.cordova  + '<br />' +
+                            'Device Platform: ' + device.platform + '<br />' +
+                            'Device UUID: '     + device.uuid     + '<br />' +
+                            'Device Version: '  + device.version  + '<br />';
+        var fileSystem;
+        var persistent_root;
+        console.log("Again..");
+        
+        if (typeof persistent_root === 'undefined') {
+          console.log("undefined persistent_root.. ");
+          window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, gotRootDir, fail);
+          console.log("persistent post log success.");
+        }
+      }
+
+      function getList(entries){
+        console.log("Device ready.");
+        console.log("Ready to read through the reader entries");
+        var i;
+        for (i=0; i < entries.length; i++){
+              console.log('Entry '+ i + ' name is: ' + entries[i].name);
+              if (entries[i].isDirectory){
+                console.log(entries[i].name + " is a directory!");
+                }
+              } 
+      }
+      
+    </script>
+
+    <script src="js/jquery-1.9.1.min.js" type='text/javascript'></script>
+    <script src="js/jquery.mobile-1.3.2.min.js" type='text/javascript'></script>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+      <link rel='stylesheet' href='jqm/jquery.mobile-1.3.2.css' type='text/css'/>
+
+
+    </head>
+  <body onload="getRootPath()">
+    Lets see if I can create a file.. 
+    <p id="deviceProperties">Loading device Properties...</p>
+
+    <script>
+      readTest();
+    </script>
+  
+  </body>
+</html>

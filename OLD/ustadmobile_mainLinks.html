@@ -1,0 +1,198 @@
+<!-- This file is part of Ustad Mobile.  
+    
+    Ustad Mobile Copyright (C) 2011-2013 Toughra Technologies FZ LLC.
+
+    Ustad Mobile is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version with the following additional terms:
+    
+    All names, links, and logos of Ustad Mobile and Toughra Technologies FZ 
+    LLC must be kept as they are in the original distribution.  If any new
+    screens are added you must include the Ustad Mobile logo as it has been
+    used in the original distribution.  You may not create any new 
+    functionality whose purpose is to diminish or remove the Ustad Mobile 
+    Logo.  You must leave the Ustad Mobile logo as the logo for the 
+    application to be used with any launcher (e.g. the mobile app launcher).  
+    
+    If you want a commercial license to remove the above restriction you must
+    contact us.  
+    
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+    Ustad Mobile is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+
+
+
+This program is free software.  It is licensed under the GNU GENERAL PUBLIC LICENSE ( http://www.gnu.org/copyleft/gpl.html ) with the following 
+
+GPL License Additional Terms
+
+All names, links, and logos of Ustad Mobile and Toughra Technologies FZ LLC must be kept as they are in the original distribution.  If any new screens are added you must include the Ustad Mobile logo as it has been used in the original distribution.  You may not create any new functionality whose purpose is to diminish or remove the Ustad Mobile Logo.  You must leave the Ustad Mobile logo as the logo for the application to be used with any launcher (e.g. the mobile app launcher).  
+
+If you need a commercial license to remove these restrictions please contact us by emailing info@ustadmobile.com 
+
+-->
+
+<!--
+    Un-important version of index.html.
+--> 
+
+  <!DOCTYPE html>
+     <html>
+     <head>
+      <title>FileReader Example</title>
+
+    <script type="text/javascript" charset="utf-8" src="cordova.js"></script>
+    <script type="text/javascript" charset="utf-8">
+
+
+	var exeContentFileName = "index.html";
+
+    // Wait for PhoneGap to load
+    //
+    function onLoad() {
+        document.addEventListener("deviceready", onDeviceReady, false);
+    }
+
+    // PhoneGap is ready
+    //
+    function onDeviceReady() {
+        window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, gotFS, fail);
+	
+    }
+
+    function gotFS(fileSystem) {
+	console.log("Test1");
+	console.log(fileSystem.name);
+        fileSystem.root.getFile("test.html", {create: false}, gotFileEntry, fail);
+    }
+
+    function gotFileEntry(fileEntry) {
+	console.log("Test2");
+	console.log(fileEntry.name);
+	console.log(fileEntry.fullPath);
+	
+	console.log("end of Test2");
+	//window.open(fileEntry.fullPath);
+        fileEntry.file(gotFile, fail);
+    }
+
+    function gotFile(file){
+        readDataUrl(file);
+        readAsText(file);
+    }
+
+    function readDataUrl(file) {
+        var reader = new FileReader();
+        reader.onloadend = function(evt) {
+            console.log("Read as data URL");
+            console.log(evt.target.result);
+	    
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function readAsText(file) {
+	//alert("readAstext");
+        var reader = new FileReader();
+	
+        reader.onloadend = function(evt) {
+            console.log("Read as text");
+            console.log(evt.target.result);
+	    //alert("content :"+evt.target.result);
+        };
+        reader.readAsText(file);
+    }
+
+
+
+    function fail(evt) {
+        console.log(evt.target.error.code);
+	alert("Something went wrong");
+    }
+
+
+
+
+    function getFileSystem(){
+	window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, gotFS2, fail);
+    }
+
+    function gotFS2(fileSystem2) {
+	console.log("Test3");
+	console.log(fileSystem2.name);
+        fileSystem2.root.getFile("/ext_card/ustadmobile/Sorting/index.html", {create: false}, gotFileEntry2, fail);
+    }
+
+    function gotFileEntry2(fileEntry2) {
+	console.log("Test4");
+	console.log(fileEntry2.name);
+	console.log(fileEntry2.fullPath);
+	
+	console.log("end of Test4");
+	window.open(fileEntry2.fullPath);
+        
+    }
+   
+
+ 
+    function getFileSystemList(){
+	window.requestFileSystem(LocalFileSystem.PERSISTENT,0,gotFSL,fail);
+    }
+     
+    function gotFSL(filesystemList){
+	console.log("Root = " + filesystemList.root.fullPath);
+	//alert("Root = " + filesystemList.root.fullPath);
+	filesystemList.root.getDirectory("/ext_card/ustadmobile",{create: false, exclusive: false},createDirReader,fail);
+    }
+   
+    function createDirReader(filesystemList){
+            var directoryReader = filesystemList.createReader();
+	    alert("Directory: " + filesystemList.fullPath);
+            directoryReader.readEntries(snlList,fail);
+	
+    }  
+ 
+    function snlList(entries) {
+	var i;
+	var list;
+	for (i=0; i<entries.length; i++) {
+	    console.log(entries[i].name);
+	    list=list+entries[i].name+'\n';
+
+	}
+	alert("List:" + '\n' + list);
+
+     }
+
+
+
+    </script>
+  </head>
+  <body onload='onLoad();'>
+    <div data-role="header" data-position="fixed">
+            <p style="background-image:url('res/umres/banne1.png'); background-repeat:repeat-x;margin-top:-8px;" >.</p>
+    <h1>Ustad Mobile for Android</h1>
+    <p>Activities:</p>
+    <a href="http://www.toughra.com" target="_blank">Toughra</a>
+    <p></p>
+    <a onclick="getFileSystem();" href="javascript:void(0);">Sorting Exercise(SD card)</a>
+    <p></p>
+    <a onclick="getFileSystemList();" href="javascript:void(0);">List of files in directory</a>
+    <p></p>
+    <a href="ustadmobile_booklist.html">List of books</a>
+    <p></p>
+    <a href="jQueryUItest.html">jQuery Mobile demo</a>
+    <p></p>
+    <a href="ustadmobile_login.html">Login</a>
+    <p></p>
+    <a href="ustadmobile_tests.html">Ustad Mobile Tests</a>
+
+  </body>
+</html>

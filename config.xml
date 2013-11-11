@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="com.toughra.ustadmobile" version="0.0.1" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <name>UstadMobileAndroid</name>
+    <description>
+        Ustad Mobile mLearning app by Toughra Technologies.
+    </description>
+    <author email="varuna@toughra.com" href="http://www.ustadmobile.com">
+        Toughra Technologies
+    </author>
+    <content src="index.html" />
+    <access origin="*" />
+    <preference name="fullscreen" value="true" />
+    <preference name="webviewbounce" value="true" />
+</widget>
