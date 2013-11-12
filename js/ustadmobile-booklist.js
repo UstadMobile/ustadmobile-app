@@ -88,7 +88,7 @@ var currentPath = "/ext_card/ustadmobile";
 //exe content
 //var foldersToScan = ["/ext_card/ustadmobile", "/sdcard/ustadmobile", "/ustadmobileContent/umPackages/"];
 
-var foldersToScan = ["/ext_card/ustadmobile"];
+var foldersToScan = ["/ext_card/ustadmobile", "/sdcard/ustadmobile", "/ustadmobileContent/umPackages/"];
 
 //the index of foldersToScan which we are currently going through
 var currentFolderIndex = 0;
@@ -154,9 +154,12 @@ Called once a scan of a directory is done - go and look at
 the next entry from foldersToScan if there are more...
 */
 function populateNextDir() {
+    debugLog("In populateNextDir()");
     if(currentFolderIndex < foldersToScan.length) {
+        console.log("Calling to populate the next folder..");
         populate(foldersToScan[currentFolderIndex++]);
     }else {
+        console.log("No more folders to scan for ustad mobile packages.");
         if(allBookFoundCallback != null) {
             if (typeof allBookFoundCallback === "function") {
                 allBookFoundCallback();
@@ -169,7 +172,8 @@ function populateNextDir() {
 When root dir reader fails
 */
 function fail(evt) {
-    debugLog(evt.target.error.code);
+    //debugLog(evt.target.error.code);
+    debugLog("Could not find the folder to scan for this platform. Going to the next folder..");
     populateNextDir();
 }
 
