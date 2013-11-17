@@ -62,6 +62,7 @@ function writeBodyStart(title) {
     document.writeln("<p style=\"background-image:url('res/umres/banne1.png'); background-repeat:repeat-x;margin-top:-8px;\" >.</p>");
     document.writeln("<a id=\"UMUsername\">");
     document.writeln("</a>");
+    //document.writeln("<a></a>");    
     document.writeln("<a id=\"UMLogout\" data-role=\"button\" data-icon=\"home\" data-iconshadow=\"false\" data-direction=\"reverse\" onclick=\"umLogout()\" class=\"ui-btn-right\"></a>");
     document.writeln("<h3>" + title + "</h3>");
     document.writeln("</div>");
@@ -69,8 +70,14 @@ function writeBodyStart(title) {
 }
 
 function writeBodyEnd() {
-    document.writeln("<div data-role=\"footer2\" data-position=\"fixed\">");
+    document.writeln("<div data-role=\"footer\" data-position=\"fixed\" style=\"text-align: center;\">");
     document.writeln("<p style=\"background-image:url('res/umres/banne1.png'); background-repeat:repeat-x;margin-top:0px;margin-bottom:0px;\">.</p>");
+    //document.writeln("<h1></h1>");
+    document.writeln("<a id=\"umBack\" data-role=\"button\" data-icon=\"arrow-l\" class=\"ui-btn-left\" onclick=\"exeNextPage\"  data-theme=\"a\" data-inline=\"true\">Back</a>");
+    //document.writeln("<h1></h1>");    
+    document.writeln("<a id=\"umMenu\" data-role=\"button\" style=\"text-align: center;\"data-icon=\"grid\" onclick=\"exeMenuPage()\"  data-theme=\"a\" data-inline=\"true\">Menu</a>");
+    //document.writeln("<h1></h1>");
+    document.writeln("<a id=\"umForward\" data-role=\"button\" data-icon=\"arrow-r\" class=\"ui-btn-right\" data-direction=\"reverse\" onclick=\"exeNextPage\" data-theme=\"a\" data-inline=\"true\">Forward</a>");
     document.writeln("</div>");
 
 }

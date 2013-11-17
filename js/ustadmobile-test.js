@@ -72,16 +72,57 @@ function checkLoginOK(statusCode){
 }
 
 
+//function checkPackageListXMLDownloadOK(arg){
+//    test("Download an xml file via FileTransfer", function(){
+//        ok( arg == "pass", "XML file download okay");
+//        //ok( arg == "xml list processing pass", "Package XML List Scan okay");
+//  
+//    });
+//}
+
+function checkPackageListXMLProcessingOK(arg){
+    test("Scan downloaded package xml list file and extract package tag information", function(){
+        ok( arg == "xml list processing pass", "Package XML List Downloaded and Scan okay");
+    });
+}
+
+function checkPackageXMLProcessingOK(arg){
+    test("Scan downloaded package xml file and extract file tag information", function(){
+        ok( arg == "xml processing pass", "Package XML Downloaded and Scan okay");
+    });
+}
+
+//function checkPackageXMLDownloadOK(arg){
+//    test("Download a Package XML file via FileTransfer", function(){
+//        ok( arg == "passed" , "Package XML Download okay");
+//        ok( arg == "downloadpassed", "Files from package download okay");
+//        ok( arg == "xml processing pass", "Package XML Scan okay");
+//    });
+//}
+
+//function checkPackageFileDownloadOK(){
+//    test("Download all files from Package XML", function(){
+//        ok( arg == "downloadpassed" , "Files from package download okay");
+//    });
+//}
+
+
 function startTestOnLoadCounter(){
 
-setTimeout("checkSomethingElse()", 500);
+    setTimeout("checkSomethingElse()", 500);
 
-currentEntriesIndex = 0;
-currentFolderIndex = 0;
-allBookFoundCallback = checkBooksOK;
-populateNextDir();
+    currentEntriesIndex = 0;
+    currentFolderIndex = 0;
+    allBookFoundCallback = checkBooksOK;
+    populateNextDir();
 
-umlogin("0974","1234", 'http://intranet.paiwastoon.net/umcloud/app/login.xhtml', checkLoginOK);
+    umlogin("0974","1234", 'http://intranet.paiwastoon.net/umcloud/app/login.xhtml', checkLoginOK);
+
+    testPackageListXML('http://www.ustadmobile.com/books/all_ustadpkg_html5.xml', 'all', checkPackageListXMLProcessingOK);
+
+    testPackageListXML('http://www.ustadmobile.com/books/TestBook2_ustadpkg_html5.xml', 'all/TestBook2', checkPackageXMLProcessingOK);    
+
+
 
 }
 

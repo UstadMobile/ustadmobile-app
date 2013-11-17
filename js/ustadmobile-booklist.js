@@ -73,10 +73,10 @@ var exeContentFileName = "index.html";
 /*
 Called when populateDir fails to get a reader for a given directory
 */
-function fail(evt) {
-    console.log(evt.target.error.code);
-	debugLog("Something went wrong");
-}
+//function failbl(evt) {
+//    console.log(evt.target.error.code);
+//	debugLog("Something went wrong");
+//}
 
 //The file that should be present in a directory to indicate this is exe content
 var exeFileMarker = "index.html";
@@ -88,7 +88,7 @@ var currentPath = "/ext_card/ustadmobile";
 //exe content
 //var foldersToScan = ["/ext_card/ustadmobile", "/sdcard/ustadmobile", "/ustadmobileContent/umPackages/"];
 
-var foldersToScan = ["/ext_card/ustadmobile", "/sdcard/ustadmobile", "/ustadmobileContent/umPackages/"];
+var foldersToScan = ["/ext_card/ustadmobile", "/sdcard/ustadmobile", "/sdcard/ustadmobileContent", "/ustadmobileContent/umPackages/"];
 
 //the index of foldersToScan which we are currently going through
 var currentFolderIndex = 0;
@@ -171,7 +171,7 @@ function populateNextDir() {
 /* 
 When root dir reader fails
 */
-function fail(evt) {
+function failbl(evt) {
     //debugLog(evt.target.error.code);
     debugLog("Could not find the folder to scan for this platform. Going to the next folder..");
     populateNextDir();
@@ -186,10 +186,11 @@ function populate(path){
     try {
         window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function(fs){
             fileSystem = fs;
-            fs.root.getDirectory(path,{create: false, exclusive: false},dirReader,fail);
-        }, fail);
+            fs.root.getDirectory(path,{create: false, exclusive: false},dirReader,failbl);
+        }, failbl);
     } catch (e) {
-        debugLog("populate exception: catch!: " + dump(e));
+        //debugLog("populate exception: catch!: " + dump(e));
+        debugLog("Populate exception.");
         populateNextDir();
     }
 }
