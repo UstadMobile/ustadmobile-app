@@ -1,0 +1,61 @@
+Things needed to install Cordova
+
+1. Install npm
+Install node.
+Install cordova
+Install Android SDK and ADT (Android Development Toolkit)
+Install ant (sudo apt-get install ant)
+Install openjdk: (sudo apt-get install openjdk-7-jdk).
+Choose the path where you want your ustadmobile git pulls to reside, mine is in:
+>cd \home\varuna\SFCordova\src (make it)
+RUN THE GIT COMMAND AND PULL IT HERE, SO
+\home\varuna\SFCordova\src\ustadmobil-codehtml5cordova\
+cd ustadmobil-codehtml5cordova < This is your www folder that we will work with.
+
+Now, got to a folder where you want your cordova app to reside, eg: \home\varuna\SFCordova\ (We will make a new Cordova project called ustadmobile there)
+
+>cordova create ustadmobile com.toughra.ustadmobile UstadMobile
+
+>cordova create ustadmobile com.toughra.ustadmobile UstadMobile
+>cd ustadmobile
+>cordova platform add android
+>cordova plugin add org.apache.cordova.device
+>cordova plugin add org.apache.cordova.network-information
+>cordova plugin add org.apache.cordova.battery-status
+>cordova plugin add org.apache.cordova.device-motion
+>cordova plugin add org.apache.cordova.device-orientation
+>cordova plugin add org.apache.cordova.file
+>cordova plugin add org.apache.cordova.file-transfer
+>cordova plugin add org.apache.cordova.globalization
+>cordova plugin add org.apache.cordova.splashscreen
+>cordova plugin add org.apache.cordova.console
+Now we should build this, >cordova build
+Then compile, >cordova compile, and have the whole thing set up. 
+AT this stage its a simple hello world project set up.
+
+Now its a matter of adding our git files and building it again.
+So, go to your git pulled files, ie: >cd \path\to\src\ustadmobil-codehtml5cordova\
+Copy all the *.html files, new folders from: \js \jqm \res \css
+Do not copy \css\override.css 
+Copy all the *.html pages except spec.html (I frankly don't know why)
+Paste these files into your newly created Cordova project ie to: C:\Users\Varuna\Documents\Cordova\SFCordova\ustadmobile\www folder 
+Now back to command line:
+>cordova build
+>cordova compile
+>cordova run // This will run on the device, if you want to emulate, >cordova emulate
+If you want you can go to the folder ustadmobile/platforms/android/ and here there will be a your ADT(Android Development Tools) Project file that you can use to edit and run.
+You're done!
+
+Always edit the contents of the main www folder first and then use: cordova build
+
+eg:
+/path/to/ustadmobile/> sudo cordova build
+/path/to/ustadmobile/> sudo cordova compile
+
+Post that, either :
+1. Open eclipse and do a refresh of your project and Run it (device/emulator), or
+2. >sudo cordova run
+
+
+
+

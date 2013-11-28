@@ -45,12 +45,24 @@ If you need a commercial license to remove these restrictions please contact us 
 //To be run at the start of app and at every page. (include it in the HeaderElement so that it is called on every page.
 
 //replace every string with this function. eg: alert(_(error) + value );
+
+var exeLastPage = "../";
+var exeMenuPage = "ustadmobile_menuPage.html";
+var exeMenuPage2 = "ustadmobile_menuPage2.html";
+//localStorage.setItem('exeMenuPage',exeMenuP);
+var globalXMLListFolderName = "all";
+
 function _(msgid) {
     if (msgid in messages) {
         return messages[msgid];
     }else {
         return msgid;
     }
+}
+
+function commonfail(){
+    debugLog("Failed at ustadmobile-common.js.");
+    alert("Something went wrong in the app start procedure.");
 }
 
 
@@ -60,14 +72,26 @@ function loadLocale(localeCode) {
     document.head.appendChild(imported);
 }
 
-function gotFS(fileSystem){
-    window.rootFS = fileSystem.root;
+function gotFSumc(fileSystem){
+    //window.rootFS = fileSystem.root;
     //so the rootFS.fullPath is the app Path.< Use that (not tested).
+	debugLog("Cordova is ready: in ustadmobile-common.js");
+	//alert("STARTUP: Cordova is ready");
+		var getDir = "ustadmobileContent";
+        debugLog("CHECKING IF DIRECTORY: " + getDir + " EXISTS. IF NOT, CREATING IT.");
+        fileSystem.root.getDirectory(getDir, {create:true, exclusive:false}, function(){
+            debugLog("STARTUP: Creating List Dir success.");
+			var getDir2 = "ustadmobileContent/" + globalXMLListFolderName;
+			debugLog("STARTUP: CHECKING IF DIRECTORY: " + getDir2 + " EXISTS. IF NOT, CREATING IT.");
+			fileSystem.root.getDirectory(getDir2, {create:true, exclusive:false}, function(){
+					debugLog("STARTUP: Creating List Dir 2 success.");
+				}, function(){debugLog("STARTUP: Creating package Dir unsuccess.");$.mobile.loading('hide'); alert("STARTUP: Some features might not work on your device.");});
+        }, function(){debugLog("STARTUP: Creating package Dir unsuccess.");$.mobile.loading('hide'); alert("STARTUP: Some features might not work on your device.");});
 }
 
 document.addEventListener('deviceready', function(){
         window.requestFileSystem  = window.requestFileSystem || window.webkitRequestFileSystem;
-        window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, gotFS, fail);
+        window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, gotFSumc, commonfail);
             },
      false);
 

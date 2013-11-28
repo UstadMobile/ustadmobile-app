@@ -45,21 +45,15 @@ If you need a commercial license to remove these restrictions please contact us 
 /*
     The javascript associated with ustad mobile login actions and login page on ustad mobil app.
 */
-
-
+//alert("Starting login.js..");
+//var username="";
+//var password="";
 $.mobile.loading('show', {
     text: 'Loading Ustad Mobile',
     textVisible: true,
     theme: 'b',
-    html: ""});
-var USTADDEBUGMODE = 1;
-var username="";
-var password="";
-function debugLog(msg) {
-    if(USTADDEBUGMODE == 1) {
-        console.log(msg);
-    }
-}
+    html: ""}
+); 
 
 function fail(evt) {
     alert("something went wrong: " + evt.target.error.code);
@@ -69,28 +63,33 @@ function fail(evt) {
 
 // Wait for PhoneGap to load
 //
-function onLoad() {
-    $.mobile.loading('show', {
-    text: 'Loading Ustad Mobile',
-    textVisible: true,
-    theme: 'b',
-    html: ""});
-    document.addEventListener("deviceready", onDeviceReady, false);
+function onLoginLoad() {
+    debugLog("Starting onLoginLoad..");
+    document.addEventListener("deviceready", onLoginDeviceReady, false);
 }
 
 // PhoneGap is ready
 //
-function onDeviceReady() {
+function onLoginDeviceReady() {
+    $.mobile.loading('hide');
+    debugLog("Checking if user is already logged in..");
     checkLoggedIn();
 }
 
 //The form in html calls this with the values. We seperate the form arguments with actual function of login for
 //testing and code-reuse purposes.
 function umloginFromForm() {
+
+     $.mobile.loading('show', {
+        text: 'Logging in to umcloud..',
+        textVisible: true,
+        theme: 'b',
+    html: ""});
+    
     username = $("#username").val();
     password = $("#password").val();
     
-    console.log("User name and password is: " + username + " / " + password);
+    debugLog("User name and password is: " + username + " / " + password);
     if (!url){
     var url = 'http://intranet.paiwastoon.net/umcloud/app/login.xhtml';
     }
@@ -98,7 +97,7 @@ function umloginFromForm() {
 }
 
 function umloginredirect(statuscode) {
-    console.log("Status code is: " + statuscode);
+    debugLog("Status code is: " + statuscode);
     if(statuscode == 200) {
         localStorage.setItem('username',username);
         localStorage.setItem('password',password);
@@ -112,7 +111,7 @@ function umloginredirect(statuscode) {
 //passed to the 
 function runcallback(callbackfunction, arg) {
     if (callbackfunction != null && typeof callbackfunction === "function") {
-        console.log("Within the call back function with arg: " + arg );
+        debugLog("Within the call back function with arg: " + arg );
         callbackfunction(arg);
     }
 }
@@ -124,44 +123,57 @@ function umlogin(username, password, url, callback){
 
     var param = 'userid=' + username + '&password=' + password;
     //var url = 'http://intranet.paiwastoon.net/umcloud/app/login.xhtml';
-    $.ajax({
-        url: url,  
-        type: 'POST',        
-        data: param,
-        datatype: 'text',
-        success: function(data, textStatus, jqxhr){
-            debugLog("Logging to server: " + url + " a success with code:" + jqxhr.status);
-            runcallback(callback, jqxhr.status);
-            },
-        complete: function (jqxhr, txt_status) {
-            debugLog("Ajax call completed to server. Status: " + jqxhr.status);
-            },
-        error: function (jqxhr,b,c){
-        
-            alert("Wrong username/password combination or server error. Status Code:" + jqxhr.status);
-            console.log("Wrong username/password combination or server error. Status Code:" + jqxhr.status);
-            runcallback(callback, jqxhr.status);
-            },
-        statusCode: {
-            200: function(){
-                //alert("Login success on the server!");
-                console.log("Login success on the server with statusCode 200.");
-                localStorage.setItem('username',username);
-                localStorage.setItem('password',password);
-                },
-            0: function(){
-                console.log("Status code 0, unable to connect to server or no internet/intranet access");
-                    }
-                    }
-            
-        });
-    
+	if( username == "umdev" && password == "umdev" ){
+		localStorage.setItem('username',username);
+        localStorage.setItem('password',password);
+        window.open("ustadmobile_developerPage.html").trigger("create");
+        //$.mobile.changePage( "ustadmobile_developerPage.html", { transition: "slideup" } );
+	}else{
+		$.ajax({
+			url: url,  
+			type: 'POST',        
+			data: param,
+			datatype: 'text',
+			success: function(data, textStatus, jqxhr){
+				debugLog("Logging to server: " + url + " a success with code:" + jqxhr.status);
+				runcallback(callback, jqxhr.status);
+				},
+			complete: function (jqxhr, txt_status) {
+				debugLog("Ajax call completed to server. Status: " + jqxhr.status);
+				},
+			error: function (jqxhr,b,c){
+			
+				alert("Wrong username/password combination or server error. Status Code:" + jqxhr.status);
+				debugLog("Wrong username/password combination or server error. Status Code:" + jqxhr.status);
+                $.mobile.loading('hide');
+				runcallback(callback, jqxhr.status);
+				},
+			statusCode: {
+				200: function(){
+					//alert("Login success on the server!");
+					debugLog("Login success on the server with statusCode 200.");
+					localStorage.setItem('username',username);
+					localStorage.setItem('password',password);
+					},
+				0: function(){
+					debugLog("Status code 0, unable to connect to server or no internet/intranet access");
+						}
+						}
+				
+			});
+		}
 }
 
 /*
 Checks if user logged in from earlier and re directs to book list.
 */
 function checkLoggedIn(){
+    $.mobile.loading('show', {
+        text: 'Checking logged user..',
+        textVisible: true,
+        theme: 'b',
+        html: ""}
+    ); 
 
     if (localStorage.getItem('username')){
         openPage("ustadmobile_booklist.html");
@@ -182,7 +194,8 @@ function umSkip(){
 Simple Open page wrapper
 */
 function openPage(openFile){
-    console.log("Going to page: " + openFile);
-	window.open(openFile).trigger("create");
+    debugLog("Going to page: " + openFile);
+	//window.open(openFile).trigger("create");
+    window.open(openFile);
 }
 

@@ -11,4 +11,6 @@
     <access origin="*" />
     <preference name="fullscreen" value="true" />
     <preference name="webviewbounce" value="true" />
+    <preference name="splashscreen" value="umsplash" />
+    <preference name="splashScreenDelay" value="3000" />
 </widget>

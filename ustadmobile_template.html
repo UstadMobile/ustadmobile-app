@@ -70,13 +70,36 @@ If you need a commercial license to remove these restrictions please contact us 
 
      <!-- Define your id  -->
            
-        <script type='text/javascript'>writeBodyStart("PageTitle");</script>
+        <!--<script type='text/javascript'>writeBodyStart("PageTitle");</script>
+        Now part of this file.    
+        -->
+        <div data-role="page" id="exemainpage">
+        <div data-role="header" data-position="fixed">
+        <p style="background-image:url('res/umres/banne1.png'); background-repeat:repeat-x;margin-top:-8px;" >.</p>
+        <a id="UMUsername"></a>
+        <a id="UMLogout" data-role="button" data-icon="home" data-iconshadow="false" data-direction="reverse" onclick="umLogout()" class="ui-btn-right"></a> 
+        <h3>PageTitle</h3> <!-- Note the page title that needs to be replaced with the Page Tite -->
+        </div>
+        <div data-role="content">
+
         
 	    
 		        Content goes here         
 	    </div>
 
-        <script type='text/javascript'>writeBodyEnd();</script>
+        <!--<script type='text/javascript'>writeBodyEnd();</script>
+        Now part of this file.
+        -->
+        
+        <div data-role="footer" data-position="fixed" style="text-align: center;">
+
+            <a id="umBack" data-role="button" data-icon="arrow-l" class="ui-btn-left" onclick="exePreviousPageOpen()"  data-theme="a" data-inline="true">Back</a>
+
+            <a onclick="exeMenuPageOpen()"   style="text-align: center;" data-transition="slideup" data-inline="true" data-icon="grid" data-theme="a">Menu</a>
+         
+            <a id="umForward" data-role="button" data-icon="arrow-r" class="ui-btn-right" data-direction="reverse" onclick="exeNextPageOpen()" data-theme="a" data-inline="true">Forward</a>
+
+        </div>
 
     </div>   
   </body>

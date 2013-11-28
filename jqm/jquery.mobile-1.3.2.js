@@ -4288,6 +4288,10 @@ $.mobile.getMaxScrollForTransition = $.mobile.getMaxScrollForTransition || defau
 		if ( !( $.mobile.allowCrossDomainPages || path.isSameDomain( documentUrl, absUrl ) ) ) {
 			deferred.reject( absUrl, options );
 		} else {
+			console.log("In jQuery mobile-1.3.2.js. $.ajax url: fileUrl: " + fileUrl);
+			var parts = fileUrl.split("x-wmapp0://");
+			fileUrl = parts[parts.length-1];
+			console.log("In jQuery mobile-1.3.2.js. $.ajax url: fileUrl has been changed (for windows phone): " + fileUrl);
 			// Load the new page.
 			$.ajax({
 				url: fileUrl,

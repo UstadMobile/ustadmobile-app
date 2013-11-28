@@ -106,6 +106,11 @@ function checkPackageXMLProcessingOK(arg){
 //    });
 //}
 
+function checkBase64ToFileConversionOK(arg){
+    test("Check Base64 to file conversion post package download", function(){
+        ok( arg == "base64ToFile success", "Base 64 to file conversion okay");
+        });
+}
 
 function startTestOnLoadCounter(){
 
@@ -121,6 +126,12 @@ function startTestOnLoadCounter(){
     testPackageListXML('http://www.ustadmobile.com/books/all_ustadpkg_html5.xml', 'all', checkPackageListXMLProcessingOK);
 
     testPackageListXML('http://www.ustadmobile.com/books/TestBook2_ustadpkg_html5.xml', 'all/TestBook2', checkPackageXMLProcessingOK);    
+    
+    //base64FileFolder = "/ustadmobileContent/all/";
+    //var base64TestVar = ["DQp2YXIgZXhlTGFzdFBhZ2UgPSAiLi4vIjsNCnZhciBleGVNZW51UGFnZSA9ICJ1c3RhZG1vYmlsZV9tZW51UGFnZS5odG1sIjsNCi8vbG9jYWxTdG9yYWdlLnNldEl0ZW0oJ2V4ZU1lbnVQYWdlJyxleGVNZW51UCk7DQp2YXIgZ2xvYmFsWE1MTGlzdEZvbGRlck5hbWUgPSAiYWxsIjsNCg==", "base64UnitTestOutput.js"];    
+    //if(base64TestVar[1] == "base64UnitTestOutput.js"){
+    //setTimeout("writeBase64(base64TestVar, checkBase64ToFileConversionOK)", 500);
+    //}
 
 
 

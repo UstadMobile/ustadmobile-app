@@ -49,21 +49,6 @@ be considered an EXE content directory and it will be displayed in a JQuery Mobi
 UI list that the user can open a chosen content entry.
 */
 
-
-
-//Set to 1 for Debug mode, otherwise 0 (will silence console.log messages
-var USTADDEBUGMODE = 1;
-
-
-/*
-Output msg to console.log if in debug mode
-*/
-function debugLog(msg) {
-    if(USTADDEBUGMODE == 1) {
-        console.log(msg);
-    }
-}
-
 /*
 The file to look for in a sub directory to determine if it is EXE
 content or not
@@ -74,7 +59,7 @@ var exeContentFileName = "index.html";
 Called when populateDir fails to get a reader for a given directory
 */
 //function failbl(evt) {
-//    console.log(evt.target.error.code);
+//    debugLog(evt.target.error.code);
 //	debugLog("Something went wrong");
 //}
 
@@ -88,7 +73,7 @@ var currentPath = "/ext_card/ustadmobile";
 //exe content
 //var foldersToScan = ["/ext_card/ustadmobile", "/sdcard/ustadmobile", "/ustadmobileContent/umPackages/"];
 
-var foldersToScan = ["/ext_card/ustadmobile", "/sdcard/ustadmobile", "/sdcard/ustadmobileContent", "/ustadmobileContent/umPackages/"];
+var foldersToScan = ["/ext_card/ustadmobile", "/sdcard/ustadmobile", "/sdcard/ustadmobileContent", "/ustadmobileContent/umPackages/", "/ustadmobileContent/"];
 
 //the index of foldersToScan which we are currently going through
 var currentFolderIndex = 0;
@@ -106,16 +91,18 @@ var booksFound = [];
 
 var allBookFoundCallback = null;
 
+
+
 // Wait for PhoneGap to load
 //
-function onLoad() {
+function onBookListLoad() {
     //$.mobile.loading('hide');
-    document.addEventListener("deviceready", onDeviceReady, false);
+    document.addEventListener("deviceready", onBLDeviceReady, false);
 }
 
 // PhoneGap is ready - scan the first directory
 //
-function onDeviceReady() {
+function onBLDeviceReady() {
     var usern= localStorage.getItem('username');
     var logome='';
     if (usern!=null)
@@ -127,9 +114,26 @@ function onDeviceReady() {
         usern='Guest';
     }
 
+    $.mobile.loading('show', {
+        text: 'Loading your books..',
+        textVisible: true,
+        theme: 'b',
+    html: ""});
+    
+    var posOfLastSlash = document.location.href.lastIndexOf("/");
+    var mainPath = document.location.href.substring(0, posOfLastSlash);
+    localStorage.setItem('baseURL', mainPath);
+    
+    $("#UMUsername").empty().append();
     $("#UMUsername").append(usern).trigger("create");
+    $("#UMLogout").empty().append();
     $("#UMLogout").append(logome).trigger("create");
-    $.mobile.loading('hide');
+    $("#UMBookList").empty().append();
+    //document.getElementById('myAnchor').innerHTML="W3Schools";
+    //document.getElementById('UMUsername').innerHTML=usern;
+    //document.getElementById('UMLogout').innerHTML=logome;
+    
+    //$.mobile.loading('hide');
     currentEntriesIndex = 0;
     currentFolderIndex = 0;
     populateNextDir();
@@ -146,7 +150,7 @@ function umLogout(){
     html: ""});
     localStorage.removeItem('username');
     localStorage.removeItem('password');
-    openPage("ustadmobile_login.html");
+    window.open("ustadmobile_login.html");
 }  
 
 /*
@@ -156,10 +160,11 @@ the next entry from foldersToScan if there are more...
 function populateNextDir() {
     debugLog("In populateNextDir()");
     if(currentFolderIndex < foldersToScan.length) {
-        console.log("Calling to populate the next folder..");
+        debugLog("Calling to populate the next folder..");
         populate(foldersToScan[currentFolderIndex++]);
     }else {
-        console.log("No more folders to scan for ustad mobile packages.");
+        $.mobile.loading('hide');
+        debugLog("No more folders to scan for ustad mobile packages.");
         if(allBookFoundCallback != null) {
             if (typeof allBookFoundCallback === "function") {
                 allBookFoundCallback();
@@ -181,12 +186,12 @@ function failbl(evt) {
 Looks for subdirectories of path that contain exe content - for each
 sub directory will look for the marker file.
 */
-function populate(path){
-    debugLog("attempting to populate from: " + path);
+function populate(pathFrom){
+    debugLog("attempting to populate from: " + pathFrom);
     try {
         window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function(fs){
             fileSystem = fs;
-            fs.root.getDirectory(path,{create: false, exclusive: false},dirReader,failbl);
+            fs.root.getDirectory(pathFrom,{create: false, exclusive: false},dirReader,failbl);
         }, failbl);
     } catch (e) {
         //debugLog("populate exception: catch!: " + dump(e));
@@ -213,16 +218,16 @@ function findEXEFileMarkerSuccess(fileEntry) {
     debugLog("Found " + fileFullPath + " is an EXE directory - adding...");
     var folderName = fileEntry.getParent();
     fileEntry.getParent(function(parentEntry) {
-        console.log("Got a parent Book directory name");
-        console.log("The full path = " + parentEntry.fullPath);
+        debugLog("Got a parent Book directory name");
+        debugLog("The full path = " + parentEntry.fullPath);
         folderName = parentEntry.name;  
         booksFound[booksFound.length] = folderName;
-        $("#UMBookList").append("<a onclick='openPage(\"" + fileFullPath + "\")' href=\"#\" data-role=\"button\" data-icon=\"star\" data-ajax=\"false\">" + folderName + "</a>").trigger("create");
+        $("#UMBookList").append("<a onclick='openBLPage(\"" + fileFullPath + "\")' href=\"#\" data-role=\"button\" data-icon=\"star\" data-ajax=\"false\">" + folderName + "</a>").trigger("create");
         }, function(error){
-            console.log("failed to get parent directory folderName: " + folderName + " with an error: " + error);
+            debugLog("failed to get parent directory folderName: " + folderName + " with an error: " + error);
         }
     ); 
-    console.log("Before we scan the directory, the number of Books Found is: " + booksFound.length);
+    debugLog("Before we scan the directory, the number of Books Found is: " + booksFound.length);
     scanNextDirectoryIndex();
 }
 
@@ -286,8 +291,9 @@ function failDirectoryReader(error) {
 /*
 Simple Open page wrapper
 */
-function openPage(openFile){
-	window.open(openFile);
+function openBLPage(openFile){
+
+	window.open(openFile).trigger("create");
 }
 
 

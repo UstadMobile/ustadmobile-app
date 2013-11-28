@@ -65,21 +65,21 @@ If you need a commercial license to remove these restrictions please contact us 
 
     /* General, all purpose fail function.*/
     function fail2(){
-      console.log("Something went wrong");
+      debugLog("Something went wrong");
       alert("Something went wrong");
       $.mobile.loading('hide');
     }
 
     /* Download fail function called in batch download process. If a file is not found, it will still continue with the next file." */
     function downloadfail(){
-        console.log("!Download Failed.");
-        console.log("Trying the next file..");
+        debugLog("!Download Failed.");
+        debugLog("Trying the next file..");
         downloadNextFile();        
     }
     
     /* Download fail function when one file (List xml or Package xml) file is unable to be downloaded. */
     function downloadfail(currentFileN){
-        console.log("!Couldn not download a file: " + currentFileN);        
+        debugLog("!Couldn not download a file: " + currentFileN);        
         alert("Could not download the file. Check if path is correct on the server list.");
     }
 
@@ -94,17 +94,24 @@ If you need a commercial license to remove these restrictions please contact us 
         //7. Have a link< Back to Book/Package List.    
     */
     function listPackagesFromServer(){
+        $.mobile.loading('show', {
+            text: 'Contacting the server..',
+            textVisible: true,
+            theme: 'b',
+            html: ""}
+        );
+        $("#packageList").empty().append();
         //var serverurl = "http://"; //In future we can use it and we can globalise it.
         onPackageListTransfer();     
     }
     // Check to see if Cordova is ready and following functions to get rootPath through file System.
     // Needed as this will be the first call to the server.
     function onPackageListTransfer(){
-        document.addEventListener('deviceready', beginPackageListTransfer, function(){alert("Something went wrong in checking Cordova ready."); console.log("Something went wrong on deviceready at function: onPackageListTransfer()");});
+        document.addEventListener('deviceready', beginPackageListTransfer, function(){alert("Something went wrong in checking Cordova ready."); debugLog("Something went wrong on deviceready at function: onPackageListTransfer()");});
     }
 
     function beginPackageListTransfer(){
-        window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, gotRootListDirPackage, function(){alert("Something went wrong in getting the fileSystem."); console.log("Something went wrong in getting file system, beginPackageListTransfer()");});
+        window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, gotRootListDirPackage, function(){alert("Something went wrong in getting the fileSystem."); debugLog("Something went wrong in getting file system, beginPackageListTransfer()");});
     }
 
     /*
@@ -121,15 +128,18 @@ If you need a commercial license to remove these restrictions please contact us 
         if (!packageListFolderName){
             packageListFolderName="";
         }
+		
+		
+		
         var lastFileNamePos = fileNameCheckArray.length - 1;
         var fileNameCheck = fileNameCheckArray[lastFileNamePos];
         if (fileNameCheck == "_html5.xml" ) {
-            console.log("Specified file: " + packageListFileName + " is an ustadmobile package list xml.");
+            debugLog("Specified file: " + packageListFileName + " is an ustadmobile package list xml.");
             startFileDownload(packageListString, packageListFolderName);
         }
         else{
             alert("Unable to fetch list of available packages on the server. Check if path to list is correct:" + fileNameCheck);
-            console.log("Invalid package name. Not a package list xml or doesnt end with all_ustadpkg_html5..");
+            debugLog("Invalid package name. Not a package list xml or doesnt end with all_ustadpkg_html5..");
         }
     }
 
@@ -152,38 +162,38 @@ If you need a commercial license to remove these restrictions please contact us 
         if (!packageListFolderName){
             packageListFolderName="";
         }
-        window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, getXMLListFile, function(){alert("Something went wrong in getting file System for packages."); console.log("Something went wrong on getting file system in onlistPackages(msg)");});
+        window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, getXMLListFile, function(){alert("Something went wrong in getting file System for packages."); debugLog("Something went wrong on getting file system in onlistPackages(msg)");});
     }
 
     // This function calls the file getting method of FileEntry.
     function getXMLListFile(fileSystem){
         //alert("message: " + msg);
-        console.log("Got XML List FileSystem.");
+        debugLog("Got XML List FileSystem.");
             rootPath = fileSystem.root.fullPath;
         var forxml = "ustadmobileContent/" + packageListFolderName + "/" + packageListFileName;
-        console.log("XML List Processing started.");
-        console.log("XML List file was downloaded from URL: " + packageListString );
+        debugLog("XML List Processing started.");
+        debugLog("XML List file was downloaded from URL: " + packageListString );
         var pathToPackageFile = rootPath + "/ustadmobileContent/" + packageListFolderName + "/" + packageListFileName;
-        console.log("The XML List location on the device is: " + pathToPackageFile);            
+        debugLog("The XML List location on the device is: " + pathToPackageFile);            
         var getDir = "ustadmobileContent/" + packageListFolderName; //Note how there is no "/" in the start.
-        console.log("CHECKING IF DIRECTORY: " + getDir+ " EXISTS. IF NOT, CREATING IT.");
+        debugLog("CHECKING IF DIRECTORY: " + getDir+ " EXISTS. IF NOT, CREATING IT.");
         fileSystem.root.getDirectory(getDir, {create:true, exclusive:false}, function(){
-            console.log("Creating List Dir success.");
-            console.log("forxml is: " + forxml);   
-            console.log("GETTING THE LIST XML!");
-            fileSystem.root.getFile(forxml, {create:false, exclusive:false},gotXMLFileList, function(){alert("Something went wrong in getting file for XML List processing."); console.log("Something went wrong on getting file at getXMLListFile(fileSystem)");});
-        },function(){console.log("Creating list Dir unsuccess.");$.mobile.loading('hide');alert("Getting Packages List on to your device failed.");});
+            debugLog("Creating List Dir success.");
+            debugLog("forxml is: " + forxml);   
+            debugLog("GETTING THE LIST XML!");
+            fileSystem.root.getFile(forxml, {create:false, exclusive:false},gotXMLFileList, function(){alert("Something went wrong in getting file for XML List processing."); debugLog("Something went wrong on getting file at getXMLListFile(fileSystem)");});
+        },function(){debugLog("Creating list Dir unsuccess.");$.mobile.loading('hide');alert("Getting Packages List on to your device failed.");});
         
     }
   
     function gotXMLFileList(fileEntry){
-        console.log("Got XML file.");
-        fileEntry.file(gotXMLListFile,function(){alert("Something went wrong in getting XML file (Package List)"); console.log("Something went wrong in getting XML Package List of function gotXMLFileList(fileEntry)");});
+        debugLog("Got XML file.");
+        fileEntry.file(gotXMLListFile,function(){alert("Something went wrong in getting XML file (Package List)"); debugLog("Something went wrong in getting XML Package List of function gotXMLFileList(fileEntry)");});
     }
     
     //Reading the xml list file.
     function gotXMLListFile(file){
-            console.log("Reading the XML file.");
+            debugLog("Reading the XML file.");
             var xmlTag = "package";
             readXMLAsText(file, xmlTag);
            //readXMLListAsText(file);
@@ -194,7 +204,7 @@ If you need a commercial license to remove these restrictions please contact us 
     */
     function someThing(xmlPath){
         packageString = xmlPath;
-        console.log("The Package xml is: " + packageString);
+        debugLog("The Package xml is: " + packageString);
         currentFileDownloadIndex = 0;
         packageFolderName = "";
         //allFileDownloadCallback = null;
@@ -203,40 +213,40 @@ If you need a commercial license to remove these restrictions please contact us 
     }
 
     function testPackageListXML(url,folder,callback){
-        console.log("TEST: In testPackageListXML with url: " + url + ", folder: " + folder);
+        debugLog("TEST: In testPackageListXML with url: " + url + ", folder: " + folder);
         packageString = url;
         packageFolderName = folder;     
-        console.log("TEST: Global variables packageString: " + packageString + ", and packageFolderName: " + packageFolderName);        
+        debugLog("TEST: Global variables packageString: " + packageString + ", and packageFolderName: " + packageFolderName);        
         window.requestFileSystem(LocalFileSystem.PERSISTENT,0, function(fs){
                 rootPath = fs.root.fullPath;
-                console.log("TEST: Global variable, rootPath: " + rootPath);
-                console.log("TEST: Starting test Package List Xml download..");
+                debugLog("TEST: Global variable, rootPath: " + rootPath);
+                debugLog("TEST: Starting test Package List Xml download..");
                 startFileDownload(url, folder, callback);
-            }, function(){ console.log("test fail"); runcallback(callback, "fail");}
+            }, function(){ debugLog("test fail"); runcallback(callback, "fail");}
         );        
     
     }
     
     //Cordova check if device is ready
     function onPackageTransfer(){
-        document.addEventListener('deviceready', beginPackageTransfer, function(){alert("Something went wrong in checking Cordova ready."); console.log("Something went wrong on deviceready at function: onPackageTransfer()");});
+        document.addEventListener('deviceready', beginPackageTransfer, function(){alert("Something went wrong in checking Cordova ready."); debugLog("Something went wrong on deviceready at function: onPackageTransfer()");});
     }
     
     //Cordova get File System
     function beginPackageTransfer(){
-        window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, gotRootDirPackage, function(){alert("Something went wrong in getting File System of Package XML"); console.log("Something went wrong in beginPackageTransfer()");});
+        window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, gotRootDirPackage, function(){alert("Something went wrong in getting File System of Package XML"); debugLog("Something went wrong in beginPackageTransfer()");});
     }
 
     /* Gets the root path and initiates packageString xml file to be downloaded (set previously) to calculated folder.*/
-    function gotRootDirPackage(rootFS){
-        rootPath = rootFS.root.fullPath; // Global root path gotten.
-        //packageString will be set by another function from xml package list.
-        console.log("packageString: " + packageString);
+    function gotRootDirPackage(fileSystem){
+		rootPath = fileSystem.root.fullPath; // Global root path gotten.
+		//packageString will be set by another function from xml package list.
+        debugLog("packageString: " + packageString);
         //Logic to get the file name from the url
         var uriSplit = packageString.split("/");
         var lastPos = uriSplit.length - 1;
             fileName = uriSplit[lastPos];        
-        console.log("The fileName in gotRootDirPackage: " + fileName); 
+        debugLog("The fileName in gotRootDirPackage: " + fileName); 
         //Logic to get the folder name / package name from the url's file name.
         var fileNameCheckArray = fileName.split("_ustadpkg");
         var packageFolderNamePos = fileNameCheckArray.length - 2;
@@ -246,24 +256,38 @@ If you need a commercial license to remove these restrictions please contact us 
         }
             packageFolderName = globalXMLListFolderName + "/" + packageFolderName;
 
-        console.log("packageFolderName: " + packageFolderName);
-        var lastFileNamePos = fileNameCheckArray.length - 1;
-        var fileNameCheck = fileNameCheckArray[lastFileNamePos];
-        if (fileNameCheck == "_html5.xml" ) {//Check if it is a valid named xml.
-        //if (fileNameCheck != null){
-          console.log("Specified file: " + fileName + " is an ustadmobile package xml.");
-          //startFileDownload(packageString,"");
-            startFileDownload(packageString, packageFolderName);
-        }
-        else{
-          alert("Sorry, please input a valid ustadmobile xml, " + fileNameCheck);
-          console.log("Invalid package name. Not an xml or doesnt end with ustadpkg_html5..");
-        }
+		debugLog("Creating Package XML Directory..");
+			var packageXMLDir = "ustadmobileContent/" + packageFolderName;
+			debugLog("CHECKING IF DIRECTORY: " + packageXMLDir + " EXISTS. IF NOT, CREATING IT.");
+			fileSystem.root.getDirectory(packageXMLDir, {create:true, exclusive:false}, function(){
+					debugLog(" Creating package XML Directory success.");
+					
+					debugLog("packageFolderName: " + packageFolderName);
+					var lastFileNamePos = fileNameCheckArray.length - 1;
+					var fileNameCheck = fileNameCheckArray[lastFileNamePos];
+					if (fileNameCheck == "_html5.xml" ) {//Check if it is a valid named xml.
+					//if (fileNameCheck != null){
+					  debugLog("Specified file: " + fileName + " is an ustadmobile package xml.");
+					  //startFileDownload(packageString,"");
+						startFileDownload(packageString, packageFolderName);
+					}
+					else{
+					  alert("Sorry, please input a valid ustadmobile xml, " + fileNameCheck);
+					  debugLog("Invalid package name. Not an xml or doesnt end with ustadpkg_html5..");
+					}
+					
+				}, function(){debugLog("Creating package XML Dir unsuccess.");$.mobile.loading('hide'); alert("Unable to download package to your device and file system.");});
+		
+		
+		
+        
+        
+        
     }
 
     function runcallback(callbackfunction, arg) {
         if(callbackfunction !=null && typeof callbackfunction === "function"){
-            console.log("Within the call back function with arg: " + arg );
+            debugLog("Within the call back function with arg: " + arg );
             callbackfunction(arg);   
         }
     }    
@@ -280,7 +304,7 @@ If you need a commercial license to remove these restrictions please contact us 
             textVisible: true,
             theme: 'b',
             html: ""});
-        console.log(" Downloading the file: " + fileToDownload + " to folder: " + rootPath + "/ustadmobileContent/" + folderName);
+        debugLog(" Downloading the file: " + fileToDownload + " to folder: " + rootPath + "/ustadmobileContent/" + folderName);
         var filePathDownload = ""; //nullify the path for every download.
         uri = encodeURI(fileToDownload); //needed by fileTransfer Cordova API.
         if (folderName == ""){
@@ -288,14 +312,14 @@ If you need a commercial license to remove these restrictions please contact us 
         }else{
             filePathDownload = rootPath + "/ustadmobileContent/" + folderName + "/" + currentFileName;
         }
-        console.log("File Path to Download: " + filePathDownload);
+        debugLog("File Path to Download: " + filePathDownload);
         var fileTransfer = new FileTransfer();
         // Using fileTransfer Cordova plugin.
         fileTransfer.download(
             uri,
             filePathDownload,
             function(entry){
-                console.log("Download complete. File location on device: " + entry.fullPath);
+                debugLog("Download complete. File location on device: " + entry.fullPath);
 
                 if(folderName == globalXMLListFolderName){ //If the file downloaded is the main package list (all_ustadpkg_html5.xml)
                     $.mobile.loading('hide');
@@ -312,15 +336,17 @@ If you need a commercial license to remove these restrictions please contact us 
                         fileXMLCallback = callback;
 					    readPackageFile("hi"); // this function will be called that goes through the package xml file and download every file one by one.
                     }else{
-
-                        var r=confirm("Download This book?");
+                        var folderNameShortSplit = folderName.split("/");
+                        var valueFolderName = folderNameShortSplit.length - 1;
+                        var folderNameShort = folderNameShortSplit[valueFolderName];
+                        var r=confirm("Download This book? " + folderNameShort);
 					    if (r==true){
                             //alert("packageFolderName: " + packageFolderName);
 						    // If user wants to download this file, then code will go here, and
-						    console.log("Download initiated..");
+						    debugLog("Download initiated..");
 						    readPackageFile("hi"); // this function will be called that goes through the package xml file and download every file one by one.
 					    }else{
-						    console.log("Download start cancelled by user. Nothing got downloaded.");
+						    debugLog("Download start cancelled by user. Nothing got downloaded.");
 					    }                
                     }
                 }else{
@@ -330,22 +356,22 @@ If you need a commercial license to remove these restrictions please contact us 
                 //alert("Download complete! Path: " + entry.fullPath); // If you ever want to notify the user that the file has finished downloading.
             },
             function(error){
-                console.log("download error source " + error.source);
-                console.log("download error target " + error.target);
-                console.log("upload error code" + error.code);
+                debugLog("download error source " + error.source);
+                debugLog("download error target " + error.target);
+                debugLog("upload error code" + error.code);
                 alert("Download error. Make sure that the file links in your package lists are working and can be reached by your device's connectivity.");
                 $.mobile.loading('hide');
                 if (folderName == globalXMLListFolderName){
-                    console.log("TEST: ERROR 1");
+                    debugLog("TEST: ERROR 1");
                     runcallback(callback,"fail");
                 }else if (folderName.indexOf(globalXMLListFolderName + "/") !== -1){
-                    console.log("TEST: ERROR 2");
+                    debugLog("TEST: ERROR 2");
                     runcallback(callback, "failed");
                 }else{
-                    console.log("TEST: ERROR 3");
+                    debugLog("TEST: ERROR 3");
                     //runcallback(callback, "downloadfailed");
                 }
-                console.log("!Couldn not download a file: " + currentFileName + " at folder: " + folderName);
+                debugLog("!Couldn not download a file: " + currentFileName + " at folder: " + folderName);
             },
             downloadfail
         );
@@ -369,36 +395,36 @@ If you need a commercial license to remove these restrictions please contact us 
         //alert("packageFolderName: " + packageFolderName);
         // We call the FileSystem again such that we get the rootPath again. We can then trigger this function if required for development purposes.
         // In that case, we need to set the packageString again as a link or fileName in this function as: fileName = testPackage_ustadpkg_html5.xml;
-        window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, getXMLFile, fail);
+        window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, getXMLFile, function(){alert("Something went wrong in getting the file system of the package file. Internal Error."); debugLog("Something went wrong in readPackageFile(msg) ");});
     }
     
     /* Function that starts the process to get the XML file URL set by previous functions. */
     function getXMLFile(fileSystem){
-        console.log("Got XML FileSystem.");
+        debugLog("Got XML FileSystem.");
         rootPath = fileSystem.root.fullPath;
         //var forxml = "ustadmobileContent/" + fileName;
         var forxml = "ustadmobileContent/all/" + packageFolderName + "/" + fileName;
-        console.log("XML Processing started.");
-        console.log("XML file was downloaded from URL: " + packageString );
+        debugLog("XML Processing started.");
+        debugLog("XML file was downloaded from URL: " + packageString );
         var pathToPackageFile = rootPath + "/ustadmobileContent/" + fileName;
-        console.log("The XML location on the device is: " + pathToPackageFile);            
+        debugLog("The XML location on the device is: " + pathToPackageFile);            
         getDir = "ustadmobileContent/" + packageFolderName;
-        console.log("CHECKING IF DIRECTORY: " + getDir+ " EXISTS. IF NOT, CREATING IT.");
+        debugLog("CHECKING IF DIRECTORY: " + getDir+ " EXISTS. IF NOT, CREATING IT.");
         fileSystem.root.getDirectory(getDir, {create:true, exclusive:false}, function(){
-            console.log("Creating List Dir success.");
-            console.log("forxml is: " + forxml);   
-            console.log("GETTING THE XML!");
-            fileSystem.root.getFile(forxml, {create:false, exclusive:false}, gotXMLFile, function(){alert("Something went wrong in getting the file XML Package "); console.log("Something went wrong in getXMLFile(fileSystem) ");});
-        }, function(){console.log("Creating package Dir unsuccess.");$.mobile.loading('hide'); alert("Getting Package file on to your device failed.");});
+            debugLog("Creating List Dir success.");
+            debugLog("forxml is: " + forxml);   
+            debugLog("GETTING THE XML!");
+            fileSystem.root.getFile(forxml, {create:false, exclusive:false}, gotXMLFile, function(){alert("Something went wrong in getting the file XML Package "); debugLog("Something went wrong in getXMLFile(fileSystem) ");});
+        }, function(){debugLog("Creating package Dir unsuccess.");$.mobile.loading('hide'); alert("Getting Package file on to your device failed.");});
     }
     /* function to get the file after finding it */    
     function gotXMLFile(fileEntry){
-        console.log("Got XML file.");
-        fileEntry.file(gotFile,function(){alert("Something went wrong in getting Package XML file"); console.log("Something went wrong in gotXMLFile(fileEntry)");});
+        debugLog("Got XML file.");
+        fileEntry.file(gotFile,function(){alert("Something went wrong in getting Package XML file"); debugLog("Something went wrong in gotXMLFile(fileEntry)");});
     }
     /* function to read the file. */
     function gotFile(file){
-            console.log("Reading the XML file.");
+            debugLog("Reading the XML file.");
             var xmlTag = "file";
            readXMLAsText(file, xmlTag);
     }
@@ -408,17 +434,17 @@ If you need a commercial license to remove these restrictions please contact us 
         var reader = new FileReader();
         fileDownloadList = new Array();
         reader.onloadend = function(evt) {
-            console.log("Reading the XML as text.");
+            debugLog("Reading the XML as text.");
             xml = evt.target.result; // The xml file read is now stored in xml
             xmlDoc = $.parseXML( xml ),
                $xml = $( xmlDoc );
-            console.log(xmlTag + "s are,");
+            debugLog(xmlTag + "s are,");
             $xml.find(xmlTag).each(function(){
                 if(xmlTag == "file"){
                     var currentFile = $(this).text();
                     fileDownloadList[fileDownloadList.length]  =  $(this).text();
                 }else if(xmlTag == "package"){
-                    console.log(" -> " + $(this).text());
+                    debugLog(" -> " + $(this).text());
                     var currentXMLPath = $(this).text();            
                     var uriSplit = currentXMLPath.split("/");
                     var lastPos = uriSplit.length - 1;
@@ -435,7 +461,7 @@ If you need a commercial license to remove these restrictions please contact us 
             });
 
             if(xmlTag == "file"){
-                console.log("Downloading all files from: " + packageFolderName + " to folder: " + rootPath + "/ustadmobileConten/" + packageFolderName + "/");
+                debugLog("Downloading all files from: " + packageFolderName + " to folder: " + rootPath + "/ustadmobileConten/" + packageFolderName + "/");
                 downloadNextFile();
                 
             }
@@ -443,19 +469,19 @@ If you need a commercial license to remove these restrictions please contact us 
         reader.readAsText(file);
         if(xmlTag == "package"){
             $.mobile.loading('hide');
-            console.log("TEST: CHECKING packageXMLCallback");
+            debugLog("TEST: CHECKING packageXMLCallback");
             if(packageXMLCallback != null && typeof packageXMLCallback === "function" ){
-                console.log("TESTL IN running packageXMLCallback call back");
+                debugLog("TESTL IN running packageXMLCallback call back");
                 runcallback(packageXMLCallback, "xml list processing pass");
                 
             }
         }else if(xmlTag == "file"){
             $.mobile.loading('hide');
-            console.log("TEST: CHECKING FILE XML File tag.");
+            debugLog("TEST: CHECKING FILE XML File tag.");
             runcallback(fileXMLCallback, "xml processing pass");
         }else{
             $.mobile.loading('hide');
-            console.log("TEST: ERROR in xml file/list processing. FAIL.");
+            debugLog("TEST: ERROR in xml file/list processing. FAIL.");
             runcallback(callback, "xml file/list processing failed");
         }
     }
@@ -465,11 +491,13 @@ If you need a commercial license to remove these restrictions please contact us 
         if ( currentFileDownloadIndex < fileDownloadList.length ) { // if there is something to download..
             startFileDownload(fileDownloadList[currentFileDownloadIndex++], packageFolderName);
         }else{
-            console.log("No more files left to scan in the package: " + fileName);          
+            debugLog("No more files left to scan in the package: " + fileName);          
             $.mobile.loading('hide');
             //if(fileXMLCallback != null && typeof fileXMLCallback === "function"){
                 alert("Download finished.");
             //}
+			debugLog("Now transfering ustadmobile javascripts and logic to the package folder: " + packageFolderName);
+			writeNextBase64ToFile(packageFolderName);
             
             // For tests..
             if( allFileDownloadCallback != null) {
@@ -485,7 +513,7 @@ If you need a commercial license to remove these restrictions please contact us 
     
     function runcallback(callbackfunction, arg){
         if (callbackfunction !=null && typeof callbackfunction === "function"){
-            console.log("Within the runcallbackfunction okay with argument: " + arg);
+            debugLog("Within the runcallbackfunction okay with argument: " + arg);
             callbackfunction(arg);
         }   
     }
