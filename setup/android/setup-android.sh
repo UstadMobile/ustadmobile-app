@@ -38,7 +38,7 @@ if [ "$1" == "build" ]; then
     cordova plugin add org.apache.cordova.splashscreen
     cordova plugin add org.apache.cordova.console
 
-    echo "Made a cordova project in $TARGETDIR"
+    echo "Made a cordova project in $TARGETDIR/ustadmobile"
 
     cd $WORKINGDIR
     cd $SRCDIR
@@ -53,6 +53,8 @@ if [ "$1" == "build" ]; then
     cp -r *.html img js jqm res $FILEDEST
     cp css/index.css css/jquery.mobile-1.3.2.min.css css/qunit-1.12.0.css $FILEDEST/css
     
+    echo "Done - now cd into $TARGETDIR/ustadmobile and run"
+    echo "cordova build ; cordova compile ; cordova run "
 fi
 
 

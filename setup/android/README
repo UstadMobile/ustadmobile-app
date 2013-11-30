@@ -1,0 +1,17 @@
+Ustad Mobile Android builder
+30/Nov/2013 - Last updated by Mike Dawson
+
+To build:
+
+./setup-android.sh build
+
+makes a directory called build and will generate the Android app via Cordova
+
+or
+
+./setup-android.sh build TARGETDIR
+
+will build in the specified target directory
+
+
+
