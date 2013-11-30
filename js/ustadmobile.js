@@ -367,3 +367,26 @@ function writeBodyEnd() {
 function listPackagesFromServer2(){
 		alert("Works..");
 	}
+	
+	
+/*
+ The minimum distance to the right for a click to trigger
+ opening the item (e.g. if they just click the plus sign
+ we should only expand the entries)
+*/
+var headerLeftThreshold = 40;
+	
+function initTableOfContents() {
+    $(document).on("pageinit", "#exemainpage", function () {
+        tocClicked = false;
+        $(".tocHeader").bind("click", function(evt) {
+            var offset = $(this).offset();
+            var x = evt.clientX - offset.left;
+            if(x > headerLeftThreshold) {
+                var pageName = $(evt.delegateTarget).attr("data-toc-pagename");
+                $.mobile.changePage(pageName,  {"transition": "slide"} );
+            }
+        });
+    });
+}
+
