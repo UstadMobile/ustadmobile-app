@@ -63,6 +63,13 @@ function debugLog(msg) {
     }
 }
 
+/*
+Even though the documentation says that this should
+happen apparently it does not
+*/
+$(document).on("pageshow", function(event, ui) {
+    ui.prevPage.remove();
+});
 
 
 
@@ -97,6 +104,17 @@ $(document).on("pagechange", function(event){
                     }else if(direction == "down"){
                         window.scrollBy(0, -20);
                     }
+                    
+                    /*
+                     * make the page follow the finger at the start of swipe
+                     * DISABLED
+                    if(direction == "left") {
+                        //alert("heading left");
+                        $(".ui-page-active").css("left", "-" + distance + "px");
+                    }else if(direction == "right") {
+                        $(".ui-page-active").css("left", distance + "px");
+                    }
+                    */
                 }
             //alert("You swiped " + direction );
             },
@@ -149,7 +167,7 @@ function exePreviousPageOpen(){
     //window.open(exePreviousPage).trigger("create");
     var previousPageHREF = $(".ui-page-active #exePreviousPage").attr("href");
     console.log("Going to previous page: " + previousPageHREF);
-    $.mobile.changePage( previousPageHREF, { transition: "slide", reverse: true } );
+    $.mobile.changePage( previousPageHREF, { transition: "slide", reverse: true }, true, true );
 }
 
 //Function to handle First Next Page button within eXe content's footer.
@@ -159,7 +177,7 @@ function exeFirstNextPageOpen(){
     //window.open(exeNextPage).trigger("create");
     var nextPageHREF = $(".ui-page-active #exeNextPage").attr("href");
     console.log("Going to next page in FirstNextPageOpen: " + nextPageHREF);
-    $.mobile.changePage( nextPageHREF, { transition: "none" } );
+    $.mobile.changePage( nextPageHREF, { transition: "none" }, true, true );
 }
 
 //Function to handle Next Page button within eXe content's footer.
@@ -339,29 +357,6 @@ function openAboutUM(){
 	$.mobile.changePage(aboutLink, { changeHash: false, transition: "slide"});
 }
 
-//Function to write the header. This can be called from within the html and well, it writes the start. Currently this is implemented in eXe so this is kind of redundant , unless you want to use it.. go ahead.
-function writeBodyStart(title) {
-    document.writeln("<div data-role=\"page\" id=\"exemainpage\">");
-    document.writeln("<div data-role=\"header\" data-position=\"fixed\" data-tap-toggle=\"false\">");
-    document.writeln("<p style=\"background-image:url('res/umres/banne1.png'); background-repeat:repeat-x;margin-top:-8px;\" >.</p>");
-    //document.writeln("<a id=\"UMUsername\">");
-    //document.writeln("</a>");
-    //document.writeln("<a></a>");    
-    //document.writeln("<a id=\"UMLogout\" data-role=\"button\" data-icon=\"home\" data-iconshadow=\"false\" data-direction=\"reverse\" onclick=\"umLogout()\" class=\"ui-btn-right\"></a>"); // might be added: rel=\"external\" so that it doesn't actually open a new page.
-    document.writeln("<h3>" + title + "</h3>");
-    document.writeln("</div>");
-    document.writeln("<div data-role=\"content\">");
-}
-
-
-//Function to write the footer. This can be called from within the html and well, it writes the end. Currently this is implemented in eXe so this is kind of redundant , unless you want to use it.. go ahead.
-function writeBodyEnd() {
-    document.writeln("<div data-role=\"footer\" data-position=\"fixed\" style=\"text-align: center;\" data-tap-toggle=\"false\">");
-    document.writeln("<a id=\"umBack\" data-role=\"button\" data-icon=\"arrow-l\" class=\"ui-btn-left\" onclick=\"exePreviousPageOpen()\"  data-theme=\"a\" data-inline=\"true\">Back</a>");
-    document.writeln("<a onclick=\"exeMenuPageOpen()\"   style=\"text-align: center;\" data-transition=\"slideup\" data-inline=\"true\" data-icon=\"grid\" data-theme=\"a\">Menu</a>");
-    document.writeln("<a id=\"umForward\" data-role=\"button\" data-icon=\"arrow-r\" class=\"ui-btn-right\" data-direction=\"reverse\" onclick=\"exeNextPageOpen()\" data-theme=\"a\" data-inline=\"true\">Forward</a>");
-    document.writeln("</div>");
-}
 
 //Test function. Does nothing. Delete it.
 function listPackagesFromServer2(){
@@ -369,24 +364,39 @@ function listPackagesFromServer2(){
 	}
 	
 	
-/*
- The minimum distance to the right for a click to trigger
- opening the item (e.g. if they just click the plus sign
- we should only expand the entries)
-*/
-var headerLeftThreshold = 40;
 	
 function initTableOfContents() {
     $(document).on("pageinit", "#exemainpage", function () {
         tocClicked = false;
-        $(".tocHeader").bind("click", function(evt) {
-            var offset = $(this).offset();
-            var x = evt.clientX - offset.left;
-            if(x > headerLeftThreshold) {
-                var pageName = $(evt.delegateTarget).attr("data-toc-pagename");
-                $.mobile.changePage(pageName,  {"transition": "slide"} );
-            }
-        });
-    });
+        var screenWidth = $(window).width();
+        var widthPerButton = 40;
+        var baseWidthReduction = 100;
+        for(var i = 0; i < 6; i++) {
+            $(".buttonLevel"+i).width(screenWidth - (baseWidthReduction+(widthPerButton*i)));
+        }
+    });    
+}
+
+/*
+This function is used to control show/hide section
+buttons.  Unfortunately JQuery mobile does not like
+changing icons on buttons, so we actually make two of
+them each inside their own span and hide them
+*/
+function tocTrigger(tocId, toShow) {
+    if(toShow == true) {
+        $("#tocButtonShowSpan" + tocId).hide();
+        $("#tocButtonHideSpan" + tocId).show();
+        $("#tocDiv" + tocId).show();
+        $("#tocButtonHideSpan" + tocId).bind("click", function() { eval("tocTrigger('" + tocId +"', false)"); });
+        $("#tocButtonShowSpan" + tocId).unbind("click");
+    }else {
+        $("#tocButtonShowSpan" + tocId).show();
+        $("#tocButtonHideSpan" + tocId).hide();
+        $("#tocDiv" + tocId).hide();
+        $("#tocButtonShowSpan" + tocId).bind("click", function() { eval("tocTrigger('" + tocId +"', true)"); });
+        $("#tocButtonHideSpan" + tocId).unbind("click");
+
+    }    
 }
 
