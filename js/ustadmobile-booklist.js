@@ -34,7 +34,7 @@ This program is free software.  It is licensed under the GNU GENERAL PUBLIC LICE
 
 GPL License Additional Terms
 
-All names, links, and logos of Ustad Mobile and Toughra Technologies FZ LLC must be kept as they are in the original distribution.  If any new screens are added you must include the Ustad Mobile logo as it has been used in the original distribution.  You may not create any new functionality whose purpose is to diminish or remove the Ustad Mobile Logo.  You must leave the Ustad Mobile logo as the logo for the application to be used with any launcher (e.g. the mobile app launcher).  
+All names, links, and logos of Ustad Mobile and Toughra Technologies FZ LLC must be kept as they are in the original distribution.  If any new screens are added you must include the Ustad Mobile logo as it has been used in the original distribution.  You may not create any new functionality whose purpose is to diminish or remove the Ustad Mobile Logo.  You must leave the Ustad Mobile logo as the logo for the application to be used with any launc   her (e.g. the mobile app launcher).  
 
 If you need a commercial license to remove these restrictions please contact us by emailing info@ustadmobile.com 
 
@@ -54,6 +54,7 @@ The file to look for in a sub directory to determine if it is EXE
 content or not
 */
 var exeContentFileName = "index.html";
+var exeContentFileName = "exetoc.html";
 
 /*
 Called when populateDir fails to get a reader for a given directory
@@ -65,6 +66,7 @@ Called when populateDir fails to get a reader for a given directory
 
 //The file that should be present in a directory to indicate this is exe content
 var exeFileMarker = "index.html";
+var exeFileMarker = "exetoc.html";
 
 //not really used
 var currentPath = "/ext_card/ustadmobile";
