@@ -51,6 +51,10 @@ fi
 cp -r *.html img js jqm res $FILEDEST
 cp css/index.css css/jquery.mobile-1.3.2.min.css css/qunit-1.12.0.css $FILEDEST/css
 
+#make the base64 versions of javascript files that get copied into directories
+cd $WORKINGDIR
+
+../makeb64js-all.sh  $TARGETDIR/ustadmobile/www/js/ustadmobile-base64-values.js ../../js/
 
 echo "Done - now cd into $TARGETDIR/ustadmobile and run"
 
@@ -58,6 +62,7 @@ echo "Done - now cd into $TARGETDIR/ustadmobile and run"
 #copy icon where it should go - strangely this does not happen by default
 RESLIST="hdpi ldpi mdpi xhdpi"
 
+cd $SRCDIR
 for res in $RESLIST; do
     cp res/icon/android/icon-??-$res.png $FILEDEST/../platforms/android/res/drawable-$res/icon.png
 done
