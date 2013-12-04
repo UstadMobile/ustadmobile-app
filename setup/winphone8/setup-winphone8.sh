@@ -33,6 +33,10 @@ FILEDEST=$WORKINGDIR/$TARGETDIR/ustadmobile/www
 cp -r *.html img js jqm res $FILEDEST
 cp css/index.css css/jquery.mobile-1.3.2.min.css css/qunit-1.12.0.css $FILEDEST/css
 
+cd $WORKINGDIR
+
+../makeb64js-all.sh  $TARGETDIR/ustadmobile/www/js/ustadmobile-base64-values.js ../../js/
+
 cd $WORKINGDIR/$TARGETDIR/ustadmobile
 cordova build
 
