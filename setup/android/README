@@ -1,17 +1,23 @@
 Ustad Mobile Android builder
-30/Nov/2013 - Last updated by Mike Dawson
+4/Dec/2013 - Last updated by Mike Dawson
 
 To build:
 
-./setup-android.sh build
+./setup-android.sh 
 
-makes a directory called build and will generate the Android app via Cordova
+To run on connected device (must have USB debugging enabled):
 
-or
+./setup-android.sh run
 
-./setup-android.sh build TARGETDIR
+To run emulator:
 
-will build in the specified target directory
+./setup-android.sh emulate
 
+Notes:
 
+Icons come from res/icons/android
+
+To create a file for signing/release:
+cd build/ustadmobile
+cordova build --release
 
