@@ -80,13 +80,13 @@ function gotFSumc(fileSystem){
 		var getDir = "ustadmobileContent";
         debugLog("CHECKING IF DIRECTORY: " + getDir + " EXISTS. IF NOT, CREATING IT.");
         fileSystem.root.getDirectory(getDir, {create:true, exclusive:false}, function(){
-            debugLog("STARTUP: Creating List Dir success.");
+            debugLog("STARTUP: Creating Dir /ustadmobileContent/ success or already exists.");
 			var getDir2 = "ustadmobileContent/" + globalXMLListFolderName;
 			debugLog("STARTUP: CHECKING IF DIRECTORY: " + getDir2 + " EXISTS. IF NOT, CREATING IT.");
 			fileSystem.root.getDirectory(getDir2, {create:true, exclusive:false}, function(){
-					debugLog("STARTUP: Creating List Dir 2 success.");
-				}, function(){debugLog("STARTUP: Creating package Dir unsuccess.");$.mobile.loading('hide'); alert("STARTUP: Some features might not work on your device.");});
-        }, function(){debugLog("STARTUP: Creating package Dir unsuccess.");$.mobile.loading('hide'); alert("STARTUP: Some features might not work on your device.");});
+					debugLog("STARTUP: Creating Dir /ustadmobileContent/all success or already exists.");
+				}, function(){debugLog("STARTUP: Creating package Dir /ustadmobileContent/ unsuccess.");$.mobile.loading('hide'); alert("STARTUP: Some features might not work on your device.");});
+        }, function(){debugLog("STARTUP: Creating package Dir /ustadmobileContent/all/ unsuccess.");$.mobile.loading('hide'); alert("STARTUP: Some features might not work on your device.");});
 }
 
 document.addEventListener('deviceready', function(){

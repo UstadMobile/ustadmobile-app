@@ -178,7 +178,9 @@ function checkLoggedIn(){
     if (localStorage.getItem('username')){
         openPage("ustadmobile_booklist.html");
         //set homepage as booklist and not Login.
-    }
+    }else{
+		debugLog("Nope, no one logged in.");
+	}
     $.mobile.loading('hide');
 }
 

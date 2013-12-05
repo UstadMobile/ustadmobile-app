@@ -201,7 +201,7 @@ function exeMenuPageOpen(){
 	//end of never used.
 
     //Windows Phone check..
-	if($.mobile.path.getLocation("x-wmapp0://www/ustadmobile_menuPage2.html") != "x-wmapp0://www/ustadmobile_menuPage.html"){
+	if($.mobile.path.getLocation("x-wmapp0://www/ustadmobile_menuPage2.html") != "x-wmapp0://www/ustadmobile_menuPage2.html"){
 		console.log('there is path problem');
 	}else{
 		console.log('everything is OK with paths');
@@ -357,6 +357,17 @@ function openAboutUM(){
 	$.mobile.changePage(aboutLink, { changeHash: false, transition: "slide"});
 }
 
+function openTOCPage(){
+	$.mobile.loading('show', {
+        text: 'Loading TOC..',
+        textVisible: true,
+        theme: 'b',
+        html: ""}
+    );
+	var tableOfContentsPage = "exetoc.html";
+    debugLog("Going to Table of Contents page: " + tableOfContentsPage);
+    $.mobile.changePage( tableOfContentsPage, { transition: "slideup", reverse: true} );	
+}
 
 //Test function. Does nothing. Delete it.
 function listPackagesFromServer2(){

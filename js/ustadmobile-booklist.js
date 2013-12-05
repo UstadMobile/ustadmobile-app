@@ -299,4 +299,28 @@ function openBLPage(openFile){
 }
 
 
+//Function to write the header. This can be called from within the html and well, it writes the start. Currently this is implemented in eXe so this is kind of redundant , unless you want to use it.. go ahead.
+function writeBodyStart(title) {
+    document.writeln("<div data-role=\"page\" id=\"exemainpage\">");
+    document.writeln("<div data-role=\"header\" data-position=\"fixed\" data-tap-toggle=\"false\">");
+    document.writeln("<p style=\"background-image:url('res/umres/banne1.png'); background-repeat:repeat-x;margin-top:-8px;\" >.</p>");
+    //document.writeln("<a id=\"UMUsername\">");
+    //document.writeln("</a>");
+    //document.writeln("<a></a>");    
+    //document.writeln("<a id=\"UMLogout\" data-role=\"button\" data-icon=\"home\" data-iconshadow=\"false\" data-direction=\"reverse\" onclick=\"umLogout()\" class=\"ui-btn-right\"></a>"); // might be added: rel=\"external\" so that it doesn't actually open a new page.
+    document.writeln("<h3>" + title + "</h3>");
+    document.writeln("</div>");
+    document.writeln("<div data-role=\"content\">");
+}
+
+
+//Function to write the footer. This can be called from within the html and well, it writes the end. Currently this is implemented in eXe so this is kind of redundant , unless you want to use it.. go ahead.
+function writeBodyEnd() {
+    document.writeln("<div data-role=\"footer\" data-position=\"fixed\" style=\"text-align: center;\" data-tap-toggle=\"false\">");
+    document.writeln("<a id=\"umBack\" data-role=\"button\" data-icon=\"arrow-l\" class=\"ui-btn-left\" onclick=\"exePreviousPageOpen()\"  data-theme=\"a\" data-inline=\"true\">Back</a>");
+    document.writeln("<a onclick=\"exeMenuPageOpen()\"   style=\"text-align: center;\" data-transition=\"slideup\" data-inline=\"true\" data-icon=\"grid\" data-theme=\"a\">Menu</a>");
+    document.writeln("<a id=\"umForward\" data-role=\"button\" data-icon=\"arrow-r\" class=\"ui-btn-right\" data-direction=\"reverse\" onclick=\"exeNextPageOpen()\" data-theme=\"a\" data-inline=\"true\">Forward</a>");
+    document.writeln("</div>");
+}
+
  

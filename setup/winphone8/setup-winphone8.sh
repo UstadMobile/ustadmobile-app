@@ -35,6 +35,11 @@ cp css/index.css css/jquery.mobile-1.3.2.min.css css/qunit-1.12.0.css $FILEDEST/
 
 cd $WORKINGDIR
 
+
+# jQuery mobile changes:
+
+cp $WORKINGDIR/jquery.mobile-1.3.2.js $TARGETDIR/ustadmobile/www/jqm/
+
 ../makeb64js-all.sh  $TARGETDIR/ustadmobile/www/js/ustadmobile-base64-values.js ../../js/
 
 cd $WORKINGDIR/$TARGETDIR/ustadmobile
