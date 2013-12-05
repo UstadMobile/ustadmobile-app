@@ -18,7 +18,7 @@ $MYDIR/makeb64jsvar.sh ustadmobilegetpackagesjs $SRCDIR/ustadmobile-getpackages.
 $MYDIR/makeb64jsvar.sh ustadmobileloginjs $SRCDIR/ustadmobile-login.js $JSFILE
 $MYDIR/makeb64jsvar.sh ustadmobiletestjs $SRCDIR/ustadmobile-test.js $JSFILE
 $MYDIR/makeb64jsvar.sh touchswipejs $SRCDIR/jquery.touchSwipe.min.js $JSFILE
-$MYDIR/makeb64jsvar.sh jquerymobilejs $SRCDIR/jquery.mobile-1.3.2.min.js $JSFILE
+$MYDIR/makeb64jsvar.sh jquerymobilejs $SRCDIR/../jqm/jquery.mobile-1.3.2.js $JSFILE
 $MYDIR/makeb64jsvar.sh base64Testjs $SRCDIR/base64Test.js $JSFILE
 
 
