@@ -47,6 +47,7 @@ If you need a commercial license to remove these restrictions please contact us 
 This javascript creates the header and footer of ustad mobile content in packages and does a lot of global actions via the functions (esp Menu Links).
 
 */
+var currentUrl = document.URL;
 var platform=""
 var userAgent=navigator.userAgent;
 var userAgentParts = userAgent.split(";");
@@ -166,12 +167,12 @@ $( document ).bind( "mobileinit", function() {
 });
 
 function onEXEContentDeviceReady(){
-console.log(" Cordova device ready in onEXEContentDeviceRead() [app], fetching localStorage..");
-var baseURL = localStorage.getItem("baseURL");
-console.log("WINDOWS PHONE TESTING ustadmobile.js onEXEContentDeviceReady: Base URL: " + baseURL);
+    console.log(" Cordova device ready in onEXEContentDeviceRead() [app], fetching localStorage..");
+    var baseURL = localStorage.getItem("baseURL");
+    console.log("WINDOWS PHONE TESTING ustadmobile.js onEXEContentDeviceReady: Base URL: " + baseURL);
 
-var messageM = localStorage.getItem("testLS");
-console.log("WINDOWS PHONE TESTING ustadmobile.js onEXEContentDeviceReady: Message: " + messageM);
+    var messageM = localStorage.getItem("testLS");
+    console.log("WINDOWS PHONE TESTING ustadmobile.js onEXEContentDeviceReady: Message: " + messageM);
 }
 
 
@@ -192,7 +193,6 @@ function exePreviousPageOpen(){
     var previousPageHREF = $(".ui-page-active #exePreviousPage").attr("href");
 	console.log("CONTENT: Going to previous page: " + previousPageHREF);
     $.mobile.changePage( previousPageHREF, { transition: "slide", reverse: true }, true, true );
-	//$.mobile.changePage( previousPageHREF, { transition: "slide", reverse: true });
 }
 
 //Function to handle First Next Page button within eXe content's footer.
@@ -203,7 +203,6 @@ function exeFirstNextPageOpen(){
     var nextPageHREF = $(".ui-page-active #exeNextPage").attr("href");
     console.log("CONTENTT: Going to next page in FirstNextPageOpen: " + nextPageHREF);
     $.mobile.changePage( nextPageHREF, { transition: "none" }, true, true );
-    //$.mobile.changePage( nextPageHREF, { transition: "none" });
 
 }
 
@@ -214,8 +213,7 @@ function exeNextPageOpen(){
     //var exeNP= localStorage.getItem('exeNextPage');   
     //window.open(exeNextPage).trigger("create");
     var nextPageHREF = $(".ui-page-active #exeNextPage").attr("href");
-    console.log("Going to next page: " + nextPageHREF);
-    //$.mobile.loadPage(nextPageHREF);    
+    console.log("Going to next page: " + nextPageHREF);  
 	//nextPageHREF = "x-wmapp0://ustadmobileContent/measurementdemoVaruna2/" + nextPageHREF;
 	console.log("CONTENT: Going to next page (part 2): " + nextPageHREF);
     $.mobile.changePage( nextPageHREF, { transition: "slide" }, true, true );
@@ -277,15 +275,21 @@ function booklistMenuPageOpen(){
 }
 
 //Function to open various links in the Menu.
-function openMenuLink(linkToOpen){
+function openMenuLink(linkToOpen, transitionMode){
 	console.log("In openMenuLink(linkToOpen), About to open: " + linkToOpen);
-	//IF WINDOWS PHONE:
-	//if(deviceOS == windows phone ){
-		linkToOpen = "/" + linkToOpen; //x-wmapp0: will be appended.
-	//}
-	//linkToOpen = "www/ustadmobile_getPackages.html";
+    if(platform == "android"){
+        //Do nothing
+        //linkToOpen = linkToOpen;
+    }else{
+        //IF WINDOWS PHONE:
+	    //if(deviceOS == windows phone ){
+		    linkToOpen = "/" + linkToOpen; //x-wmapp0: will be appended.
+	    //}
+	    //linkToOpen = "www/ustadmobile_getPackages.html";
+    }
+	
 	console.log("In openMenuLink(linkToOpen), About to open (post wp check): " + linkToOpen);
-	$.mobile.changePage(linkToOpen, { changeHash: false, transition: "slide"});
+	$.mobile.changePage(linkToOpen, { changeHash: false, transition: transitionMode});
 }
 
 //Your last page code goes here (or it goes in: resumeLastBookPage() which ever you call it from ustabmobile_booklist.html.
@@ -296,6 +300,12 @@ function exeLastPageOpen(){
 //openPage2 named with a 2 so that doesnt' confuse with other page's openPage() functions, if any.
 //openPage2 is the one that calls window.open (not changePage() of jQuery).
 function openPage2(openFile){
+    
+    if(platform == "android"){
+        //Do nothing, openFile = "ustadmobile_file.html";
+    }else{
+        openFile = "//www/" + openFile;
+    }
     console.log("Menu Links: Going to page: " + openFile);
 	//window.open(openFile).trigger("create");
     window.open(openFile);
@@ -310,7 +320,7 @@ function openBookListPage(){
         theme: 'b',
         html: ""}
     );
-	openPage2("//www/ustadmobile_booklist.html");
+	openPage2("ustadmobile_booklist.html");
 }
 
 //duplicated function for testing purposes..
@@ -321,7 +331,7 @@ function openBookListPage2(){
         theme: 'b',
         html: ""}
     );
-	openPage2("//www/ustadmobile_booklist.html"); // Used to be ../ustadmobile_booklist.html
+	openPage2("ustadmobile_booklist.html"); // Used to be ../ustadmobile_booklist.html
     
 }
 //Function to log out and get back to the login page.
@@ -334,7 +344,7 @@ function umMenuLogout(){
     );
     localStorage.removeItem('username');
     localStorage.removeItem('password');
-	openPage2("//www/ustadmobile_login.html");
+	openPage2("ustadmobile_login.html");
 }  
 
 //Function to log out and get back to the login page from the content. This will show a slightly different login page because we want to maintain a constant gui.
@@ -349,7 +359,7 @@ function umMenuLogout2(){
 	//Commented because localStoage of app is not accessible on windows phone
     //localStorage.removeItem('username');
     //localStorage.removeItem('password');
-    openPage2("//www/ustadmobile_login2.html");
+    openPage2("ustadmobile_login2.html");
 }
 
 //This function gets called from the Book List Menu to go back to the Login Page from the Menu.
@@ -360,7 +370,7 @@ function openLoginPage(){
         theme: 'b',
         html: ""}
     );
-	openMenuLink("ustadmobile_login2.html");
+	openMenuLink("ustadmobile_login2.html", "slide");
 }
 
 //This function is called from the Book List Meny to go to the download pakcages Page from the Menu.
@@ -372,7 +382,7 @@ function openGetPackagesPage(){
         theme: 'b',
         html: ""}
     );
-	openMenuLink("ustadmobile_getPackages.html");
+	openMenuLink("ustadmobile_getPackages.html", "slide");
 }
 
 //Function available to test refreshing a page. Not tested.
@@ -395,8 +405,10 @@ function openAboutUM(){
         html: ""}
     );
     var	aboutLink = "ustadmobile_aboutus.html"; //Maybe make this a global variable ?..
-	aboutLink = "/" + aboutLink; 
-	$.mobile.changePage(aboutLink, { changeHash: false, transition: "slide"});
+    
+	//aboutLink = "/" + aboutLink; 
+    openMenuLink(aboutLink, "slide");
+	//$.mobile.changePage(aboutLink, { changeHash: false, transition: "slide"});
 }
 
 function openTOCPage(){
@@ -406,7 +418,13 @@ function openTOCPage(){
         theme: 'b',
         html: ""}
     );
-	var tableOfContentsPage = "exetoc.html";
+    //console.log("Current location: " + document.URL);
+    //var contentUrl = document.referrer;
+    //console.log("Content / Previous location: " + contentUrl);
+    //alert("Book url: " + currentBookPath);
+	//var tableOfContentsPage = contentUrl + "/exetoc.html";
+	//var tableOfContentsPage = "exetoc.html";
+    var tableOfContentsPage = currentUrl; //Not tested for Windows Phone yet.
     debugLog("Going to Table of Contents page: " + tableOfContentsPage);
     $.mobile.changePage( tableOfContentsPage, { transition: "slideup", reverse: true} );	
 }

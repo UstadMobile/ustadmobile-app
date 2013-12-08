@@ -53,6 +53,7 @@ UI list that the user can open a chosen content entry.
 The file to look for in a sub directory to determine if it is EXE
 content or not
 */
+var currentBookPath="";
 var exeContentFileName = "index.html";
 var exeContentFileName = "exetoc.html";
 
@@ -294,7 +295,8 @@ function failDirectoryReader(error) {
 Simple Open page wrapper
 */
 function openBLPage(openFile){
-
+    currentBookPath = openFile;
+    console.log("Book URL that UM is going to is: " + currentBookPath);
 	window.open(openFile).trigger("create");
 }
 
