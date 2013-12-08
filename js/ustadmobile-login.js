@@ -101,7 +101,11 @@ function umloginredirect(statuscode) {
     if(statuscode == 200) {
         localStorage.setItem('username',username);
         localStorage.setItem('password',password);
-        openPage("ustadmobile_booklist.html");
+		var un = localStorage.getItem('username');
+		var pw = localStorage.getItem('password');
+		console.log("U/P: " + un + "/" + pw);
+        openPage("ustadmobile_booklist.html").trigger("create");
+		//openPage("//www/ustadmobile_booklist.html").trigger("create"); // Changes for Windows Phone. added //www/
     }else {
         alert("Wrong username/password combination, or Please check that you are able to connect to the internet and your server.");
     }
@@ -127,6 +131,7 @@ function umlogin(username, password, url, callback){
 		localStorage.setItem('username',username);
         localStorage.setItem('password',password);
         window.open("ustadmobile_developerPage.html").trigger("create");
+		////www/ustadmobile_developerPage.html
         //$.mobile.changePage( "ustadmobile_developerPage.html", { transition: "slideup" } );
 	}else{
 		$.ajax({
@@ -154,6 +159,7 @@ function umlogin(username, password, url, callback){
 					debugLog("Login success on the server with statusCode 200.");
 					localStorage.setItem('username',username);
 					localStorage.setItem('password',password);
+					console.log("Username and Password set in statusCode");
 					},
 				0: function(){
 					debugLog("Status code 0, unable to connect to server or no internet/intranet access");
@@ -178,7 +184,9 @@ function checkLoggedIn(){
     if (localStorage.getItem('username')){
         openPage("ustadmobile_booklist.html");
         //set homepage as booklist and not Login.
-    }
+    }else{
+		debugLog("Nope, no one logged in.");
+	}
     $.mobile.loading('hide');
 }
 
