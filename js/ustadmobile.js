@@ -47,6 +47,16 @@ If you need a commercial license to remove these restrictions please contact us 
 This javascript creates the header and footer of ustad mobile content in packages and does a lot of global actions via the functions (esp Menu Links).
 
 */
+var platform=""
+var userAgent=navigator.userAgent;
+var userAgentParts = userAgent.split(";");
+var userAgentPlatform = userAgentParts[2];
+console.log("User Agent Platform is: " + userAgentPlatform);
+
+if(userAgentPlatform.indexOf("Android") !== -1) {
+    console.log("YOU ARE USING ANDROID!");
+    platform="android";
+}
 
 document.addEventListener("deviceready", onEXEContentDeviceReady, false);
 
@@ -230,10 +240,15 @@ function exeMenuPageOpen(){
 	}
 
 	console.log(" You will go into: exeMenuPage " + exeMenuPage2);
-    //var exeMenuLink = localStorage.getItem("baseURL") + "/" + exeMenuPage2;
-	//console.log("BEFORE: You will go into: exeMenuLink " + exeMenuLink);	
-	var exeMenuLink2 = "/www/" + exeMenuPage2;
-	//WINDOWS PHONE CHANGES END.
+
+    if( platform == "android" ){
+        var exeMenuLink2 = localStorage.getItem("baseURL") + "/" + exeMenuPage2;
+	    console.log("ANDROID: You will go into: exeMenuLink " + exeMenuLink2);	
+    }else{	
+	    var exeMenuLink2 = "/www/" + exeMenuPage2;
+        console.log("WINDOWS PHONE: You will go into: exeMenuLink " + exeMenuLink2);
+	    //WINDOWS PHONE CHANGES END.
+    }
     console.log("AFTER: You will go into: exeMenuLink " + exeMenuLink2);	
     $.mobile.changePage( exeMenuLink2, { transition: "slideup" } );
 	// 21/11/2013: Only logic changes done to jquery mobile.
