@@ -38,6 +38,11 @@ cd $WORKINGDIR
 #Ustad mobile changes to jQuery Mobile for Windows Phone 8
 cp $WORKINGDIR/jquery.mobile-1.3.2.js $TARGETDIR/ustadmobile/www/jqm/
 
+#9Dec2013Changes
+cp $WORKINGDIR/jquery.mobile-1.3.2.js $TARGETDIR/ustadmobile/www/jqm/jquery.mobile-1.3.2.min.js
+cp $WORKINGDIR/modernizr.js $TARGETDIR/ustadmobile/www/jqm/
+#9Dec2013Changes
+
 ../makeb64js-all.sh  $TARGETDIR/ustadmobile/www/js/ustadmobile-base64-values.js ../../js/
 
 cd $WORKINGDIR/$TARGETDIR/ustadmobile
