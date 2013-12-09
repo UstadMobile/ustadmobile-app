@@ -47,8 +47,9 @@ If you need a commercial license to remove these restrictions please contact us 
 		
 		//var base64VarName = ["base64Testjs", "ustadmobilejs", "jquerymobilejs", "ustadmobilebooklistjs", "ustadmobilecommonjs", "ustadmobileconstantsjs", "ustadmobilegetpackagesjs", "ustadmobileloginjs", "ustadmobiletestjs"];
 		
-		var base64VarName = [base64Testjs, ustadmobilejs, jquerymobilejs, ustadmobilebooklistjs, ustadmobilecommonjs, ustadmobileconstantsjs, ustadmobilegetpackagesjs, ustadmobileloginjs, ustadmobiletestjs, touchswipejs];
-		
+		var base64VarName = [base64Testjs, ustadmobilejs, jquerymobilejs, ustadmobilebooklistjs, ustadmobilecommonjs, ustadmobileconstantsjs, ustadmobilegetpackagesjs, ustadmobileloginjs, ustadmobiletestjs, touchswipejs, modernizrjs];
+		//9Dec2013: added modernizrjs
+
 		var currentB64Index = 0;
 		var globalCurrentB64 = "";
 		var base64FileFolder = "ustadmobileContent/";

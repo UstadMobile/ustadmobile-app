@@ -294,8 +294,21 @@ If you need a commercial license to remove these restrictions please contact us 
 
     /*Actual download function that downloads a file given to it to a folder which is also give to it.*/
     function startFileDownload(fileToDownload, folderName, callback){
+        console.log("TESTS1: folderName: " + folderName);
+        console.log("TESTS1: packageFolderName: " + packageFolderName);
         var uriSplit = fileToDownload.split("/");
         var lastPos = uriSplit.length - 1;
+    
+        //changes 9Dec2013
+        var fileFullPath = uriSplit[lastPos];
+        var fileFolder = uriSplit[lastPos-1];
+        if ( typeof fileFolder === 'undefined'){
+            //Do nothing.
+        }else{
+            debugLog("Saving current file to Course Folder: " + fileFolder);
+        }
+        //end of changes 9Dec2013
+
         //fileName = uriSplit[lastPos];
         var currentFileName = uriSplit[lastPos];        
         //jQuery mobile loading animation.
@@ -308,9 +321,33 @@ If you need a commercial license to remove these restrictions please contact us 
         var filePathDownload = ""; //nullify the path for every download.
         uri = encodeURI(fileToDownload); //needed by fileTransfer Cordova API.
         if (folderName == ""){
+            //fileToDownload = "http://www.ustadmobile.com/books/" + currentFileName;
             filePathDownload = rootPath + "/ustadmobileContent/" + currentFileName;
-        }else{
-            filePathDownload = rootPath + "/ustadmobileContent/" + folderName + "/" + currentFileName;
+        }else{ //If downloading the actual course.
+            
+            if(typeof fileFolder === 'undefined'){   //09122013
+                fileToDownload = "http://www.ustadmobile.com/books/" + folderName + "/" + currentFileName;
+                filePathDownload = rootPath + "/ustadmobileContent/" + folderName + "/" + currentFileName;
+                console.log("fileToDownload: " + fileToDownload + " filePathDownload: " + filePathDownload);
+                console.log("TESTS: folderName: " + folderName);
+                console.log("TESTS: packageFolderName: " + packageFolderName);
+            }else{  //09122013
+                if(fileFolder != "books" && currentFileName != "all_ustadpkg_html5.xml"){
+                    fileToDownload = "http://www.ustadmobile.com/books/" + folderName + "/" + fileFolder + "/" + currentFileName;
+                    debugLog("Saving file: " + currentFileName + " to course folder: " + fileFolder);
+                    filePathDownload = rootPath + "/ustadmobileContent/" + folderName + "/" + fileFolder + "/" + currentFileName;
+                    console.log("fileToDownload: " + fileToDownload + " filePathDownload: " + filePathDownload);
+                    console.log("TESTS: folderName: " + folderName);
+                    console.log("TESTS: packageFolderName: " + packageFolderName);
+                }else{      //Triggered on List Courses from Server button.
+                    console.log("Getting course list part..");
+                    filePathDownload = rootPath + "/ustadmobileContent/" + folderName + "/" + currentFileName;
+                    console.log("fileToDownload: " + fileToDownload + " filePathDownload: " + filePathDownload);
+                    console.log("TESTS: folderName: " + folderName);
+                    console.log("TESTS: packageFolderName: " + packageFolderName);
+                }
+            }   //09122013
+            uri = encodeURI(fileToDownload); //needed by fileTransfer Cordova API. //09122013
         }
         debugLog("File Path to Download: " + filePathDownload);
         var fileTransfer = new FileTransfer();
@@ -339,7 +376,7 @@ If you need a commercial license to remove these restrictions please contact us 
                         var folderNameShortSplit = folderName.split("/");
                         var valueFolderName = folderNameShortSplit.length - 1;
                         var folderNameShort = folderNameShortSplit[valueFolderName];
-                        var r=confirm("Download This book? " + folderNameShort);
+                        var r=confirm("Download This course? " + folderNameShort);
 					    if (r==true){
                             //alert("packageFolderName: " + packageFolderName);
 						    // If user wants to download this file, then code will go here, and
@@ -442,6 +479,7 @@ If you need a commercial license to remove these restrictions please contact us 
             $xml.find(xmlTag).each(function(){
                 if(xmlTag == "file"){
                     var currentFile = $(this).text();
+                    debugLog(" -> " + currentFile);
                     fileDownloadList[fileDownloadList.length]  =  $(this).text();
                 }else if(xmlTag == "package"){
                     debugLog(" -> " + $(this).text());
