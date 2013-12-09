@@ -120,8 +120,12 @@ function startTestOnLoadCounter(){
     currentFolderIndex = 0;
     allBookFoundCallback = checkBooksOK;
     populateNextDir();
+	
+	var usern = "";
+	var passw = "";
+	//Code to get username (usern) and password (passw) goes here.
 
-    umlogin("0974","1234", 'http://intranet.paiwastoon.net/umcloud/app/login.xhtml', checkLoginOK);
+    umlogin(usern,passw, 'http://intranet.paiwastoon.net/umcloud/app/login.xhtml', checkLoginOK);
 
     testPackageListXML('http://www.ustadmobile.com/books/all_ustadpkg_html5.xml', 'all', checkPackageListXMLProcessingOK);
 

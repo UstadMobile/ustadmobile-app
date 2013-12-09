@@ -333,6 +333,13 @@ If you need a commercial license to remove these restrictions please contact us 
                 console.log("TESTS: packageFolderName: " + packageFolderName);
             }else{  //09122013
                 if(fileFolder != "books" && currentFileName != "all_ustadpkg_html5.xml"){
+					//Windows Phone specific code to make that folder.
+					var getDir = fileFolder;
+					debugLog("Checking if Directory: " + fileFolder + " exists. If not, creating it.");
+					getDir = "ustadmobileContent/" + folderName + "/" + fileFolder;
+					fileSystem.root.getDirectory(getDir, {create:true, exclusive: false}, function(){
+						debugLog("Creation of folder: " + fileFolder + " in Course folder is a success.");}, function(){debugLog("Creation of folder: " + fileFolder + " in Course folder failed!");});
+			
                     fileToDownload = "http://www.ustadmobile.com/books/" + folderName + "/" + fileFolder + "/" + currentFileName;
                     debugLog("Saving file: " + currentFileName + " to course folder: " + fileFolder);
                     filePathDownload = rootPath + "/ustadmobileContent/" + folderName + "/" + fileFolder + "/" + currentFileName;
