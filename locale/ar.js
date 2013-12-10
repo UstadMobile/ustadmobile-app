@@ -45,8 +45,8 @@ If you need a commercial license to remove these restrictions please contact us 
 */
 
 var messages = new Array();
-messages['test'] = "You are in en.js";
-messages['login'] = "Login";
+messages['test'] = "You are in ar.js";
+messages['login'] = "دخول";
 messages['error'] = "Error";
 messages['usernameentry'] = "Username/User ID:";
 messages['passwordentry'] = "Password/Pin:";
@@ -90,7 +90,7 @@ messages['in'] = "in";
 messages['errorgeneral'] = "Something went wrong:";
 messages['errorloggingin'] = "Wrong username/password combination, or Please check that you are able to connect to the internet and your server.";
 messages['errorloggincode'] = "Wrong username/password combination or server error. Status Code:";
-messages['loggingintoserver'] = "Logging in to umcloud..";
+messages['loggingintoserver'] = "..um cloud الدخول الى";
 messages['checkinglogged'] = "Checking logged user..";
 messages['next'] = "Next";
 messages['previous'] = "Previous";

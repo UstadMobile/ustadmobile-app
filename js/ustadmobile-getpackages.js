@@ -66,7 +66,7 @@ If you need a commercial license to remove these restrictions please contact us 
     /* General, all purpose fail function.*/
     function fail2(){
       debugLog("Something went wrong");
-      alert("Something went wrong");
+      alert("Something went wrong");//errorunknown (messages from en.js)
       $.mobile.loading('hide');
     }
 
@@ -148,7 +148,7 @@ If you need a commercial license to remove these restrictions please contact us 
     */
     function onlistPackages(msg){
         $.mobile.loading('show', {
-            text: 'Listing the available Packages...',
+            text: 'Listing the available courses..',
             textVisible: true,
             theme: 'b',
             html: ""
@@ -313,7 +313,7 @@ If you need a commercial license to remove these restrictions please contact us 
         var currentFileName = uriSplit[lastPos];        
         //jQuery mobile loading animation.
         $.mobile.loading('show', {
-            text: 'Downloading UM Package:' + currentFileName + ' in ' + folderName,
+            text: 'Downloading UM Course:' + currentFileName + ' in ' + folderName,
             textVisible: true,
             theme: 'b',
             html: ""});
@@ -439,7 +439,7 @@ If you need a commercial license to remove these restrictions please contact us 
         //alert("packageFolderName: " + packageFolderName);
         // We call the FileSystem again such that we get the rootPath again. We can then trigger this function if required for development purposes.
         // In that case, we need to set the packageString again as a link or fileName in this function as: fileName = testPackage_ustadpkg_html5.xml;
-        window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, getXMLFile, function(){alert("Something went wrong in getting the file system of the package file. Internal Error."); debugLog("Something went wrong in readPackageFile(msg) ");});
+        window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, getXMLFile, function(){alert("Something went wrong in getting the file system of the package file. Internal Error."); debugLog("Something went wrong in readPackageFile(msg) ");}); // errorfilesystem (messages->en.js)
     }
     
     /* Function that starts the process to get the XML file URL set by previous functions. */

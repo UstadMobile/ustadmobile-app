@@ -49,9 +49,9 @@ If you need a commercial license to remove these restrictions please contact us 
 
 ustadAppPath = "/blah/blah";
 
-ustadThemeDir = 
+//ustadThemeDir = 
 
-document.location.href
+//document.location.href
 
 
 

@@ -328,6 +328,17 @@ function openGetPackagesPage(){
 	openMenuLink("ustadmobile_getPackages.html", "slide");
 }
 
+//Function to open Settings and Languages page (Preferences)
+function openSetLanguagesPage(){
+	$.mobile.loading('show', {
+        text: 'Ustad Mobile:Loading..',
+        textVisible: true,
+        theme: 'b',
+        html: ""}
+    );
+	openMenuLink("ustadmobile_setLanguage.html", "slide");
+}
+
 //Function available to test refreshing a page. Not tested.
 function refreshPage(pageToRefresh)
 {

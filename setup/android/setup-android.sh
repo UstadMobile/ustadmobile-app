@@ -49,7 +49,7 @@ if [ -e spec.html ]; then
     rm spec.html
 fi
 
-cp -r *.html img js jqm res $FILEDEST
+cp -r *.html img js jqm res locale $FILEDEST
 cp css/index.css css/jquery.mobile-1.3.2.min.css css/qunit-1.12.0.css $FILEDEST/css
 
 #make the base64 versions of javascript files that get copied into directories

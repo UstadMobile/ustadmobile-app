@@ -79,9 +79,10 @@ function onLoginDeviceReady() {
 //The form in html calls this with the values. We seperate the form arguments with actual function of login for
 //testing and code-reuse purposes.
 function umloginFromForm() {
-
+    //var msg = messages['loggingintoserver'];
+    //alert(msg);
      $.mobile.loading('show', {
-        text: 'Logging in to umcloud..',
+        text: messages['loggingintoserver'],
         textVisible: true,
         theme: 'b',
     html: ""});
