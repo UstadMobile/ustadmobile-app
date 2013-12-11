@@ -149,19 +149,71 @@ $(document).on("pagechange", function(event){
 
 //Function called whenever Cordova is ready within the app's navigation.
 function onAppDeviceReady(){
-    console.log(" Cordova device ready (onAppDeviceReady())");
+    console.log("Cordova device ready (onAppDeviceReady())");
     
     var baseURL = localStorage.getItem("baseURL");
-    console.log("WPTEST: ustadmobile.js->onAppDeviceReady()->baseURL: " + baseURL);
+    console.log(" Startup: ustadmobile.js->onAppDeviceReady()->baseURL: " + baseURL);
 
     //var messageM = localStorage.getItem("testLS");
     //console.log("WPTEST: ustadmobile.js->onAppDeviceReady-> Message: " + messageM);
-}
 
+    
+    debugLog(" in onLangDeviceReady()");
+    navigator.globalization.getPreferredLanguage(
+    
+    function langsuccess(language){
+       debugLog(" Your device's language is: " +  language.value + "\n");
+        var langGlob = language.value;
+        if (langGlob == "English"){
+            langGlob = "en";
+        }
+        if (langGlob == "Arabic"){
+            langGlob = "ar";
+        }
+       localStorage.setItem('checklanguage', langGlob); 
+    },
+    function errorCB(){
+        debugLog("Failed to get your device's language.");
+    }
+    );
+}
 //When the Menu Loads, this is called. You can write in your actions and code that needs to be run in the start here.
 function onMenuLoad(){
 	debugLog("Menu triggered: ustadmobile_menuPage/2.html -> ustadmobile.js -> onMenuLoad()");
 }
+
+/*
+ Localization function - will return original English if not in JSON
+*/
+function x_(str) {
+    if(messages[str]) {
+        return messages[str];
+    }else {
+        return str;
+    }
+}
+
+/*
+ Dummy function to allow strings to be picked up by babel script
+*/
+function x__(str) {
+    return str;
+}
+
+/*
+Gets called on page load (e.g. before is shown)
+
+pageSelector - class or id selector e.g. .ui-page-active
+*/
+function localizePage(pageSelector) {
+    $(pageSelector + " .exeTranslated").each(function(index, value) {
+        var textToTranslate = $(this).attr("data-exe-translation");
+        $(value).text(_x(textToTranslate));
+    });
+}
+
+
+
 
 /*
 //Function reserved to get the app location. This has been moved to: onBLDeviceReady() in ustadmobile-booklist.js .

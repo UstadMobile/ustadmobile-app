@@ -48,13 +48,41 @@ If you need a commercial license to remove these restrictions please contact us 
 //alert("Starting login.js..");
 //var username="";
 //var password="";
-$.mobile.loading('show', {
-    text: 'Loading Ustad Mobile',
-    textVisible: true,
-    theme: 'b',
-    html: ""}
-); 
 
+//$.mobile.loading('show', {
+//    text: 'Loading Ustad Mobile',
+//    textVisible: true,
+//    theme: 'b',
+//    html: ""}
+//); 
+
+
+    // Wait for device API libraries to load
+    //
+    document.addEventListener("deviceready", onLoginDeviceReady, false);
+
+    // device APIs are available
+    //
+    function onLoginDeviceReady() {
+        debugLog("Ustad Mobile Startup: In onLoginDeviceReady()");
+        navigator.splashscreen.show();
+        
+    }
+/*
+    document.addEventListener("deviceready", onLangDeviceReady, false);
+    function onLangDeviceReady(){
+        debugLog("in onLangDeviceReady()");
+        navigator.globalization.getPreferredLanguage(
+    
+    function langsuccess(language){
+       debugLog("Your device's language is: " +  language.value + "\n");
+    },
+    function errorCB(){
+        debugLog("Failed to get your device's language.");
+    }
+    );
+}
+*/
 function fail(evt) {
     alert("something went wrong: " + evt.target.error.code);
     console.log(evt.target.error.code);
