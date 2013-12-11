@@ -100,6 +100,17 @@ var scrollEnabled = 1;
 debugLog("Ustad Mobile: Current Location: " + currentUrl); //For testing purposes.
 
 /*
+ There is an issue with the cloze because eXe sets the width
+ according to the number of letters; jQuery mobile wants to 
+ make this the width of the screen.  That results in what
+ looks like a text box but only a small part being selectable.
+*/
+function setupClozeWidth() {
+    $(".ClozeIdevice input[type=text]").css("width", "");
+}
+
+
+/*
 Even though the documentation says that this should
 happen apparently it does not
 */
@@ -112,6 +123,7 @@ $(document).on("pageshow", function(event, ui) {
     On Pagechange, the logic for touch, swipe and scroll events are executed.
 */
 $(document).on("pagechange", function(event){
+    setupClozeWidth();
     $('.ui-page-active').swipe( {   //On the active page..
 
     //Generic swipe handler for all directions
