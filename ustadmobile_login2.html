@@ -67,27 +67,27 @@ If you need a commercial license to remove these restrictions please contact us 
     <div data-role="page" id="LoginPage">
 	    <div data-role="header" data-position="fixed">
             <p style="background-image:url('res/umres/banne1.png'); background-repeat:repeat-x;margin-top:-8px;" >.</p>
-		    <h1> Login </h1>
+		    <h1> <span id="login2text" class="exeTranslated" data-exe-translation="Login">LoginF</span> </h1>
 	    </div>
         
 	    <div data-role="content" id="Login" style="float:left">
 
-	        <label for="basic">Username/User ID:</label>
+	        <label for="basic"><span id="useridinput2text" class="exeTranslated" data-exe-translation="Username/User ID:">Username/User ID:F</span></label>
             <input type="text" name="username" id="username" value="" />
             
-            <label for="basic">Password/Pin:</label>
+            <label for="basic"><span id="passwordinput2text" class="exeTranslated" data-exe-translation="Password/Pin:">Password/Pin:F</span></label>
             <input type="password" name="password" id="password" value="" />
 
             <div style="margin-top:30px;">
-                <input onclick='umloginFromForm()' type="button" id="loginButton"  name="loginButton" value="Login">
+                <input onclick='umloginFromForm()' type="button" id="loginButton"  name="loginButton" class="exeTranslated2" data-exe-translation-attr = "value" value="Login">
             </div>
            <br></br>
 		   <br><br>
-		   <input onclick='umSkip()' data-mini="true" type="button" id="skipButton" name="skipButton" value="Skip"/>
+		   <input onclick='umSkip()' data-mini="true" type="button" id="skipButton" name="skipButton" class="exeTranslated2" data-exe-translation-attr = "value" value="Skip"/>
         </div>  
         
 		<div data-role="footer" data-position="fixed" style="text-align: center;" data-tap-toggle="false"> 
-			<a style="text-align: center;" data-rel="back" data-direction="reverse" data-icon="ui-btn-left" data-theme="a">Go back</a>            
+			<a style="text-align: center;" data-rel="back" data-direction="reverse" data-icon="ui-btn-left" data-theme="a"><span id="gobacklogin2text" class="exeTranslated" data-exe-translation="Go back">Go backF</span></a>            
          </div>
     </div> 
   </body>

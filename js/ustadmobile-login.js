@@ -84,7 +84,7 @@ If you need a commercial license to remove these restrictions please contact us 
 }
 */
 function fail(evt) {
-    alert("something went wrong: " + evt.target.error.code);
+    alert( x_("something went wrong: ") + evt.target.error.code);
     console.log(evt.target.error.code);
 	debugLog("Something went wrong");
 }
@@ -110,7 +110,7 @@ function umloginFromForm() {
     //var msg = messages['loggingintoserver'];
     //alert(msg);
      $.mobile.loading('show', {
-        text: messages['loggingintoserver'],
+        text: x_("Logging in to umcloud.."),
         textVisible: true,
         theme: 'b',
     html: ""});
@@ -136,7 +136,7 @@ function umloginredirect(statuscode) {
         openPage("ustadmobile_booklist.html").trigger("create");
 		//openPage("//www/ustadmobile_booklist.html").trigger("create"); // Changes for Windows Phone. added //www/
     }else {
-        alert("Wrong username/password combination, or Please check that you are able to connect to the internet and your server.");
+        alert(x_("Wrong username/password combination, or Please check that you are able to connect to the internet and your server."));
     }
 }
 
@@ -177,7 +177,7 @@ function umlogin(username, password, url, callback){
 				},
 			error: function (jqxhr,b,c){
 			
-				alert("Wrong username/password combination or server error. Status Code:" + jqxhr.status);
+				alert(x_("Wrong username/password combination or server error. Status Code:") + jqxhr.status);
 				debugLog("Wrong username/password combination or server error. Status Code:" + jqxhr.status);
                 $.mobile.loading('hide');
 				runcallback(callback, jqxhr.status);
@@ -204,7 +204,7 @@ Checks if user logged in from earlier and re directs to book list.
 */
 function checkLoggedIn(){
     $.mobile.loading('show', {
-        text: 'Checking logged user..',
+        text: x_('Checking logged user..'),
         textVisible: true,
         theme: 'b',
         html: ""}

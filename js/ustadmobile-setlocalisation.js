@@ -12,11 +12,12 @@ var devicelanguage;
 //console.log("Not Device Ready Local Storage set Device Language is: " + devicelanguage);
 
 //Event triggered when Cordova is ready
-document.addEventListener("deviceready", onLanguageDeviceReady, false);
-
+//document.addEventListener("deviceready", onLanguageDeviceReady, false);
+//onLanguageDeviceReady();
 //Function is only fired when Cordova is ready. 
 //This sets the language on load. This can be moved to ustadmobile.js  (maybe we keep it here)
 function onLanguageDeviceReady(){
+    //console.log("CORDOVA READY..");
     var selectedlanguage = localStorage.getItem('language');    
     var devicelanguage = localStorage.getItem('checklanguage');
     console.log("Local Storage set Language is: " + selectedlanguage);
@@ -34,6 +35,8 @@ function onLanguageDeviceReady(){
         setLanguageAppStart(selectedlanguage);
     }
     console.log("selectedlanguage: " + selectedlanguage); 
+    localizePage(); // After language is set, call the translator.
+
 }
 
 //Function that is called within device ready after language is set from onLanguageDeviceReady()..
@@ -49,7 +52,8 @@ function setlanguage(){
     localStorage.setItem('language', selectedlanguage);
     var selectedlang = "locale/" + selectedlanguage + ".js";
     loadjscssfile( selectedlang, "js") //dynamically load and add this .js file
-    alert("You language is now: " + selectedlanguage + ". Restart the app for the changes.");
+    alert("You language is now: " + selectedlanguage + ". Refreshing/You will now be taken back to your course list"); //Note: add refresh button or trigger refresh (window.open basically)
+    //Then OK <-> Cancel logic.
 }
 
 //Function logic that dynamically adds a javascript to the head of the current page.

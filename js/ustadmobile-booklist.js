@@ -110,15 +110,15 @@ function onBLDeviceReady() {
     var logome='';
     if (usern!=null)
     {
-        logome='Logout';
+        logome=x_('Logout');
     }
     else{
-        logome='Home';
-        usern='Guest';
+        logome=x_('Home');
+        usern=x_('Guest');
     }
 
     $.mobile.loading('show', {
-        text: 'Loading your books..',
+        text: x_('Loading your books..'),
         textVisible: true,
         theme: 'b',
     html: ""});
@@ -147,7 +147,7 @@ Log out function to set localStorage to null (remove) and redirect to login page
 */
 function umLogout(){
     $.mobile.loading('show', {
-    text: 'Loading Ustad Mobile',
+    text: x_('Loading Ustad Mobile'),
     textVisible: true,
     theme: 'b',
     html: ""});

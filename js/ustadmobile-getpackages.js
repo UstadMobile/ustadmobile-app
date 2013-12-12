@@ -95,7 +95,7 @@ If you need a commercial license to remove these restrictions please contact us 
     */
     function listPackagesFromServer(){
         $.mobile.loading('show', {
-            text: 'Contacting the server..',
+            text: x_('Contacting the server..'),
             textVisible: true,
             theme: 'b',
             html: ""}
@@ -148,7 +148,7 @@ If you need a commercial license to remove these restrictions please contact us 
     */
     function onlistPackages(msg){
         $.mobile.loading('show', {
-            text: 'Listing the available courses..',
+            text: x_('Listing the available courses..'),
             textVisible: true,
             theme: 'b',
             html: ""
@@ -313,7 +313,7 @@ If you need a commercial license to remove these restrictions please contact us 
         var currentFileName = uriSplit[lastPos];        
         //jQuery mobile loading animation.
         $.mobile.loading('show', {
-            text: 'Downloading UM Course:' + currentFileName + ' in ' + folderName,
+            text: x_('Downloading UM Course:') + currentFileName + x_(' in ') + folderName,
             textVisible: true,
             theme: 'b',
             html: ""});

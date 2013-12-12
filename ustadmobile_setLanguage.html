@@ -67,17 +67,19 @@ If you need a commercial license to remove these restrictions please contact us 
 	<br></br>
     <div data-role="header" data-position="fixed">
     <!--<p style="background-image:url('res/umres/banne1.png'); background-repeat:repeat-x;margin-top:-8px;" >.</p>   -->
-    <h3>Set Language</h3>
+    <h3><span id="setlanguagetitletext" class="exeTranslated" data-exe-translation="Set Language">Set LanguageF</span></h3>
     </div>
     
     
-        <label for="select-um-language" class="select">Language:</label>
+        <label for="select-um-language" class="select"><span id="languagetitletext" class="exeTranslated" data-exe-translation="Language:">Language:F</span></label>
         <select name="select-um-language" id="select-um-language">
            <option value="en">English</option>
            <option value="en-gb">English-GB</option>
-           <option value="ar">Arabic</option>
-           <option value="hi">Hindi</option>
+           <option value="ar">العربية</option>
+           <option value="hi">हिन्दी</option>
            <option value="fr">Farsi</option>
+            <option value="jp">日本語</option>
+            <option value="es">Español</option>
         </select>
         <script>
             $("#select-um-language").change(function(){
@@ -89,10 +91,10 @@ If you need a commercial license to remove these restrictions please contact us 
     
 
     <div style="margin-top:20px;">
-        <input onclick='setlanguage()' type="button" id="setLanguage"  name="setLanguage" value="Set Choosen Language"/>
+        <input onclick='setlanguage()' type="button" id="setLanguage"  name="setLanguage" class="exeTranslated2" data-exe-translation-attr = "value" value="Set Choosen Language"/>
         <!--<input onclick='testSetlanguage()' type="button" id="testSetLanguage"  name="testSetLanguage" value="Test Set Language"/>-->
 		<div data-role="footer" data-position="fixed" style="text-align: center;" data-tap-toggle="false"> 
-			<a style="text-align: center;" data-rel="back" data-direction="reverse" data-icon="ui-btn-left" data-theme="a">Go back</a>
+			<a style="text-align: center;" data-rel="back" data-direction="reverse" data-icon="ui-btn-left" data-theme="a"><span id="gobacksnltext" class="exeTranslated" data-exe-translation="Go back">Go backF</span></a>
 		</div>
     
   

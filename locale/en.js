@@ -1,5 +1,5 @@
 
-messages2 = { 
+messages = { 
 "You are in en-gb.js" : "You are in en-gb.js",
 "Login" : "Login",
 "Error" : "Error",
@@ -56,6 +56,6 @@ messages2 = {
 
 };
 
-var messages = new Array();
+var messagesold = new Array();
 messages['loggingintoserver'] = "Logging into umcloud..";
 

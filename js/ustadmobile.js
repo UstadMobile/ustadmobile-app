@@ -69,7 +69,9 @@ function debugLog(msg) {
     }
 }
 
-var currentUrl = document.URL;  
+var currentUrl = document.URL; 
+debugLog("Ustad Mobile: Current Location: " + currentUrl); //For testing purposes.
+ 
 //useful to get TOC link from Menu Page triggered in Content.
 var platform="";
 var userAgent=navigator.userAgent; //User agent
@@ -97,7 +99,7 @@ document.addEventListener("deviceready", onAppDeviceReady, false);
 //Global variable set in scroll login. Can be disabled from the Content (!1) to disable scroll.
 var scrollEnabled = 1;
 
-debugLog("Ustad Mobile: Current Location: " + currentUrl); //For testing purposes.
+
 
 /*
  There is an issue with the cloze because eXe sets the width
@@ -109,12 +111,37 @@ function setupClozeWidth() {
     $(".ClozeIdevice input[type=text]").css("width", "");
 }
 
+$(document).on("pagebeforecreate", function(event, ui) { //pageinit gets triggered when app start.
+    console.log("In pagebeforecreate");
+    //$("#skipButton").attr("value", "Hey man");
+    //document.addEventListener("deviceready", onAppDeviceReady2(), false);
+    //document.addEventListener("deviceready", callOnLanguageDeviceReady(), false);
+    onLanguageDeviceReady();
+    //localizeAttrPage();
+});
+function callOnLanguageDeviceReady(){
+    onLanguageDeviceReady();
+}
+
+$(document).on("pageload", function(event, ui) { //pageLoad only gets triggered when we do a mobile.changePage() from within the code. Not when the app starts.
+    console.log("In pageload");
+    
+    //localizePage();
+
+});
+
+$(document).on("pageinit", function(event, ui) { //pageinit gets triggered when app start.
+    console.log("In pageinit");
+    //onLanguageDeviceReady(); //Set / Check the language first. //Commented out because it works in pagebeforecreate instead and hence works with all html strings.
+    //localizePage();
+});
 
 /*
 Even though the documentation says that this should
 happen apparently it does not
 */
 $(document).on("pageshow", function(event, ui) {
+    console.log("In pageshow"); //Means nothing. You can delete this.
     //ui.prevPage.remove(); 
     //Commented out because it messes with going back from a page (it is removed, so throws error)
 });
@@ -188,7 +215,9 @@ function onAppDeviceReady(){
         debugLog("Failed to get your device's language.");
     }
     );
+    
 }
+
 //When the Menu Loads, this is called. You can write in your actions and code that needs to be run in the start here.
 function onMenuLoad(){
 	debugLog("Menu triggered: ustadmobile_menuPage/2.html -> ustadmobile.js -> onMenuLoad()");
@@ -217,14 +246,31 @@ Gets called on page load (e.g. before is shown)
 
 pageSelector - class or id selector e.g. .ui-page-active
 */
-function localizePage(pageSelector) {
-    $(pageSelector + " .exeTranslated").each(function(index, value) {
+function localizePage() { 
+
+    console.log("In localizePage()");
+    $(".exeTranslated").each(function(index, value) {
         var textToTranslate = $(this).attr("data-exe-translation");
-        $(value).text(_x(textToTranslate));
+        //var attrTextToTranslate = $(this).attr("data-exe-translation-attr");
+        //$('#skipButton').attr( attrTextToTranslate, "Hey");
+        //console.log("THE attribute text to translate: " + attrTextToTranslate);
+        console.log("text to translate: " + textToTranslate);
+        //console.log(" value for: " + value);
+        console.log(" translated value: " + x_(textToTranslate)); // Need to include the locale/lang.js file before this is called. 
+        $(value).text(x_(textToTranslate));
     });
+    
+    $(".exeTranslated2").each(function(index, value){
+        var attrText = $(this).attr("data-exe-translation-attr");
+        console.log("TEST: attrText is: " + attrText);
+        var attrTextToTranslate = $(this).attr(attrText);
+        var idTextToTranslate = $(this).attr("id");
+
+        console.log("For the attribute: " + attrText + " and id: " + idTextToTranslate + " of value: " + attrTextToTranslate + ", Translation is: " + x_(attrTextToTranslate));
+        $("#" + idTextToTranslate).attr(attrText, x_(attrTextToTranslate));
+    });
+
 }
-
-
 
 
 /*
@@ -322,7 +368,7 @@ function openPage2(openFile){
 //function that opens Books. this uses openPage2() because it needs to reload the page.
 function openBookListPage(){
 	$.mobile.loading('show', {
-        text: 'Ustad Mobile: Loading..',
+        text: x_('Ustad Mobile: Loading..'),
         textVisible: true,
         theme: 'b',
         html: ""}
@@ -333,7 +379,7 @@ function openBookListPage(){
 //duplicated function for testing purposes..
 function openBookListPage2(){
 	$.mobile.loading('show', {
-        text: 'Ustad Mobile: Loading..',
+        text: x_('Ustad Mobile: Loading..'),
         textVisible: true,
         theme: 'b',
         html: ""}
@@ -344,7 +390,7 @@ function openBookListPage2(){
 //Function to log out and get back to the login page.
 function umMenuLogout(){
     $.mobile.loading('show', {
-        text: 'Ustad Mobile:Logging Out..',
+        text: x_('Ustad Mobile:Logging Out..'),
         textVisible: true,
         theme: 'b',
         html: ""}
@@ -358,7 +404,7 @@ function umMenuLogout(){
 //Does the same as umMenuLogout()..
 function umMenuLogout2(){
     $.mobile.loading('show', {
-        text: 'Ustad Mobile:Logging Out..',
+        text: x_('Ustad Mobile:Logging Out..'),
         textVisible: true,
         theme: 'b',
         html: ""}
@@ -372,7 +418,7 @@ function umMenuLogout2(){
 //This function gets called from the Book List Menu to go back to the Login Page from the Menu.
 function openLoginPage(){
 	$.mobile.loading('show', {
-        text: 'Ustad Mobile: Loading..',
+        text: x_('Ustad Mobile: Loading..'),
         textVisible: true,
         theme: 'b',
         html: ""}
@@ -384,7 +430,7 @@ function openLoginPage(){
 //We have decided to not allow user to access the Download Packages page whilist in a book (for reduction in complexity).
 function openGetPackagesPage(){
 	$.mobile.loading('show', {
-        text: 'Ustad Mobile:Loading..',
+        text: x_('Ustad Mobile:Loading..'),
         textVisible: true,
         theme: 'b',
         html: ""}
@@ -395,7 +441,7 @@ function openGetPackagesPage(){
 //Function to open Settings and Languages page (Preferences)
 function openSetLanguagesPage(){
 	$.mobile.loading('show', {
-        text: 'Ustad Mobile:Loading..',
+        text: x_('Ustad Mobile:Loading..'),
         textVisible: true,
         theme: 'b',
         html: ""}
@@ -417,7 +463,7 @@ function refreshPage(pageToRefresh)
 //Function to open the About Ustad Mobile page from within the Menu (both from Book List and eXe content).
 function openAboutUM(){
 	$.mobile.loading('show', {
-        text: 'Ustad Mobile..',
+        text: x_('Ustad Mobile..'),
         textVisible: true,
         theme: 'b',
         html: ""}
@@ -431,7 +477,7 @@ function openAboutUM(){
 
 function openTOCPage(){
 	$.mobile.loading('show', {
-        text: 'Loading TOC..',
+        text: x_('Loading TOC..'),
         textVisible: true,
         theme: 'b',
         html: ""}
