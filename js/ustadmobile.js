@@ -47,7 +47,7 @@ If you need a commercial license to remove these restrictions please contact us 
 This javascript creates the header and footer of ustad mobile content in packages and does a lot of global actions via the functions (esp Menu Links).
 
 */
-
+/*
 //For jQuery mobile and Cordova/PhoneGap framework configurations.
 $( document ).bind( "mobileinit", function() {
     // Make your jQuery Mobile framework configuration changes here!
@@ -56,7 +56,7 @@ $( document ).bind( "mobileinit", function() {
 	console.log("Mobileinit changes set for jQuery mobile for PhoneGap");
 
 }); //as per jQuery's documentation and Cordova/Phonegap
-
+*/
 //Set to 1 for Debug mode, otherwise 0 (will silence console.log messages)
 var USTADDEBUGMODE = 1;
 
@@ -98,7 +98,7 @@ document.addEventListener("deviceready", onAppDeviceReady, false);
 
 //Global variable set in scroll login. Can be disabled from the Content (!1) to disable scroll.
 var scrollEnabled = 1;
-
+console.log("In ustadmobile.js : content test");
 
 
 /*
@@ -113,21 +113,44 @@ function setupClozeWidth() {
 
 $(document).on("pagebeforecreate", function(event, ui) { //pageinit gets triggered when app start.
     console.log("In pagebeforecreate");
-    //$("#skipButton").attr("value", "Hey man");
-    //document.addEventListener("deviceready", onAppDeviceReady2(), false);
-    //document.addEventListener("deviceready", callOnLanguageDeviceReady(), false);
-    onLanguageDeviceReady();
-    //localizeAttrPage();
+    if(typeof(onLanguageDeviceReady) == "function" ){
+        onLanguageDeviceReady();
+    }else{ // meaning it is in Content..
+        onLanguageContentReady();
+    }
 });
+
+function onLanguageContentReady(){
+    console.log("*****************************IN ONLANGUAGECONTENTREADY()!!*******************************");
+    if (!ustadlocalelang){
+        ustadlocalelang = "default";
+    }
+    console.log("App set language is: " + ustadlocalelang );
+    var filetype = "js";
+     if (ustadlocalelang != null && filetype=="js"){ //if filename is a external JavaScript file    
+
+        if (platform == "android"){      
+        var baseURL = localStorage.getItem("baseURL");
+        baseURL = "/android_asset/www/locale";
+        }else if (platform == "wp8"){
+        var baseURL = "/www";
+        }//else, platform not set yet.
+        backupfilename = baseURL + "/" + "en.js";        
+      filename = baseURL + "/" + ustadlocalelang + ".js";      
+      console.log("Loading language js: " + filename + " in course (dynamically)..");
+        //$('head').append($('<script>').attr('type', 'text/javascript').attr('src', backupfilename));
+      $('head').append($('<script>').attr('type', 'text/javascript').attr('src', filename));
+     }
+    console.log(" Content language javascript: " + filename + ".js Loading done.");
+    localizePage();
+}
+
 function callOnLanguageDeviceReady(){
     onLanguageDeviceReady();
 }
 
 $(document).on("pageload", function(event, ui) { //pageLoad only gets triggered when we do a mobile.changePage() from within the code. Not when the app starts.
     console.log("In pageload");
-    
-    //localizePage();
-
 });
 
 $(document).on("pageinit", function(event, ui) { //pageinit gets triggered when app start.
@@ -215,7 +238,7 @@ function onAppDeviceReady(){
         debugLog("Failed to get your device's language.");
     }
     );
-    
+    debugLog(" checklanguage set: " + localStorage.getItem('checklanguage'));
 }
 
 //When the Menu Loads, this is called. You can write in your actions and code that needs to be run in the start here.

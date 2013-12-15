@@ -56,6 +56,7 @@ content or not
 var currentBookPath="";
 var exeContentFileName = "index.html";
 var exeContentFileName = "exetoc.html";
+var jsLoaded = "false";
 
 /*
 Called when populateDir fails to get a reader for a given directory
@@ -292,13 +293,30 @@ function failDirectoryReader(error) {
 }
 
 /*
-Simple Open page wrapper
+Simple Open page wrapper (+ sets language of the opened book ?)
 */
 function openBLPage(openFile){
+    jsLoaded = false;
     currentBookPath = openFile;
     console.log("Book URL that UM is going to is: " + currentBookPath);
-	window.open(openFile).trigger("create");
+    //eg: file:///sdcard/ustadmobileContent/measurementDemoV2AO/exetoc.html
+    //1. We need to create a file: ustadmobile-settings.js
+    //2. We need to put that file in that directory
+    //3. We need to open the file.
+    var bookpath = currentBookPath.substring(0, currentBookPath.lastIndexOf("/"));
+    var bookpathSplit = bookpath.split("//");
+    bookpath = bookpathSplit[bookpathSplit.length-1];
+    var userSetLanguage = localStorage.getItem('language');
+    console.log("The user selected language is : " + userSetLanguage + " and the current Book Path is: " + bookpath);
+    userSetLanguageString = "var ustadlocalelang = \"" + userSetLanguage + "\"; console.log(\"DAFT PUNK GET LUCKY\");";
+    localStorage.setItem('ustadmobile-settings.js', userSetLanguageString);
+    localStorageToFile(bookpath, "ustadmobile-settings.js").done(wdotopen(openFile));
 }
+    function wdotopen(openFile){
+         window.open(openFile);
+
+    }
+
 
 
 //Function to write the header. This can be called from within the html and well, it writes the start. Currently this is implemented in eXe so this is kind of redundant , unless you want to use it.. go ahead.

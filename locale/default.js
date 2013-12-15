@@ -1,4 +1,4 @@
-console.log("Loaded: en.js");
+
 messages = { 
 "You are in en-gb.js" : "You are in en-gb.js",
 "Login" : "Login",

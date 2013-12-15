@@ -7,7 +7,7 @@
 
 var selectedlanguage;
 var devicelanguage;
-
+console.log("Called ustadmobile-setlocalisation.js.");
 //console.log("Not Device Ready Local Storage set Language is: " + selectedlanguage);
 //console.log("Not Device Ready Local Storage set Device Language is: " + devicelanguage);
 
@@ -26,7 +26,18 @@ function onLanguageDeviceReady(){
         selectedlanguage = devicelanguage;
         console.log("Setting the default language as device's language: " + selectedlanguage);
         setLanguageAppStart(selectedlanguage);
-    }else if (selectedlanguage == null){    //If ustadmobile.js fails to set the language / undestand the language of the device, default to English.
+    }else if (selectedlanguage == "default" && devicelanguage != null){    //Second run..
+        //Check if device language file is available. 
+        
+        //if Not, set default as: en 
+        selectedlanguage = devicelanguage;
+        console.log("App second run: Setting language as device: " + devicelanguage);
+        setLanguageAppStart(selectedlanguage);
+    }else if (selectedlanguage == null && devicelanguage == null){    //If ustadmobile.js fails to set the language / undestand the language of the device, default to English.
+        selectedlanguage = "default";
+        console.log("App first run: Setting language as null.");
+        setLanguageAppStart(selectedlanguage);
+    }else if (selectedlanguage == null){    //First page load.
         selectedlanguage = "en";
         console.log("Setting the default language as English: " + selectedlanguage);
         setLanguageAppStart(selectedlanguage);

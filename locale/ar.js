@@ -1,3 +1,4 @@
+console.log("Loaded now: ar.js");
 //mostly manually put from Google Tranlate
 messages = { 
 "You are in ar.js" : "You are in ar.js",

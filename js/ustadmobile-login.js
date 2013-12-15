@@ -59,13 +59,13 @@ If you need a commercial license to remove these restrictions please contact us 
 
     // Wait for device API libraries to load
     //
-    document.addEventListener("deviceready", onLoginDeviceReady, false);
+  //document.addEventListener("deviceready", onLoginDeviceReady2, false);
 
     // device APIs are available
     //
-    function onLoginDeviceReady() {
-        debugLog("Ustad Mobile Startup: In onLoginDeviceReady()");
-        navigator.splashscreen.show();
+    function onLoginDeviceReady2() {
+        debugLog("Ustad Mobile Startup: In onLoginDeviceReady2()");
+        //navigator.splashscreen.show(); //Only to be uncommented when splashscreen support is enabled.
         
     }
 /*
@@ -100,7 +100,7 @@ function onLoginLoad() {
 //
 function onLoginDeviceReady() {
     $.mobile.loading('hide');
-    debugLog("Checking if user is already logged in..");
+    debugLog(" onLoginLoad: Checking if user is already logged in..");
     checkLoggedIn();
 }
 
