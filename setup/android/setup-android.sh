@@ -21,6 +21,8 @@ if [ ! -d $TARGETDIR ]; then
     mkdir $TARGETDIR
 fi
 
+source $SRCDIR/ustad_version
+
 cd $TARGETDIR
 cordova create ustadmobile com.toughra.ustadmobile UstadMobile
 cd ustadmobile
@@ -39,7 +41,11 @@ for plugin in $PLUGINLIST; do
 	done
 done
 
+#now set the version in config.xml
+sed -i s/version=\"0.0.1\"/version=\"$VERSION\"/g www/config.xml
+
 echo "Made a cordova project in $TARGETDIR/ustadmobile"
+read
 
 cd $WORKINGDIR
 cd $SRCDIR
@@ -79,6 +85,7 @@ cp res/icon/android/icon-96-xhdpi.png $FILEDEST/../platforms/android/res/drawabl
 #Logic to set Hardware Acceleration to false in Android Manifest file: AndroidManifest.xml
 
 sed -i.backup -e 's/hardwareAccelerated=\"true\"/hardwareAccelerated=\"false\"/' $WORKINGDIR/build/ustadmobile/platforms/android/AndroidManifest.xml
+
 #For splashscreen, need to make these additions to config.xml (inside the <widget> tag):
 #    <preference name="splashscreen" value="umsplash" />
 #    <preference name="splashScreenDelay" value="3000" />
@@ -91,6 +98,7 @@ cd $TARGETDIR/ustadmobile
 cordova build
 
 sed -i.backup -e 's/hardwareAccelerated=\"true\"/hardwareAccelerated=\"false\"/' $WORKINGDIR/build/ustadmobile/platforms/android/AndroidManifest.xml
+
 #sed -i.backup -e '\|</widget>| i\\    <preference name=\"splashscreen\" value=\"umsplash\" />' $WORKINGDIR/ustadmobile/www/config.xml 
 #sed -i.backup -e '\|</widget>| i\\    <preference name=\"splashScreenDelay\" value=\"3000\" />' $WORKINGDIR/ustadmobile/www/config.xml 
 

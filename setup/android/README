@@ -1,5 +1,5 @@
 Ustad Mobile Android builder
-4/Dec/2013 - Last updated by Mike Dawson
+15/Dec/2013 - Last updated by Mike Dawson
 
 To build:
 
@@ -13,11 +13,14 @@ To run emulator:
 
 ./setup-android.sh emulate
 
+To release (sign and zipalign):
+
+Copy release-settings-android.sh.example to release-settings-android.sh
+Add your keystore path and alias
+Then run ./release-android.sh
+
 Notes:
 
 Icons come from res/icons/android
 
-To create a file for signing/release:
-cd build/ustadmobile
-cordova build --release
 
