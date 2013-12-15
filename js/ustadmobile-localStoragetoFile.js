@@ -48,14 +48,18 @@ If you need a commercial license to remove these restrictions please contact us 
 		if (!localStorageValue){
 			var localStorageValue="";
 		}
-		function localStrageToFile(localStorageVariable){
+		function localStorageToFile(bookpath, localStorageVariable){
+            var r = $.Deferred();
             //alert("5");
 			//if (!localStorageValue){
 			//	var localStorageValue="";
 			//}
-			var localStorageFilePath = "/ustadmobileContent/localStorage/" + localStorageVariable + ".ume";
+			//var localStorageFilePath = "/ustadmobileContent/localStorage/" + localStorageVariable + ".ume";
+            var localStorageFilePath = bookpath + "/" + localStorageVariable; // If js, should end with .js
+            console.log(" file to be made: " + localStorageFilePath);
 			//Maybe add checks if localStorage exists..
-			localStorageValue = localStorage.getItem("localStorageVariable");		// Global variable. Make it.	
+			localStorageValue = localStorage.getItem(localStorageVariable);		// Global variable. Make it.	
+            console.log("localStroageValue is: " + localStorageValue);
             
 			try {
 				window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function(fs){
@@ -65,8 +69,10 @@ If you need a commercial license to remove these restrictions please contact us 
 				}, notLS2FFileSystem);
 			} catch (e) {
 				debugLog("File System / File get exception.");
-				//writeNextBase64();
 			}
+            console.log("All done..?");
+            return r;
+            //jsLoaded = "true";
 		}
 		
 		function gotLS2FFileEntry(fileEntry){
@@ -76,13 +82,16 @@ If you need a commercial license to remove these restrictions please contact us 
 		function gotLS2FFileWriter(writer){
 			debugLog("Writing the contents..");
 			writer.onwrite = function(evt) {
-				debugLog("Base64 file written to a new file. Going to next file..");
+				debugLog("Base64 file written to a new file. Going to next file.."); 
+                //jsLoaded = "true";
                 //runb2fcallback(base64ToFileCallback, "localStorage to File success");
 				//writeNextBase64();
 			};
 
 			//var currentLS2Fdata = window.atob(globalCurrentB64[0]);
 			writer.write(localStorageValue);
+            //writer.write("var ustadlocalelang = \"en\"; console.log(\"Daft Punk\");");
+            
 			
 		}
 		
