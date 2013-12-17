@@ -47,7 +47,7 @@ If you need a commercial license to remove these restrictions please contact us 
 This javascript creates the header and footer of ustad mobile content in packages and does a lot of global actions via the functions (esp Menu Links).
 
 */
-/*
+
 //For jQuery mobile and Cordova/PhoneGap framework configurations.
 $( document ).bind( "mobileinit", function() {
     // Make your jQuery Mobile framework configuration changes here!
@@ -56,7 +56,7 @@ $( document ).bind( "mobileinit", function() {
 	console.log("Mobileinit changes set for jQuery mobile for PhoneGap");
 
 }); //as per jQuery's documentation and Cordova/Phonegap
-*/
+
 //Set to 1 for Debug mode, otherwise 0 (will silence console.log messages)
 var USTADDEBUGMODE = 1;
 
@@ -75,8 +75,12 @@ debugLog("Ustad Mobile: Current Location: " + currentUrl); //For testing purpose
 //useful to get TOC link from Menu Page triggered in Content.
 var platform="";
 var userAgent=navigator.userAgent; //User agent
+console.log("User agent is: " + userAgent);
 var userAgentParts = userAgent.split(";");
 var userAgentPlatform = userAgentParts[2]; // Gets the platform
+if (typeof userAgentPlatform === 'undefined'){	//Possibility of iOS
+    userAgentPlatform = userAgentParts[1];
+}
 debugLog("User Agent Platform is: " + userAgentPlatform);
 
 if(userAgentPlatform.indexOf("Android") !== -1) { // if string contains Android
@@ -91,6 +95,42 @@ if(userAgentPlatform.indexOf("Android") !== -1) { // if string contains Android
 }else if(userAgentPlatform.indexOf("Windows Phone OS 8.0") !== -1) {
     debugLog("Ustad Mobile: YOU ARE USING WINDOWS PHONE 8!");
     platform="wp8";
+}else if(userAgentPlatform.indexOf("Safari") !== -1) {
+    debugLog("Ustad Mobile: YOU ARE USING iOS");
+    platform="ios";
+    //alert("You are in iOS!");
+}
+
+function getPlatform(){
+    
+    var platform="";
+    var userAgent=navigator.userAgent; //User agent
+    console.log("User agent is: " + userAgent);
+    var userAgentParts = userAgent.split(";");
+    var userAgentPlatform = userAgentParts[2]; // Gets the platform
+    if (typeof userAgentPlatform === 'undefined'){	//Possibility of iOS
+        userAgentPlatform = userAgentParts[1];
+    }
+    debugLog("User Agent Platform is: " + userAgentPlatform);
+    
+    if(userAgentPlatform.indexOf("Android") !== -1) { // if string contains Android
+        debugLog("Ustad Mobile: YOU ARE USING ANDROID!");
+        platform="android";
+    }else if(userAgentPlatform.indexOf("Windows Phone OS 7.0") !== -1) {
+        debugLog("Ustad Mobile: YOU ARE USING WINDOWS PHONE 7!");
+        platform="wp7";
+    }else if(userAgentPlatform.indexOf("Windows Phone OS 7.5") !== -1) {
+        debugLog("Ustad Mobile: YOU ARE USING WINDOWS PHONE 7.5!");
+        platform="wp7.5";
+    }else if(userAgentPlatform.indexOf("Windows Phone OS 8.0") !== -1) {
+        debugLog("Ustad Mobile: YOU ARE USING WINDOWS PHONE 8!");
+        platform="wp8";
+    }else if(userAgentPlatform.indexOf("Safari") !== -1) {
+        debugLog("Ustad Mobile: YOU ARE USING iOS");
+        platform="ios";
+        alert("You are in iOS!");
+    }
+
 }
 
 //Cordova device ready event handler
@@ -116,28 +156,63 @@ $(document).on("pagebeforecreate", function(event, ui) { //pageinit gets trigger
     if(typeof(onLanguageDeviceReady) == "function" ){
         onLanguageDeviceReady();
     }else{ // meaning it is in Content..
-        onLanguageContentReady();
+        callOnLanguageDeviceReady();
     }
 });
+
+function callOnLanguageDeviceReady(){
+    if (navigator.userAgent.indexOf("Safari") == -1){
+        platform = "ios";
+        onLanguageContentReady();
+        //alert("Platform isssss:: " + platform);
+    }else  if (navigator.userAgent.indexOf("Android") == -1){
+        platform = "ios";
+        onLanguageContentReady();
+    }else  if (navigator.userAgent.indexOf("Windows Phone OS 7.0") == -1){
+        platform = "ios";
+        onLanguageContentReady();
+    }else  if (navigator.userAgent.indexOf("Windows Phone OS 7.5") == -1){
+        platform = "ios";
+        onLanguageContentReady();
+    }else  if (navigator.userAgent.indexOf("Windows Phone OS 8.0") == -1){
+        platform = "ios";
+        onLanguageContentReady();
+    }else{
+        alert("Could not verify your device or platform. Error");
+    }
+    
+}
+
 
 function onLanguageContentReady(){
     console.log("*****************************IN ONLANGUAGECONTENTREADY()!!*******************************");
     if (!ustadlocalelang){
         ustadlocalelang = "default";
     }
+    //alert("ustadlocalelang: " + ustadlocalelang);
+    //alert("Platform set is: " + platform);
+    
+    //platform = "ios";
     console.log("App set language is: " + ustadlocalelang );
     var filetype = "js";
      if (ustadlocalelang != null && filetype=="js"){ //if filename is a external JavaScript file    
 
-        if (platform == "android"){      
+        if (platform == "android"){
         var baseURL = localStorage.getItem("baseURL");
-        baseURL = "/android_asset/www/locale";
-        }else if (platform == "wp8"){
+        baseURL = "/android_asset/www";
+        }else if(platform == "wp8"){
         var baseURL = "/www";
-        }//else, platform not set yet.
-        backupfilename = baseURL + "/" + "en.js";        
-      filename = baseURL + "/" + ustadlocalelang + ".js";      
+        }else if(platform == "ios"){
+            var baseURL = localStorage.getItem("baseURL");
+        }else{
+            console.log("Unable to verify your device or platform. Error.");
+            alert("Your device/platform isn't recgnized by this device. So there will/might be errors. Contact an Ustad Mobile Developer.");
+        }
+         //else, platform not set yet.
+        //backupfilename = baseURL + "/" + "en.js";
+      filename = baseURL + "/locale/" + ustadlocalelang + ".js";      
       console.log("Loading language js: " + filename + " in course (dynamically)..");
+         //alert("Loading language js: " + filename + " in course (dynamically)..");
         //$('head').append($('<script>').attr('type', 'text/javascript').attr('src', backupfilename));
       $('head').append($('<script>').attr('type', 'text/javascript').attr('src', filename));
      }
@@ -145,9 +220,6 @@ function onLanguageContentReady(){
     localizePage();
 }
 
-function callOnLanguageDeviceReady(){
-    onLanguageDeviceReady();
-}
 
 $(document).on("pageload", function(event, ui) { //pageLoad only gets triggered when we do a mobile.changePage() from within the code. Not when the app starts.
     console.log("In pageload");
@@ -338,9 +410,16 @@ function exeMenuPageOpen(){
     if( platform == "android" ){
         var exeMenuLink2 = localStorage.getItem("baseURL") + "/" + exeMenuPage2;
 	    debugLog("Ustad Mobile Content: ANDROID: You will go into: exeMenuLink " + exeMenuLink2);	
-    }else{	//Currently only Windows Phone checks.
+    }else if(platform == "wp8"){	//Currently only Windows Phone checks.
 	    var exeMenuLink2 = "/www/" + exeMenuPage2;
         debugLog("Ustad Mobile Content: WINDOWS PHONE: You will go into: exeMenuLink " + exeMenuLink2);
+    }else if(platform == "ios"){
+        //Do nothing
+        console.log("Detected your device platform as: iOS!");
+        var exeMenuLink2 = localStorage.getItem("baseURL") + "/" + exeMenuPage2;
+	    debugLog("Ustad Mobile Content: iOS: You will go into: exeMenuLink " + exeMenuLink2);
+    }else{
+        console.log("Unable to detect your device platform. Error.");	
     }
     $.mobile.changePage( exeMenuLink2, { transition: "slideup" } );
 }
@@ -359,11 +438,16 @@ function openMenuLink(linkToOpen, transitionMode){
     if(platform == "android"){
         //Do nothing
         //linkToOpen = linkToOpen;
-    }else{
+    }else if(platform == "wp8"){
 	    //if(device is windows phone){
 		    linkToOpen = "/" + linkToOpen; //x-wmapp0: will be appended.
 	    //}
-    }	
+    }else if(platform == "ios"){
+        console.log("Detected iOS platform.");
+        //Do nothing
+    }else{
+        console.log("Your platform cannot be detected. Error.");
+    }
 	debugLog("Ustad Mobile: In openMenuLink(linkToOpen), About to open (post wp check): " + linkToOpen);
 	$.mobile.changePage(linkToOpen, { changeHash: false, transition: transitionMode});
 }
@@ -379,8 +463,13 @@ function openPage2(openFile){
     
     if(platform == "android"){
         //Do nothing, openFile = "ustadmobile_file.html";
-    }else{
+    }else if(platform == "wp8"){
         openFile = "//www/" + openFile;
+    }else if(platform == "ios"){
+        //Do nothing.
+        console.log("Detected your device is iOS");
+    }else{
+        console.log("Unable to detect your device platform. Error.");
     }
     console.log("Menu Links: Going to page: " + openFile);
 	//window.open(openFile).trigger("create");

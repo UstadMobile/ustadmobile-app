@@ -5,9 +5,15 @@
 //var selectedlanguage = localStorage.getItem('language');
 //var devicelanguage = localStorage.getItem('checklanguage');
 
-var selectedlanguage;
-var devicelanguage;
-console.log("Called ustadmobile-setlocalisation.js.");
+document.addEventListener("deviceready", onSetLocalisationReady, false);
+
+function onSetLocalisationReady(){
+	console.log("in onSetLocalisationReady()");
+	var selectedlanguage;
+	var devicelanguage;
+	console.log("Called ustadmobile-setlocalisation.js.");
+}
+
 //console.log("Not Device Ready Local Storage set Language is: " + selectedlanguage);
 //console.log("Not Device Ready Local Storage set Device Language is: " + devicelanguage);
 

@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# Release settings - put your values in here
+
+KEYSTORE=/path/to/keystore
+
+
