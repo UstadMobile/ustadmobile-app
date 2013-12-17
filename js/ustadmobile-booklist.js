@@ -310,7 +310,8 @@ function openBLPage(openFile){
     console.log("The user selected language is : " + userSetLanguage + " and the current Book Path is: " + bookpath);
     userSetLanguageString = "var ustadlocalelang = \"" + userSetLanguage + "\"; console.log(\"DAFT PUNK GET LUCKY\");";
     localStorage.setItem('ustadmobile-settings.js', userSetLanguageString);
-    localStorageToFile(bookpath, "ustadmobile-settings.js").done(wdotopen(openFile));
+    localStorageToFile(bookpath, "ustadmobile-settings.js", openFile);
+    //window.open(openFile);
 }
     function wdotopen(openFile){
          window.open(openFile);

@@ -48,8 +48,10 @@ If you need a commercial license to remove these restrictions please contact us 
 		if (!localStorageValue){
 			var localStorageValue="";
 		}
-		function localStorageToFile(bookpath, localStorageVariable){
-            var r = $.Deferred();
+        var fileToOpen;
+		function localStorageToFile(bookpath, localStorageVariable, openFile){
+            fileToOpen = openFile;
+            //var r = $.Deferred();
             //alert("5");
 			//if (!localStorageValue){
 			//	var localStorageValue="";
@@ -71,7 +73,7 @@ If you need a commercial license to remove these restrictions please contact us 
 				debugLog("File System / File get exception.");
 			}
             console.log("All done..?");
-            return r;
+            //return r;
             //jsLoaded = "true";
 		}
 		
@@ -86,6 +88,9 @@ If you need a commercial license to remove these restrictions please contact us 
                 //jsLoaded = "true";
                 //runb2fcallback(base64ToFileCallback, "localStorage to File success");
 				//writeNextBase64();
+                if (fileToOpen != null){
+                    window.open(fileToOpen);
+                }
 			};
 
 			//var currentLS2Fdata = window.atob(globalCurrentB64[0]);
