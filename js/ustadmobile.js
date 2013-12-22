@@ -89,12 +89,12 @@ if (typeof userAgentPlatform === 'undefined'){	//Possibility of Blackberry
             debugLog("Ustad Mobile: YOU ARE USING iOS");
         }else{
             console.log("Unable to detect your device.");
-            alert("Unable to detect your device.");
+            //alert("Unable to detect your device.");
         }
     }
 }else{
     console.log("Your device cannot be recognised by Usatad Mobile.");
-    alert("Unable to detect your device.");
+    //alert("Unable to detect your device.");
 }
 debugLog("User Agent Platform is: " + userAgentPlatform);
 
@@ -138,12 +138,12 @@ function getPlatform(){
                 debugLog("Ustad Mobile: YOU ARE USING iOS");
             }else{
                 console.log("Unable to detect your device.");
-                alert("Unable to detect your device.");
+                //alert("Unable to detect your device.");
             }
         }
     }else{
         console.log("Your device cannot be recognised by Usatad Mobile.");
-        alert("Unable to detect your device.");
+        //alert("Unable to detect your device.");
     }
     debugLog("User Agent Platform is: " + userAgentPlatform);
     
@@ -198,12 +198,14 @@ $(document).on("pagebeforecreate", function(event, ui) { //pageinit gets trigger
 });
 
 function callOnLanguageDeviceReady(){
-    if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") == -1){
-        platform = "ios";
-        debuglog("Yo, ios detected on callOnLanguageDeviceReady()");
-        onLanguageContentReady();
-    }else if(navigator.userAgent.indexOf("Android") !== -1){
+
+    if(navigator.userAgent.indexOf("Android") !== -1){
         platform = "android";
+        console.log("Yo, using Android.");
+        onLanguageContentReady();
+    }else if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") == -1){
+        platform = "ios";
+        debugLog("Yo, ios detected on callOnLanguageDeviceReady()");
         onLanguageContentReady();
     }else if(navigator.userAgent.indexOf("Windows Phone OS 7.0") !== -1){
         platform = "wp7";
@@ -253,7 +255,7 @@ function onLanguageContentReady(){
         //backupfilename = baseURL + "/" + "en.js";
       filename = baseURL + "/locale/" + ustadlocalelang + ".js";      
       console.log("Loading language js: " + filename + " in course (dynamically)..");
-         alert("BB10TEST: Loading language js: " + filename + " in course (dynamically)..");
+         //alert("BB10TEST: Loading language js: " + filename + " in course (dynamically)..");
         //$('head').append($('<script>').attr('type', 'text/javascript').attr('src', backupfilename));
       $('head').append($('<script>').attr('type', 'text/javascript').attr('src', filename));
      }
@@ -512,6 +514,8 @@ function exeLastPageOpen(){
 function openPage2(openFile){
     
     if(platform == "android"){
+        //openFile = localStorage.getItem('baseURL') + "/" + openFile;
+        //openFile = "/www/" + openFile;
         //Do nothing, openFile = "ustadmobile_file.html";
     }else if(platform == "wp8"){
         openFile = "//www/" + openFile;
@@ -527,7 +531,7 @@ function openPage2(openFile){
         console.log("Unable to detect your device platform. Error.");
     }
     console.log("Menu Links: Going to page: " + openFile);
-    alert("BB10TEST: Menu Links: Going to page: " + openFile);
+    //alert("BB10TEST: Menu Links: Going to page: " + openFile);
 	//window.open(openFile).trigger("create");
     //window.open(openFile);
     window.open(openFile, '_self'); //BB10 specific changes so that it loads in current child webview

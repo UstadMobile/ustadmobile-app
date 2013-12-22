@@ -370,6 +370,7 @@ function openBLPage(openFile){
     wdotopen(openFile);
 }
     function wdotopen(openFile){
+        $.mobile.loading('hide');
         //window.open(openFile);
         //openFile = "" + openFile;
         console.log("About to open course main file: " + openFile);
