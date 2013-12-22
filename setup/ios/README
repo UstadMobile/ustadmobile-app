@@ -1,26 +1,20 @@
-Ustad Mobile Android builder
-15/Dec/2013 - Last updated by Mike Dawson
+Ustad Mobile iOS builder
+17/Dec/2013 - Last updated by Varuna Singh
 
 To build:
 
-./setup-android.sh 
+./setup-ios.sh 
 
 To run on connected device (must have USB debugging enabled):
 
-./setup-android.sh run
+./setup-ios.sh run
 
 To run emulator:
 
-./setup-android.sh emulate
-
-To release (sign and zipalign):
-
-Copy release-settings-android.sh.example to release-settings-android.sh
-Add your keystore path and alias
-Then run ./release-android.sh
+./setup-ios.sh emulate
 
 Notes:
 
-Icons come from res/icons/android
+No Icons added yet.
 
 

@@ -1,0 +1,3 @@
+
+cordova build
+cordova emulate
