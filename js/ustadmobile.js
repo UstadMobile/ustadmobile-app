@@ -77,11 +77,14 @@ var platform="";
 var userAgent=navigator.userAgent; //User agent
 console.log("User agent is: " + userAgent);
 //alert("BBTEST: User Agent: " + userAgent);
+
 var userAgentParts = userAgent.split(";");
 var userAgentPlatform = userAgentParts[2]; // Gets the platform
 if (typeof userAgentPlatform === 'undefined'){	//Possibility of Blackberry
     userAgentPlatform = userAgentParts[0];
-    if(userAgentPlatform.indexOf("BB10") !== -1) {
+    if(userAgentPlatform.indexOf("Android") !== -1){
+        console.log("Detected ANDROID.");
+    }else if(userAgentPlatform.indexOf("BB10") !== -1) {
         console.log("You are using Blackberry 10");
     }else {
         userAgentPlatform = userAgentParts[1];
@@ -120,63 +123,11 @@ if(userAgentPlatform.indexOf("Android") !== -1) { // if string contains Android
 }
 
 
-function getPlatform(){
-    
-    var platform="";
-    var userAgent=navigator.userAgent; //User agent
-    console.log("User agent is: " + userAgent);
-    //alert("BBTEST: User Agent: " + userAgent);
-    var userAgentParts = userAgent.split(";");
-    var userAgentPlatform = userAgentParts[2]; // Gets the platform
-    if (typeof userAgentPlatform === 'undefined'){	//Possibility of Blackberry
-        userAgentPlatform = userAgentParts[0];
-        if(userAgentPlatform.indexOf("BB10") !== -1) {
-            console.log("You are using Blackberry 10");
-        }else {
-            userAgentPlatform = userAgentParts[1];
-            if(userAgentPlatform.indexOf("Safari") !== -1) {  // Possibility of iOS.
-                debugLog("Ustad Mobile: YOU ARE USING iOS");
-            }else{
-                console.log("Unable to detect your device.");
-                //alert("Unable to detect your device.");
-            }
-        }
-    }else{
-        console.log("Your device cannot be recognised by Usatad Mobile.");
-        //alert("Unable to detect your device.");
-    }
-    debugLog("User Agent Platform is: " + userAgentPlatform);
-    
-    if(userAgentPlatform.indexOf("Android") !== -1) { // if string contains Android
-        debugLog("Ustad Mobile: YOU ARE USING ANDROID!");
-        platform="android";
-    }else if(userAgentPlatform.indexOf("Windows Phone OS 7.0") !== -1) {
-        debugLog("Ustad Mobile: YOU ARE USING WINDOWS PHONE 7!");
-        platform="wp7";
-    }else if(userAgentPlatform.indexOf("Windows Phone OS 7.5") !== -1) {
-        debugLog("Ustad Mobile: YOU ARE USING WINDOWS PHONE 7.5!");
-        platform="wp7.5";
-    }else if(userAgentPlatform.indexOf("Windows Phone OS 8.0") !== -1) {
-        debugLog("Ustad Mobile: YOU ARE USING WINDOWS PHONE 8!");
-        platform="wp8";
-    }else if(userAgentPlatform.indexOf("Safari") !== -1) {
-        debugLog("Ustad Mobile: YOU ARE USING iOS");
-        platform="ios";
-    }else if(userAgentPlatform.indexOf("BB10") !== -1) {
-        debugLog("Ustad Mobile: YOU ARE USING BlackBerry 10");
-        platform="bb10";
-        //alert("Your platform is Blackberry 10: " + platform);
-    }
-
-}
-
 //Cordova device ready event handler
 document.addEventListener("deviceready", onAppDeviceReady, false);
 
 //Global variable set in scroll login. Can be disabled from the Content (!1) to disable scroll.
 var scrollEnabled = 1;
-console.log("In ustadmobile.js : content test");
-
 
 /*
  There is an issue with the cloze because eXe sets the width
@@ -201,19 +152,22 @@ function callOnLanguageDeviceReady(){
 
     if(navigator.userAgent.indexOf("Android") !== -1){
         platform = "android";
-        console.log("Yo, using Android.");
+        console.log("You are using Android on callOnLanguageDeviceReady().");
         onLanguageContentReady();
     }else if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") == -1){
         platform = "ios";
-        debugLog("Yo, ios detected on callOnLanguageDeviceReady()");
+        debugLog("You are using ios on callOnLanguageDeviceReady()");
         onLanguageContentReady();
     }else if(navigator.userAgent.indexOf("Windows Phone OS 7.0") !== -1){
         platform = "wp7";
+        debugLog("You are using wp7 on callOnLanguageDeviceReady()");
         onLanguageContentReady();
     }else if(navigator.userAgent.indexOf("Windows Phone OS 7.5") !== -1){
         platform = "wp7.5";
+        debugLog("You are using wp7.5 on callOnLanguageDeviceReady()");
         onLanguageContentReady();
     }else if(navigator.userAgent.indexOf("Windows Phone OS 8.0") !== -1){
+        debugLog("You are using wp8 on callOnLanguageDeviceReady()");
         platform = "wp8";
         onLanguageContentReady();
     }else if(navigator.userAgent.indexOf("BB10") !== -1){
@@ -226,7 +180,6 @@ function callOnLanguageDeviceReady(){
     
 }
 
-
 function onLanguageContentReady(){
     console.log("*****************************IN ONLANGUAGECONTENTREADY()!!*******************************");
     if (!ustadlocalelang){
@@ -235,16 +188,21 @@ function onLanguageContentReady(){
 
     console.log("App set language is: " + ustadlocalelang );
     var filetype = "js";
+    console.log("In ONLANGUAGECONTENTREADY(), platform set in Content is: " + platform);
      if (ustadlocalelang != null && filetype=="js"){ //if filename is a external JavaScript file    
-
+        
         if (platform == "android"){
         var baseURL = localStorage.getItem("baseURL");
+        console.log("Detected platform as : " + platform);
         baseURL = "/android_asset/www";
         }else if(platform == "wp8"){
+            console.log("Detected platform as : " + platform);
         var baseURL = "/www";
         }else if(platform == "ios"){
+            console.log("Detected platform as : " + platform);
             var baseURL = localStorage.getItem("baseURL");
         }else if(platform == "bb10"){
+            console.log("Detected platform as : " + platform);
             var baseURL = localStorage.getItem("baseURL");
             alert("BB10TEST: baseUrl: " + baseURL);
         }else{
@@ -512,9 +470,9 @@ function exeLastPageOpen(){
 //openPage2 named with a 2 so that doesnt' confuse with other page's openPage() functions, if any.
 //openPage2 is the one that calls window.open (not changePage() of jQuery).
 function openPage2(openFile){
-    
+    console.log("Opening page, platform is: " + platform);
     if(platform == "android"){
-        //openFile = localStorage.getItem('baseURL') + "/" + openFile;
+        openFile = localStorage.getItem('baseURL') + "/" + openFile;
         //openFile = "/www/" + openFile;
         //Do nothing, openFile = "ustadmobile_file.html";
     }else if(platform == "wp8"){
@@ -534,7 +492,8 @@ function openPage2(openFile){
     //alert("BB10TEST: Menu Links: Going to page: " + openFile);
 	//window.open(openFile).trigger("create");
     //window.open(openFile);
-    window.open(openFile, '_self'); //BB10 specific changes so that it loads in current child webview
+    //window.open(openFile, '_self'); //BB10 specific changes so that it loads in current child webview
+    window.open(openFile, '_blank');
 }
 
 

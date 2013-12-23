@@ -208,6 +208,7 @@ function populateNextDir() {
     }else {
         $.mobile.loading('hide');
         debugLog("No more folders to scan for ustad mobile packages.");
+        $("#UMBookList").append("<p><i>Go to Menu > Download Courses to get more courses from the online library</i></p>").trigger("create");
         if(allBookFoundCallback != null) {
             if (typeof allBookFoundCallback === "function") {
                 allBookFoundCallback();
@@ -233,7 +234,7 @@ function populate(pathFrom){
     debugLog("attempting to populate from: " + pathFrom);
     try {
         
-        if (umCLPlatform == "bb10"){ //If blackberry 10 device
+        if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1){ //If blackberry 10 device
             blackberry.io.sandbox = false;
             window.webkitRequestFileSystem(window.PERSISTENT, 0, function(fs){
                                      fileSystem = fs;
@@ -375,6 +376,7 @@ function openBLPage(openFile){
         //openFile = "" + openFile;
         console.log("About to open course main file: " + openFile);
         window.open(openFile, '_self');     //BB10 specific changes.
+        //window.open(openFile, '_blank'); //Android
         //window.open(openFile, '_parent');     //BB10 specific changes.
         //window.open(openFile, '_blank');     //BB10 specific changes.
         //blackberry.io.file.open(openFile);
