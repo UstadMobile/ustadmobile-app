@@ -352,6 +352,12 @@ function failDirectoryReader(error) {
 Simple Open page wrapper (+ sets language of the opened book ?)
 */
 function openBLPage(openFile){
+    $.mobile.loading('show', {
+        text: x_('Ustad Mobile: Loading..'),
+        textVisible: true,
+        theme: 'b',
+        html: ""}
+    );
     jsLoaded = false;
     currentBookPath = openFile;
     console.log("Book URL that UM is going to is: " + currentBookPath);
@@ -366,9 +372,9 @@ function openBLPage(openFile){
     console.log("The user selected language is : " + userSetLanguage + " and the current Book Path is: " + bookpath);
     userSetLanguageString = "var ustadlocalelang = \"" + userSetLanguage + "\"; console.log(\"DAFT PUNK GET LUCKY\");";
     localStorage.setItem('ustadmobile-settings.js', userSetLanguageString);
-    localStorageToFile(bookpath, "ustadmobile-settings.js", openFile);
+    localStorageToFile(bookpath, "ustadmobile-settings.js", openFile);  //Also is the function that opens the book.
     //window.open(openFile);
-    wdotopen(openFile);
+    //wdotopen(openFile); //Don't worry, localStorageToFile is using window.open, so we are opening it from there after the checks/files are transfered.
 }
     function wdotopen(openFile){
         $.mobile.loading('hide');

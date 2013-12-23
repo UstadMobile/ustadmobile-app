@@ -110,7 +110,8 @@ If you need a commercial license to remove these restrictions please contact us 
                 //runb2fcallback(base64ToFileCallback, "localStorage to File success");
 				//writeNextBase64();
                 if (fileToOpen != null){
-                    window.open(fileToOpen);
+                    //$.mobile.loading('hide');
+                    window.open(fileToOpen, '_self').trigger("create");
                 }
 			};
 
