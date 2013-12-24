@@ -55,6 +55,7 @@ messages = {
 "Exit to Course List" : "الخروج إلى قائمة من الدورات",
 "Go back" : "العودة",
 "List Courses from Server" : "قائمة الدورات من خادم",
+"List Courses" : "قائمة الدورات ",
 "Get Courses" : "الحصول على دورات",
 "About" : "حول",
 "Guest" : "ضيف",
