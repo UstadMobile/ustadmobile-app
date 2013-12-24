@@ -45,7 +45,6 @@ done
 sed -i s/version=\"0.0.1\"/version=\"$VERSION\"/g www/config.xml
 
 echo "Made a cordova project in $TARGETDIR/ustadmobile"
-read
 
 cd $WORKINGDIR
 cd $SRCDIR

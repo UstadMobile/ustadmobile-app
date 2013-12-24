@@ -64,11 +64,32 @@ If you need a commercial license to remove these restrictions please contact us 
             console.log("localStroageValue is: " + localStorageValue);
             
 			try {
+                
+                if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1){ // if blackberry 10 device
+                    console.log("Detected blackberry 10 device platform before converting LocalStorage to File..");
+                    blackberry.io.sandbox = false;
+                    
+                    window.webkitRequestFileSystem(window.PERSISTENT, 0, function(fs){
+                                             fileSystem = fs;
+                                             fileSystem.root.getFile(localStorageFilePath, {create: true, exclusive: false}, gotLS2FFileEntry, notLS2FFileEntry);
+                                             
+                                             }, notLS2FFileSystem);
+                    
+                }else{ //if all other devices except blackberry 10
+                    window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function(fs){
+                                             fileSystem = fs;
+                                             fileSystem.root.getFile(localStorageFilePath, {create: true, exclusive: false}, gotLS2FFileEntry, notLS2FFileEntry);
+                                             
+                                             }, notLS2FFileSystem);
+                }
+                /*
 				window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function(fs){
 					fileSystem = fs;
 					fileSystem.root.getFile(localStorageFilePath, {create: true, exclusive: false}, gotLS2FFileEntry, notLS2FFileEntry);
 					
 				}, notLS2FFileSystem);
+                 */
+                
 			} catch (e) {
 				debugLog("File System / File get exception.");
 			}
@@ -84,17 +105,27 @@ If you need a commercial license to remove these restrictions please contact us 
 		function gotLS2FFileWriter(writer){
 			debugLog("Writing the contents..");
 			writer.onwrite = function(evt) {
-				debugLog("Base64 file written to a new file. Going to next file.."); 
+				debugLog("Base64 file written to a new file. Going to next file..(if any)"); 
                 //jsLoaded = "true";
                 //runb2fcallback(base64ToFileCallback, "localStorage to File success");
 				//writeNextBase64();
                 if (fileToOpen != null){
-                    window.open(fileToOpen);
+                    //$.mobile.loading('hide');
+                    window.open(fileToOpen, '_self').trigger("create");
                 }
 			};
 
 			//var currentLS2Fdata = window.atob(globalCurrentB64[0]);
-			writer.write(localStorageValue);
+            if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1){ // Blackberry 10 platform performs as expected when using BLOBS
+                console.log("[lS->F]Detected blackberry 10 device. Going to use BLOBs for File Writing in the course..");
+                var blob = new Blob([localStorageValue], {type: 'text/plain'}); //creates the BLOB <such a cool name, BLOB. Hey BLOB, hows it going??
+                writer.write(blob);
+            }else{ // Other device platforms can use String to File.
+                writer.write(localStorageValue);
+            }
+
+            
+			//writer.write(localStorageValue);
             //writer.write("var ustadlocalelang = \"en\"; console.log(\"Daft Punk\");");
             
 			

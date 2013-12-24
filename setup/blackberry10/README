@@ -1,0 +1,23 @@
+Ustad Mobile blackberry10 builder
+16/Dec/2013 - Last updated by Varuna Singh
+
+To build:
+
+./setup-blackberry10.sh 
+
+To run on connected device (must have USB debugging enabled):
+
+./setup-blackberry10.sh run
+
+To run emulator:
+
+./setup-blackberry10.sh emulate
+
+To release (sign and zipalign):
+
+None.
+
+Notes:
+
+None yet.
+

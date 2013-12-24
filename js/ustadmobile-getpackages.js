@@ -43,9 +43,13 @@ If you need a commercial license to remove these restrictions please contact us 
    This is the javasript that accompanies the page where user requests for a list of ustad mobile packages available and is able to select and fetch all the files such that it will be available Over The Air on the device itself. 
 -->
 */
+    var cowsdung; //BB10TEST: Testing purposes.
+
     var globalXMLListFolderName = "all";
-    var rootPath; //Doesn't change throughout the program. 
-    var fileName = ""; //fileName either List of Packages or the Packages it self. 
+    var rootPath; //Doesn't change throughout the program.
+    var rootURL; //BB10 root is slightly different.
+    var umgpPlatform;
+    var fileName = ""; //fileName either List of Packages or the Packages it self.
     var packageString = ""; //eg: http://www.ustadmobile/books/TestPackage3_ustadpkg_html5.xml
     var packageFolderName = ""; // eg: TestPackage3
     var allFileDownloadCallback = null;
@@ -111,14 +115,36 @@ If you need a commercial license to remove these restrictions please contact us 
     }
 
     function beginPackageListTransfer(){
+        if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1){
+            blackberry.io.sandbox = false;
+            console.log("beginPackageListTransfer(): You are using Blackberry 10 device.");
+            umgpPlatform = "bb10";
+            //update: doesnt really matter which one I guess.
+            
+            //newly discovered:
+            //requestFileSystem(LocalFileSystem.PERSISTENT, 1024 * 1024 * 1024, gotRootListDirPackage, function(){alert("Something went wrong in getting the fileSystem."); debugLog("Something went wrong in getting file system, beginPackageListTransfer()");});
+            
+            //default:
+            window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, gotRootListDirPackage, function(){alert("Something went wrong in getting the fileSystem."); debugLog("Something went wrong in getting file system, beginPackageListTransfer()");});
+            
+            //BB10 specific (using webkit):
+            //window.webkitRequestFileSystem(window.PERSISTENT, 1024*1024*1024, gotRootListDirPackage, function(){alert("Something went wrong in getting the fileSystem."); debugLog("Something went wrong in getting file system, beginPackageListTransfer()");});
+            
+
+        }else{
+            umgpPlatform = "NOTbb10";
+            console.log("NOT BB!");
         window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, gotRootListDirPackage, function(){alert("Something went wrong in getting the fileSystem."); debugLog("Something went wrong in getting file system, beginPackageListTransfer()");});
+        }
     }
 
     /*
         Function that gets the rootPath, gets XML List' file name and folder Name for it to be stored at to finally download the main package list xml file. 
     */
     function gotRootListDirPackage(rootFS){
-        rootPath = rootFS.root.fullPath;    
+        rootPath = rootFS.root.fullPath;
+        rootURL = rootFS.root.toURL();
+        console.log("rootPath is: " + rootPath + " and rootURL is: " + rootURL);
         var uriSplit = packageListString.split("/");
         var lastPos = uriSplit.length - 1;
             packageListFileName = uriSplit[lastPos];        
@@ -162,7 +188,22 @@ If you need a commercial license to remove these restrictions please contact us 
         if (!packageListFolderName){
             packageListFolderName="";
         }
-        window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, getXMLListFile, function(){alert("Something went wrong in getting file System for packages."); debugLog("Something went wrong on getting file system in onlistPackages(msg)");});
+        
+        if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1){
+            console.log("Detected your device as a Blacberry10 Device. Proceeding Package XML retrieval..");
+            //BB10:
+            window.webkitRequestFileSystem(window.PERSISTENT, 0, getXMLListFile, function(){alert("Something went wrong in getting file System for packages."); debugLog("Something went wrong on getting file system in onlistPackages(msg)");});
+            
+        }else{
+            //original
+            window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, getXMLListFile, function(){alert("Something went wrong in getting file System for packages."); debugLog("Something went wrong on getting file system in onlistPackages(msg)");});
+            
+        }
+        
+
+        
+
+    
     }
 
     // This function calls the file getting method of FileEntry.
@@ -170,12 +211,33 @@ If you need a commercial license to remove these restrictions please contact us 
         //alert("message: " + msg);
         debugLog("Got XML List FileSystem.");
             rootPath = fileSystem.root.fullPath;
-        var forxml = "ustadmobileContent/" + packageListFolderName + "/" + packageListFileName;
+        //var forxml = "ustadmobileContent/" + packageListFolderName + "/" + packageListFileName;
+        
+        var getDir;
+        var forxml;
+        var pathToPackageFile;
+        if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1){ // If blackberry10 device
+            //console.log("BB10TEST: Success in getXMLListFile(fileSystem) "); //works
+            getDir = blackberry.io.SDCard + "/ustadmobileContent/" + packageListFolderName;
+            forxml = blackberry.io.SDCard + "/ustadmobileContent/" + packageListFolderName + "/" + packageListFileName;
+            pathToPackageFile = blackberry.io.SDCard + "/ustadmobileContent/" + packageListFolderName + "/" + packageListFileName;
+            
+        }else{ //Other devices
+            getDir = "ustadmobileContent/" + packageListFolderName; //Note how there is no "/" in the start.
+            forxml = "ustadmobileContent/" + packageListFolderName + "/" + packageListFileName;
+            pathToPackageFile = rootPath + "/ustadmobileContent/" + packageListFolderName + "/" + packageListFileName;
+            
+        }
+        
+        
         debugLog("XML List Processing started.");
         debugLog("XML List file was downloaded from URL: " + packageListString );
-        var pathToPackageFile = rootPath + "/ustadmobileContent/" + packageListFolderName + "/" + packageListFileName;
-        debugLog("The XML List location on the device is: " + pathToPackageFile);            
-        var getDir = "ustadmobileContent/" + packageListFolderName; //Note how there is no "/" in the start.
+        //var pathToPackageFile = rootPath + "/ustadmobileContent/" + packageListFolderName + "/" + packageListFileName;
+        debugLog("The XML List location on the device is: " + pathToPackageFile);
+        
+        
+        //var getDir = "ustadmobileContent/" + packageListFolderName; //Note how there is no "/" in the start.
+        
         debugLog("CHECKING IF DIRECTORY: " + getDir+ " EXISTS. IF NOT, CREATING IT.");
         fileSystem.root.getDirectory(getDir, {create:true, exclusive:false}, function(){
             debugLog("Creating List Dir success.");
@@ -188,14 +250,39 @@ If you need a commercial license to remove these restrictions please contact us 
   
     function gotXMLFileList(fileEntry){
         debugLog("Got XML file.");
+        /*fileEntry.file(function(file){
+                       var reader = new FileReader();
+                       reader.onloadend = function(e) {
+                       console.log("BB10TEST: fileEntry.file test: " + this.result);
+                       };
+                       reader.readAsText(file);
+                       }
+                       ,function(){alert("Something went wrong in getting XML file (Package List)"); debugLog("Something went wrong in getting XML Package List of function gotXMLFileList(fileEntry)");});
+         */
         fileEntry.file(gotXMLListFile,function(){alert("Something went wrong in getting XML file (Package List)"); debugLog("Something went wrong in getting XML Package List of function gotXMLFileList(fileEntry)");});
     }
     
     //Reading the xml list file.
     function gotXMLListFile(file){
+        console.log("file: " + file.fullPath + " of size " + file.size);
             debugLog("Reading the XML file.");
             var xmlTag = "package";
-            readXMLAsText(file, xmlTag);
+        
+        /*
+         var reader = new FileReader();
+         reader.onloadend = function(evt) {
+         console.log("Able to read..");
+         }
+        reader.onerror = function(evt){
+            console.log("Error reading xml file");
+            console.log("error", evt);
+        }
+        //reader.readAsText(file);
+        reader.readAsDataURL(file);
+        */
+        
+            readXMLAsText(file, xmlTag); //actual
+        
            //readXMLListAsText(file);
     }
 
@@ -257,7 +344,16 @@ If you need a commercial license to remove these restrictions please contact us 
             packageFolderName = globalXMLListFolderName + "/" + packageFolderName;
 
 		debugLog("Creating Package XML Directory..");
-			var packageXMLDir = "ustadmobileContent/" + packageFolderName;
+        
+        var packageXMLDir;
+        if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1){
+            console.log("Detected your device as a blackberry 10 device. Proceeding with Downloading the course..");
+            packageXMLDir = blackberry.io.SDCard + "/ustadmobileContent/" + packageFolderName;
+        }else{
+            packageXMLDir = "ustadmobileContent/" + packageFolderName;
+        }
+			//var packageXMLDir = "ustadmobileContent/" + packageFolderName;
+        
 			debugLog("CHECKING IF DIRECTORY: " + packageXMLDir + " EXISTS. IF NOT, CREATING IT.");
 			fileSystem.root.getDirectory(packageXMLDir, {create:true, exclusive:false}, function(){
 					debugLog(" Creating package XML Directory success.");
@@ -321,13 +417,31 @@ If you need a commercial license to remove these restrictions please contact us 
         var filePathDownload = ""; //nullify the path for every download.
         uri = encodeURI(fileToDownload); //needed by fileTransfer Cordova API.
         if (folderName == ""){
+            if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1){
+                blackberry.io.sandbox = false;
+                umgpPlatform = "bb10";
+                filePathDownload = blackberry.io.SDCard + "/ustadmobileContent/" + currentFileName;
+            }else{
+                filePathDownload = rootPath + "/ustadmobileContent/" + currentFileName;
+            }
             //fileToDownload = "http://www.ustadmobile.com/books/" + currentFileName;
-            filePathDownload = rootPath + "/ustadmobileContent/" + currentFileName;
+            //filePathDownload = rootPath + "/ustadmobileContent/" + currentFileName;
         }else{ //If downloading the actual course.
             
             if(typeof fileFolder === 'undefined'){   //09122013
                 fileToDownload = "http://www.ustadmobile.com/books/" + folderName + "/" + currentFileName;
-                filePathDownload = rootPath + "/ustadmobileContent/" + folderName + "/" + currentFileName;
+                
+                if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1){ // Blackberry 10 platforms only.
+                    blackberry.io.sandbox = false;
+                    umgpPlatform = "bb10";
+                    filePathDownload = blackberry.io.SDCard + "/ustadmobileContent/" + folderName + "/" + currentFileName;
+                    
+                }else{ // Platforms apart from blackberry 10
+                    filePathDownload = rootPath + "/ustadmobileContent/" + folderName + "/" + currentFileName;
+                }
+                
+                //filePathDownload = rootPath + "/ustadmobileContent/" + folderName + "/" + currentFileName;
+                
                 console.log("fileToDownload: " + fileToDownload + " filePathDownload: " + filePathDownload);
                 console.log("TESTS: folderName: " + folderName);
                 console.log("TESTS: packageFolderName: " + packageFolderName);
@@ -336,20 +450,44 @@ If you need a commercial license to remove these restrictions please contact us 
 					//Windows Phone specific code to make that folder.
 					var getDir = fileFolder;
 					debugLog("Checking if Directory: " + fileFolder + " exists. If not, creating it.");
-					getDir = "ustadmobileContent/" + folderName + "/" + fileFolder;
+                    if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1){
+                        blackberry.io.sandbox = false;
+                        umgpPlatform = "bb10";
+                        getDir = blackberry.io.SDCard + "ustadmobileContent/" + folderName + "/" + fileFolder;
+                    }else{ //If platform is not blackberry10
+                        getDir = "ustadmobileContent/" + folderName + "/" + fileFolder;
+                    }
+					//getDir = "ustadmobileContent/" + folderName + "/" + fileFolder;
+                        
 					fileSystem.root.getDirectory(getDir, {create:true, exclusive: false}, function(){
 						debugLog("Creation of folder: " + fileFolder + " in Course folder is a success.");}, function(){debugLog("Creation of folder: " + fileFolder + " in Course folder failed!");});
 			
                     fileToDownload = "http://www.ustadmobile.com/books/" + folderName + "/" + fileFolder + "/" + currentFileName;
                     debugLog("Saving file: " + currentFileName + " to course folder: " + fileFolder);
-                    filePathDownload = rootPath + "/ustadmobileContent/" + folderName + "/" + fileFolder + "/" + currentFileName;
+                    
+                    if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1){ // Platform is blackberry 10
+                        filePathDownload = blackberry.io.SDCard + "/ustadmobileContent/" + folderName + "/" + fileFolder + "/" + currentFileName;
+                    }else{ // Platform is not blackberry 10
+                        filePathDownload = rootPath + "/ustadmobileContent/" + folderName + "/" + fileFolder + "/" + currentFileName;
+                    }
+                    
+                    //filePathDownload = rootPath + "/ustadmobileContent/" + folderName + "/" + fileFolder + "/" + currentFileName;
                     console.log("fileToDownload: " + fileToDownload + " filePathDownload: " + filePathDownload);
                     console.log("TESTS: folderName: " + folderName);
                     console.log("TESTS: packageFolderName: " + packageFolderName);
                 }else{      //Triggered on List Courses from Server button.
                     console.log("Getting course list part..");
                     filePathDownload = rootPath + "/ustadmobileContent/" + folderName + "/" + currentFileName;
-                    console.log("fileToDownload: " + fileToDownload + " filePathDownload: " + filePathDownload);
+                    if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1){
+                            blackberry.io.sandbox = false;
+                            umgpPlatform = "bb10";
+                            //if bb10:
+                            filePathDownload = blackberry.io.SDCard + "/ustadmobileContent/" + folderName + "/" + currentFileName;
+                            debugLog("Listing Courses from Server: Detected Blackberry 10");
+                            console.log("fileToDownload(in): " + fileToDownload + " filePathDownload: " + filePathDownload);
+                    }
+                    
+                    console.log("fileToDownload(out): " + fileToDownload + " filePathDownload: " + filePathDownload);
                     console.log("TESTS: folderName: " + folderName);
                     console.log("TESTS: packageFolderName: " + packageFolderName);
                 }
@@ -357,13 +495,24 @@ If you need a commercial license to remove these restrictions please contact us 
             uri = encodeURI(fileToDownload); //needed by fileTransfer Cordova API. //09122013
         }
         debugLog("File Path to Download: " + filePathDownload);
+        debugLog("Downloading uri: " + uri);
+        //blackberry.io.home = /accounts/1000/appdata/com.toughra.ustadmobile.testDev_ustadmobilea3b0f56a/data/"
         var fileTransfer = new FileTransfer();
         // Using fileTransfer Cordova plugin.
+        //fileTransfer.download(
+        //filePathDownload = blackberry.io.SDCard + "/BigBoobies.xml";
+        //filePathDownload = "/sdcard/external_sd/BigBoobies3.xml";
+        
+        console.log("filePathDownload is: " + filePathDownload);
+        //if (umgpPlatform != "bb10"){
+        if(navigator.userAgent.indexOf("Safari") === -1 || navigator.userAgent.indexOf("BB10") === -1){
+        //blackberry.io.filetransfer.download(
         fileTransfer.download(
             uri,
             filePathDownload,
             function(entry){
-                debugLog("Download complete. File location on device: " + entry.fullPath);
+                              
+                debugLog("Download (notBB) complete. File location on device: " + entry.fullPath);
 
                 if(folderName == globalXMLListFolderName){ //If the file downloaded is the main package list (all_ustadpkg_html5.xml)
                     $.mobile.loading('hide');
@@ -391,19 +540,20 @@ If you need a commercial license to remove these restrictions please contact us 
 						    readPackageFile("hi"); // this function will be called that goes through the package xml file and download every file one by one.
 					    }else{
 						    debugLog("Download start cancelled by user. Nothing got downloaded.");
-					    }                
+					    }
                     }
                 }else{
                    
                     downloadNextFile();
                 }
+                              
                 //alert("Download complete! Path: " + entry.fullPath); // If you ever want to notify the user that the file has finished downloading.
             },
             function(error){
                 debugLog("download error source " + error.source);
                 debugLog("download error target " + error.target);
                 debugLog("upload error code" + error.code);
-                alert("Download error. Make sure that the file links in your package lists are working and can be reached by your device's connectivity.");
+                alert("Download error. Make sure that the file links in your package lists are working and can be reached by your device's connectivity. " + umgpPlatform);
                 $.mobile.loading('hide');
                 if (folderName == globalXMLListFolderName){
                     debugLog("TEST: ERROR 1");
@@ -419,6 +569,87 @@ If you need a commercial license to remove these restrictions please contact us 
             },
             downloadfail
         );
+        }else{ //platform is blackberry10..
+            console.log("Platform for fileTransfer downoad is Blackberry10");
+            //filePathDownload = blackberry.io.SDCard + "ustadmobileContent/BigBoobies.xml";
+            //console.log("blackberry.io.SDCard is: " + blackberry.io.SDCard);
+            //var cow = $("#cowdung").val();
+            //console.log("Cow is: " + cow);
+            //filePathDownload = cow;
+            //console.log("rooturl is : " + rootURL);
+            //filePathDownload = rootURL + '/test3boobies.xml';
+            console.log("filePathDownload is: " + filePathDownload);
+            
+            blackberry.io.filetransfer.download(
+            //fileTransfer.download(
+                                  uri,
+                                  filePathDownload,
+                                  function(entry){
+                                  //alert("BB10 SUCCESS!!");
+                                  ///*//commented for BB10TEST: testing purposes.
+                                   debugLog("BB10 fileTransfer download success!");
+    //entry.file(function(file2){console.log("Downloaded (bytes): " + file2.size);});
+                                   debugLog("Download complete. File location on device: " + entry.fullPath);
+                                   
+                                   if(folderName == globalXMLListFolderName){ //If the file downloaded is the main package list (all_ustadpkg_html5.xml)
+                                   $.mobile.loading('hide');
+                                   // For unit testing purposes..
+                                   packageXMLCallback = callback;
+                                   onlistPackages("hi"); // Calls a method that lists the available packages from the downloaded xml package list .xml file.
+                                   
+                                   }else if(folderName.indexOf(globalXMLListFolderName + "/") !== -1){
+                                   $.mobile.loading('hide');
+                                   if (callback != null && typeof callback === "function" ){
+                                   //alert("Testing package..");
+                                   //For testing purposes..
+                                   //runcallback(callback, "passed");
+                                   fileXMLCallback = callback;
+                                   readPackageFile("hi"); // this function will be called that goes through the package xml file and download every file one by one.
+                                   }else{
+                                   var folderNameShortSplit = folderName.split("/");
+                                   var valueFolderName = folderNameShortSplit.length - 1;
+                                   var folderNameShort = folderNameShortSplit[valueFolderName];
+                                   var r=confirm("Download This course? " + folderNameShort);
+                                   if (r==true){
+                                   //alert("packageFolderName: " + packageFolderName);
+                                   // If user wants to download this file, then code will go here, and
+                                   debugLog("Download initiated..");
+                                   readPackageFile("hi"); // this function will be called that goes through the package xml file and download every file one by one.
+                                   }else{
+                                   debugLog("Download start cancelled by user. Nothing got downloaded.");
+                                   }
+                                   }
+                                   }else{
+                                   
+                                   downloadNextFile();
+                                   }
+                                   //*///commented for BB10TEST: testing purposes.
+                                  
+                                  //alert("Download complete! Path: " + entry.fullPath); // If you ever want to notify the user that the file has finished downloading.
+                                  },
+                                  function(error){
+                                  debugLog("download error source " + error.source);
+                                  debugLog("download error target " + error.target);
+                                  debugLog("upload error code" + error.code);
+                                  alert("Download error. Make sure that the file links in your package lists are working and can be reached by your device's connectivity. " + umgpPlatform);
+                                  $.mobile.loading('hide');
+                                  if (folderName == globalXMLListFolderName){
+                                  debugLog("TEST: ERROR 1");
+                                  runcallback(callback,"fail");
+                                  }else if (folderName.indexOf(globalXMLListFolderName + "/") !== -1){
+                                  debugLog("TEST: ERROR 2");
+                                  runcallback(callback, "failed");
+                                  }else{
+                                  debugLog("TEST: ERROR 3");
+                                  //runcallback(callback, "downloadfailed");
+                                  }
+                                  debugLog("!Couldn not download a file: " + currentFileName + " at folder: " + folderName);
+                                  },
+                                  downloadfail
+                                  );
+            
+            
+        }
     }
    
     /* Function that reads the package xml downloaded and reads through the XML*/       
@@ -439,7 +670,16 @@ If you need a commercial license to remove these restrictions please contact us 
         //alert("packageFolderName: " + packageFolderName);
         // We call the FileSystem again such that we get the rootPath again. We can then trigger this function if required for development purposes.
         // In that case, we need to set the packageString again as a link or fileName in this function as: fileName = testPackage_ustadpkg_html5.xml;
-        window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, getXMLFile, function(){alert("Something went wrong in getting the file system of the package file. Internal Error."); debugLog("Something went wrong in readPackageFile(msg) ");}); // errorfilesystem (messages->en.js)
+        
+        if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1){ //if blackberry 10 device.
+            console.log("Detecting your device as a Blackberry 10 devie. Continuing with Course content downloads..");
+            window.webkitRequestFileSystem(window.PERSISTENT, 0, getXMLFile, function(){alert("Something went wrong in getting the file system of the package file. Internal Error."); debugLog("Something went wrong in readPackageFile(msg) ");}); // errorfilesystem (messages->en.js)
+            
+        }else{ // Other devies (not blackberry 10)
+            window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, getXMLFile, function(){alert("Something went wrong in getting the file system of the package file. Internal Error."); debugLog("Something went wrong in readPackageFile(msg) ");}); // errorfilesystem (messages->en.js)
+        
+        }
+        //window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, getXMLFile, function(){alert("Something went wrong in getting the file system of the package file. Internal Error."); debugLog("Something went wrong in readPackageFile(msg) ");}); // errorfilesystem (messages->en.js)
     }
     
     /* Function that starts the process to get the XML file URL set by previous functions. */
@@ -447,12 +687,24 @@ If you need a commercial license to remove these restrictions please contact us 
         debugLog("Got XML FileSystem.");
         rootPath = fileSystem.root.fullPath;
         //var forxml = "ustadmobileContent/" + fileName;
-        var forxml = "ustadmobileContent/all/" + packageFolderName + "/" + fileName;
+        //var forxml = "ustadmobileContent/all/" + packageFolderName + "/" + fileName; //BB10 changes.
+        var forxml;
         debugLog("XML Processing started.");
         debugLog("XML file was downloaded from URL: " + packageString );
         var pathToPackageFile = rootPath + "/ustadmobileContent/" + fileName;
-        debugLog("The XML location on the device is: " + pathToPackageFile);            
-        getDir = "ustadmobileContent/" + packageFolderName;
+        debugLog("The XML location on the device is: " + pathToPackageFile);
+        
+       if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1){ //if Blackberry10 device
+            console.log("Detected your device as a Blackberry10 device. Proceeding to make your course folder to download..");
+            getDir = blackberry.io.SDCard + "/ustadmobileContent/" + packageFolderName;
+            forxml = blackberry.io.SDCard + "/ustadmobileContent/all/" + packageFolderName + "/" + fileName;
+        }else{  //All other platforms
+            getDir = "ustadmobileContent/" + packageFolderName;
+            forxml = "ustadmobileContent/all/" + packageFolderName + "/" + fileName;
+        }
+        
+        //getDir = "ustadmobileContent/" + packageFolderName;
+        
         debugLog("CHECKING IF DIRECTORY: " + getDir+ " EXISTS. IF NOT, CREATING IT.");
         fileSystem.root.getDirectory(getDir, {create:true, exclusive:false}, function(){
             debugLog("Creating List Dir success.");
@@ -470,16 +722,27 @@ If you need a commercial license to remove these restrictions please contact us 
     function gotFile(file){
             debugLog("Reading the XML file.");
             var xmlTag = "file";
+        /*
+        var reader = new FileReader();
+        reader.onloadend = function(evt) {
+            console.log("Able to read..");
+        }
+        reader.readAsText(file);
+        */
            readXMLAsText(file, xmlTag);
     }
 
     /* Function that goes through the xml files and gets tag information and process's it.*/
     function readXMLAsText(file, xmlTag) {
+        //console.log("BB10TEST: in readXMLAsText: file : " + )
         var reader = new FileReader();
         fileDownloadList = new Array();
         reader.onloadend = function(evt) {
             debugLog("Reading the XML as text.");
+            //alert("Reading the XML as text.");
             xml = evt.target.result; // The xml file read is now stored in xml
+            //alert("Paused. xml is: " + xml );
+            ///* // start of BB10TEST debug.
             xmlDoc = $.parseXML( xml ),
                $xml = $( xmlDoc );
             debugLog(xmlTag + "s are,");
@@ -510,6 +773,7 @@ If you need a commercial license to remove these restrictions please contact us 
                 downloadNextFile();
                 
             }
+            //*/ //end of BB10TEST debug
         }
         reader.readAsText(file);
         if(xmlTag == "package"){

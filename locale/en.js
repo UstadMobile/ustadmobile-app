@@ -52,6 +52,7 @@ messages = {
 "Exit to Course List" : "Exit to Course List",
 "Go back" : "Go back",
 "List Courses from Server" : "List Courses from Server",
+"List Courses" : "List Courses",
 "Get Courses" : "Get Courses",
 
 };

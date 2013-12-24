@@ -76,70 +76,40 @@ debugLog("Ustad Mobile: Current Location: " + currentUrl); //For testing purpose
 var platform="";
 var userAgent=navigator.userAgent; //User agent
 console.log("User agent is: " + userAgent);
-var userAgentParts = userAgent.split(";");
-var userAgentPlatform = userAgentParts[2]; // Gets the platform
-if (typeof userAgentPlatform === 'undefined'){	//Possibility of iOS
-    userAgentPlatform = userAgentParts[1];
-}
-debugLog("User Agent Platform is: " + userAgentPlatform);
 
-if(userAgentPlatform.indexOf("Android") !== -1) { // if string contains Android
-    debugLog("Ustad Mobile: YOU ARE USING ANDROID!");
-    platform="android";
-}else if(userAgentPlatform.indexOf("Windows Phone OS 7.0") !== -1) {
-    debugLog("Ustad Mobile: YOU ARE USING WINDOWS PHONE 7!");
-    platform="wp7";
-}else if(userAgentPlatform.indexOf("Windows Phone OS 7.5") !== -1) {
-    debugLog("Ustad Mobile: YOU ARE USING WINDOWS PHONE 7.5!");
-    platform="wp7.5";
-}else if(userAgentPlatform.indexOf("Windows Phone OS 8.0") !== -1) {
-    debugLog("Ustad Mobile: YOU ARE USING WINDOWS PHONE 8!");
-    platform="wp8";
-}else if(userAgentPlatform.indexOf("Safari") !== -1) {
-    debugLog("Ustad Mobile: YOU ARE USING iOS");
-    platform="ios";
-    //alert("You are in iOS!");
-}
+if(navigator.userAgent.indexOf("Android") !== -1){
+        platform = "android";
+        console.log("You are using Android on ustadmobile.js.");
+        
+    }else if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") == -1){
+        platform = "ios";
+        debugLog("You are using ios on ustadmobile.js()");
 
-function getPlatform(){
-    
-    var platform="";
-    var userAgent=navigator.userAgent; //User agent
-    console.log("User agent is: " + userAgent);
-    var userAgentParts = userAgent.split(";");
-    var userAgentPlatform = userAgentParts[2]; // Gets the platform
-    if (typeof userAgentPlatform === 'undefined'){	//Possibility of iOS
-        userAgentPlatform = userAgentParts[1];
+    }else if(navigator.userAgent.indexOf("Windows Phone OS 7.0") !== -1){
+        platform = "wp7";
+        debugLog("You are using wp7 on ustadmobile.js()");
+
+    }else if(navigator.userAgent.indexOf("Windows Phone OS 7.5") !== -1){
+        platform = "wp7.5";
+        debugLog("You are using wp7.5 on ustadmobile.js()");
+
+    }else if(navigator.userAgent.indexOf("Windows Phone OS 8.0") !== -1){
+        debugLog("You are using wp8 on ustadmobile.js()");
+        platform = "wp8";
+
+    }else if(navigator.userAgent.indexOf("BB10") !== -1){
+        platform = "bb10";
+        alert("Blackberry detected in ustadmobile.js()");
+ 
+    }else{
+        alert("Could not verify your device or platform. Your device isn't tested with our developers. Error. Contact an ustad mobile developer.");
     }
-    debugLog("User Agent Platform is: " + userAgentPlatform);
-    
-    if(userAgentPlatform.indexOf("Android") !== -1) { // if string contains Android
-        debugLog("Ustad Mobile: YOU ARE USING ANDROID!");
-        platform="android";
-    }else if(userAgentPlatform.indexOf("Windows Phone OS 7.0") !== -1) {
-        debugLog("Ustad Mobile: YOU ARE USING WINDOWS PHONE 7!");
-        platform="wp7";
-    }else if(userAgentPlatform.indexOf("Windows Phone OS 7.5") !== -1) {
-        debugLog("Ustad Mobile: YOU ARE USING WINDOWS PHONE 7.5!");
-        platform="wp7.5";
-    }else if(userAgentPlatform.indexOf("Windows Phone OS 8.0") !== -1) {
-        debugLog("Ustad Mobile: YOU ARE USING WINDOWS PHONE 8!");
-        platform="wp8";
-    }else if(userAgentPlatform.indexOf("Safari") !== -1) {
-        debugLog("Ustad Mobile: YOU ARE USING iOS");
-        platform="ios";
-        alert("You are in iOS!");
-    }
-
-}
 
 //Cordova device ready event handler
 document.addEventListener("deviceready", onAppDeviceReady, false);
 
 //Global variable set in scroll login. Can be disabled from the Content (!1) to disable scroll.
 var scrollEnabled = 1;
-console.log("In ustadmobile.js : content test");
-
 
 /*
  There is an issue with the cloze because eXe sets the width
@@ -161,66 +131,82 @@ $(document).on("pagebeforecreate", function(event, ui) { //pageinit gets trigger
 });
 
 function callOnLanguageDeviceReady(){
-    if (navigator.userAgent.indexOf("Safari") == -1){
-        platform = "ios";
+
+    if(navigator.userAgent.indexOf("Android") !== -1){
+        platform = "android";
+        console.log("You are using Android on callOnLanguageDeviceReady().");
         onLanguageContentReady();
-        //alert("Platform isssss:: " + platform);
-    }else  if (navigator.userAgent.indexOf("Android") == -1){
+    }else if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") == -1){
         platform = "ios";
+        debugLog("You are using ios on callOnLanguageDeviceReady()");
         onLanguageContentReady();
-    }else  if (navigator.userAgent.indexOf("Windows Phone OS 7.0") == -1){
-        platform = "ios";
+    }else if(navigator.userAgent.indexOf("Windows Phone OS 7.0") !== -1){
+        platform = "wp7";
+        debugLog("You are using wp7 on callOnLanguageDeviceReady()");
         onLanguageContentReady();
-    }else  if (navigator.userAgent.indexOf("Windows Phone OS 7.5") == -1){
-        platform = "ios";
+    }else if(navigator.userAgent.indexOf("Windows Phone OS 7.5") !== -1){
+        platform = "wp7.5";
+        debugLog("You are using wp7.5 on callOnLanguageDeviceReady()");
         onLanguageContentReady();
-    }else  if (navigator.userAgent.indexOf("Windows Phone OS 8.0") == -1){
-        platform = "ios";
+    }else if(navigator.userAgent.indexOf("Windows Phone OS 8.0") !== -1){
+        debugLog("You are using wp8 on callOnLanguageDeviceReady()");
+        platform = "wp8";
+        onLanguageContentReady();
+    }else if(navigator.userAgent.indexOf("BB10") !== -1){
+        platform = "bb10";
+        alert("Blackberry detected in callOnLanguageDeviceReady()");
         onLanguageContentReady();
     }else{
-        alert("Could not verify your device or platform. Error");
+        alert("Could not verify your device or platform. Your device isn't tested with our developers. Error. Contact an ustad mobile developer.");
     }
     
 }
-
 
 function onLanguageContentReady(){
     console.log("*****************************IN ONLANGUAGECONTENTREADY()!!*******************************");
     if (!ustadlocalelang){
         ustadlocalelang = "default";
     }
-    //alert("ustadlocalelang: " + ustadlocalelang);
-    //alert("Platform set is: " + platform);
-    
-    //platform = "ios";
+
     console.log("App set language is: " + ustadlocalelang );
     var filetype = "js";
+    //var baseURL;
+    console.log("In ONLANGUAGECONTENTREADY(), platform set in Content is: " + platform);
      if (ustadlocalelang != null && filetype=="js"){ //if filename is a external JavaScript file    
-
+        
         if (platform == "android"){
-        var baseURL = localStorage.getItem("baseURL");
-        baseURL = "/android_asset/www";
+        //var baseURL = localStorage.getItem("baseURL");
+        console.log("Detected platform as : " + platform);
+        var baseURL = "/android_asset/www";
         }else if(platform == "wp8"){
+            console.log("Detected platform as : " + platform);
         var baseURL = "/www";
         }else if(platform == "ios"){
+            console.log("Detected platform as : " + platform);
             var baseURL = localStorage.getItem("baseURL");
+        }else if(platform == "bb10"){
+            console.log("Detected platform as : " + platform);
+            var baseURL = localStorage.getItem("baseURL");
+            alert("BB10TEST: baseUrl: " + baseURL);
         }else{
             console.log("Unable to verify your device or platform. Error.");
             alert("Your device/platform isn't recgnized by this device. So there will/might be errors. Contact an Ustad Mobile Developer.");
+            var baseURL = localStorage.getItem("baseURL");
         }
          //else, platform not set yet.
         //backupfilename = baseURL + "/" + "en.js";
       filename = baseURL + "/locale/" + ustadlocalelang + ".js";      
       console.log("Loading language js: " + filename + " in course (dynamically)..");
-         //alert("Loading language js: " + filename + " in course (dynamically)..");
+         //alert("BB10TEST: Loading language js: " + filename + " in course (dynamically)..");
         //$('head').append($('<script>').attr('type', 'text/javascript').attr('src', backupfilename));
       $('head').append($('<script>').attr('type', 'text/javascript').attr('src', filename));
      }
     console.log(" Content language javascript: " + filename + ".js Loading done.");
     localizePage();
+    $.mobile.loading('hide');
 }
 
-
+/*
 $(document).on("pageload", function(event, ui) { //pageLoad only gets triggered when we do a mobile.changePage() from within the code. Not when the app starts.
     console.log("In pageload");
 });
@@ -230,6 +216,8 @@ $(document).on("pageinit", function(event, ui) { //pageinit gets triggered when 
     //onLanguageDeviceReady(); //Set / Check the language first. //Commented out because it works in pagebeforecreate instead and hence works with all html strings.
     //localizePage();
 });
+*/
+
 
 /*
 Even though the documentation says that this should
@@ -240,6 +228,7 @@ $(document).on("pageshow", function(event, ui) {
     //ui.prevPage.remove(); 
     //Commented out because it messes with going back from a page (it is removed, so throws error)
 });
+
 
 /*
     On Pagechange, the logic for touch, swipe and scroll events are executed.
@@ -418,6 +407,12 @@ function exeMenuPageOpen(){
         console.log("Detected your device platform as: iOS!");
         var exeMenuLink2 = localStorage.getItem("baseURL") + "/" + exeMenuPage2;
 	    debugLog("Ustad Mobile Content: iOS: You will go into: exeMenuLink " + exeMenuLink2);
+    }else if(platform == "bb10"){
+        //Do nothing
+        console.log("Detected your device platform as: Blackberry 10!");
+        var exeMenuLink2 = localStorage.getItem("baseURL") + "/" + exeMenuPage2;
+	    debugLog("Ustad Mobile Content: Blackberry 10: You will go into: exeMenuLink " + exeMenuLink2);
+        alert("BB10TEST: Ustad Mobile Content: Blackberry 10: You will go into: exeMenuLink " + exeMenuLink2);
     }else{
         console.log("Unable to detect your device platform. Error.");	
     }
@@ -445,6 +440,9 @@ function openMenuLink(linkToOpen, transitionMode){
     }else if(platform == "ios"){
         console.log("Detected iOS platform.");
         //Do nothing
+    }else if(platform == "bb10"){
+        console.log("Detected Blackberry 10 platform.");
+        //Do nothing
     }else{
         console.log("Your platform cannot be detected. Error.");
     }
@@ -460,20 +458,30 @@ function exeLastPageOpen(){
 //openPage2 named with a 2 so that doesnt' confuse with other page's openPage() functions, if any.
 //openPage2 is the one that calls window.open (not changePage() of jQuery).
 function openPage2(openFile){
-    
+    console.log("Opening page, platform is: " + platform);
     if(platform == "android"){
+        openFile = localStorage.getItem('baseURL') + "/" + openFile;
+        //openFile = "/www/" + openFile;
         //Do nothing, openFile = "ustadmobile_file.html";
     }else if(platform == "wp8"){
         openFile = "//www/" + openFile;
     }else if(platform == "ios"){
         //Do nothing.
         console.log("Detected your device is iOS");
+    }else if(platform == "bb10"){
+        //var baseurl = localStorage.getItem("baseURL");
+        //openFile = "" + openFile;
+        //Do nothing.
+        console.log("Detected your device is Blackberry 10");
     }else{
         console.log("Unable to detect your device platform. Error.");
     }
     console.log("Menu Links: Going to page: " + openFile);
+    //alert("BB10TEST: Menu Links: Going to page: " + openFile);
 	//window.open(openFile).trigger("create");
-    window.open(openFile);
+    //window.open(openFile);
+    //window.open(openFile, '_self'); //BB10 specific changes so that it loads in current child webview
+    window.open(openFile, '_blank');
 }
 
 

@@ -60,7 +60,14 @@ If you need a commercial license to remove these restrictions please contact us 
 	<link rel='stylesheet' href='css/qunit-1.12.0.css' type='text/css'/>
     <meta name="viewport" content="width=device-width, initial-scale=1">
       <link rel='stylesheet' href='jqm/jquery.mobile-1.3.2.css' type='text/css'/>
-
+<script>
+        //cowsdung = $("#cowdung").val();
+        $("#cowdung").change(function(){
+                                        cowsdung = $(this).val();
+                                        console.log("Cow set is: " + cowsdung);
+                                        }
+                                        );
+    </script>
     </head>
   <body>
 	<br></br>
@@ -68,6 +75,7 @@ If you need a commercial license to remove these restrictions please contact us 
     <p style="background-image:url('res/umres/banne1.png'); background-repeat:repeat-x;margin-top:-8px;" >.</p>   
     <h3><span id="getcoursestitletext" class="exeTranslated" data-exe-translation="Get Courses">Get CoursesF</span></h3>
     </div>
+    <p>Download public Ustad Mobile courses</p>
     <div data-role="listview" id="packageList2">
         <ul data-role="listview" data-inset="true" data-filter="true" id="packageList">
 		<br></br>
@@ -75,7 +83,9 @@ If you need a commercial license to remove these restrictions please contact us 
     </div>
     
     <div style="margin-top:20px;">
-        <input onclick='listPackagesFromServer()' type="button" id="listPackage"  name="listPackage" class="exeTranslated2" data-exe-translation-attr = "value" value="List Courses from Server"/>
+        <input onclick='listPackagesFromServer()' type="button" id="listPackage"  name="listPackage" class="exeTranslated2" data-exe-translation-attr = "value" value="List courses"/>
+        <p><i>You will need your device connected to the internet / network to get Courses from Ustad Mobile public library</i></p>
+        <!--<input type="text" name="cowdung" id="cowdung" value="/sdcard/external_sd/BigBoobies3.xml"  />-->
 		<!--<input onclick='listPackagesFromServer2()' type="button" id="listPackage"  name="listPackage" value="Test function call"/>-->
 		<div data-role="footer" data-position="fixed" style="text-align: center;" data-tap-toggle="false"> 
 			<a style="text-align: center;" data-rel="back" data-direction="reverse" data-icon="ui-btn-left" data-theme="a"><span id="gobackfootertext" class="exeTranslated" data-exe-translation="Go back">Go backF</span></a>
