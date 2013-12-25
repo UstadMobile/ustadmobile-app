@@ -1,7 +1,12 @@
 #!/bin/bash
 
-# Release settings - put your values in here
-
+# Release settings - Path to Java keystore
 KEYSTORE=/path/to/keystore
+
+# Alias of key to use in java keystrore fil
+KEYALIAS=androidrelease
+
+export KEYSTORE
+export KEYALIAS
 
 
