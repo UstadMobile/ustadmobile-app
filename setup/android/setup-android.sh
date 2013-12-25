@@ -55,9 +55,16 @@ FILEDEST=$WORKINGDIR/$TARGETDIR/ustadmobile/www
 if [ -e spec.html ]; then
     rm spec.html
 fi
+
 echo "copying assets";
 cp -r *.html img js jqm res locale $FILEDEST
+
 cp css/index.css css/jquery.mobile-1.3.2.min.css css/qunit-1.12.0.css $FILEDEST/css
+
+cd $FILEDEST/res/icon
+ls | grep -v "android" | xargs rm -r
+cd ../screen
+ls | grep -v "android" | xargs rm -r
 
 #make the base64 versions of javascript files that get copied into directories
 cd $WORKINGDIR

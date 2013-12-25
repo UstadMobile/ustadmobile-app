@@ -1,7 +1,0 @@
-{
-    "version": "1.0.0",
-    "name": "com.blackberry.io.filetransfer",
-    "description": "BlackBerry 10 File Transfer APIs",
-    "license": "Apache 2.0",
-    "engines": []
-}

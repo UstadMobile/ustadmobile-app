@@ -86,8 +86,8 @@ function loadLocale(localeCode) {
 function gotFSumc(fileSystem){
     var getDir;
     var getDir2Pre;
-    //if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1){
-    if(platformCommon == "bb10"){
+    if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1){
+    //if(platformCommon == "bb10"){
         console.log("ustadmobile-common.js: Detected Blackberry 10 device.");
         blackberry.io.sandbox = false;
         getDir = blackberry.io.SDCard + "/ustadmobileContent";
