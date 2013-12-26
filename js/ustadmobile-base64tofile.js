@@ -146,7 +146,7 @@ If you need a commercial license to remove these restrictions please contact us 
 		
 		function gotB64FileWriter(writer){
 			debugLog("Writing the contents..");
-            writer.seek(writer.length);
+
 			writer.onwrite = function(evt) {
 				debugLog("Base64 file written to a new file. Going to next file(if any)..");
                 runb2fcallback(base64ToFileCallback, "base64ToFile success");

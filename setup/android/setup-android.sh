@@ -92,6 +92,10 @@ cp res/icon/android/icon-96-xhdpi.png $FILEDEST/../platforms/android/res/drawabl
 
 sed -i.backup -e 's/hardwareAccelerated=\"true\"/hardwareAccelerated=\"false\"/' $WORKINGDIR/build/ustadmobile/platforms/android/AndroidManifest.xml
 
+#Future changes: (Varuna Singh - 25-12-2013)
+sed -i.backup2 -e 's/ACCESS_FINE_LOCATION\"/ACCESS_FINE_LOCATION\" android:required=\"false\"/' $WORKINGDIR/build/ustadmobile/platforms/android/AndroidManifest.xml
+sed -i.backup3 -e 's/ACCESS_FINE_LOCATION\"/ACCESS_COARSE_LOCATION\" android:required=\"false\"/' $WORKINGDIR/build/ustadmobile/platforms/android/AndroidManifest.xml
+
 #For splashscreen, need to make these additions to config.xml (inside the <widget> tag):
 #    <preference name="splashscreen" value="umsplash" />
 #    <preference name="splashScreenDelay" value="3000" />
