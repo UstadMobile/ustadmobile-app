@@ -60,6 +60,11 @@ echo "copying assets";
 cp -r *.html img js jqm res locale $FILEDEST
 cp css/index.css css/jquery.mobile-1.3.2.min.css css/qunit-1.12.0.css $FILEDEST/css
 
+cd $FILEDEST/res/icon
+ls | grep -v "ios" | xargs rm -r
+cd ../screen
+ls | grep -v "ios" | xargs rm -r
+
 #make the base64 versions of javascript files that get copied into directories
 cd $WORKINGDIR
 
@@ -72,6 +77,15 @@ echo "Done - now cd into $TARGETDIR/ustadmobile and run"
 RESLIST="hdpi ldpi mdpi xhdpi"
 
 cd $SRCDIR
+
+
+#for res in $RESLIST; do
+#echo cp -v res/icon/android/icon-??-$res.png $FILEDEST/../platforms/android/res/drawable-$res/icon.png
+#cp -v res/icon/android/icon-??-$res.png $FILEDEST/../platforms/android/res/drawable-$res/icon.png
+##cp -v res/screen/android/umsplash-??-$res.png $FILEDEST/../platforms/android/res/drawable-$res/umsplash.png
+#done
+#cp res/icon/android/icon-96-xhdpi.png $FILEDEST/../platforms/android/res/drawable/icon.png
+##cp res/screen/android/umsplash-96-xhdpi.png $FILEDEST/../platforms/android/res/drawable/umsplash.png
 
 
 
