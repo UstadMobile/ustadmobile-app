@@ -111,7 +111,14 @@ If you need a commercial license to remove these restrictions please contact us 
 				//writeNextBase64();
                 if (fileToOpen != null){
                     //$.mobile.loading('hide');
+                    if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1){
+                        console.log("Detected BB10, appending file:// to open external HTMLs.");
+                        fileToOpen = "file://" + fileToOpen;
+                        console.log("Going to file: " + fileToOpen);
+                        window.open(fileToOpen, '_self');
+                    }else{
                     window.open(fileToOpen, '_self').trigger("create");
+                    }
                 }
 			};
 

@@ -9,7 +9,7 @@ TARGETDIR=""
 SRCDIR="../../"
 
 WORKINGDIR=$(pwd)
-TARGETDIR="./build2"
+TARGETDIR="./build"
 
 #clean
 if [ -d $TARGETDIR ]; then
@@ -59,6 +59,11 @@ echo "copying assets";
 cp -r *.html img js jqm res locale $FILEDEST
 cp css/index.css css/jquery.mobile-1.3.2.min.css css/qunit-1.12.0.css $FILEDEST/css
 
+#cd $FILEDEST/res/icon
+#ls | grep -v "blackberry10" | xargs rm -r
+#cd ../screen
+#ls | grep -v "blackberry10" | xargs rm -r
+
 #make the base64 versions of javascript files that get copied into directories
 cd $WORKINGDIR
 
@@ -80,6 +85,34 @@ cp res/icon/android/icon-96-xhdpi.png $FILEDEST/../platforms/android/res/drawabl
 #cp res/screen/android/umsplash-96-xhdpi.png $FILEDEST/../platforms/android/res/drawable/umsplash.png
 
 #Make these additions to config.xml
+cd $WORKINGDIR
+cd $TARGETDIR/ustadmobile/www/
+
+cp config.xml config.xml.original
+
+cp config.xml config.xml.temp2
+sed "s/access origin=\"\*\"/access subdomains=\"true\" uri=\"\*\" origin=\"\*\" /g" config.xml.temp2 > config.xml
+rm -f config.xml.temp2
+
+cp config.xml config.xml.temp
+
+
+sed '\|</widget>| i \
+<preference name="websecurity" value="disable" /> <!--Default: enable: Dev only! --> \
+<rim:permissions> \
+<rim:permit>access_shared</rim:permit> \
+</rim:permissions>
+' config.xml.temp > config.xml
+
+rm -f config.xml.temp
+
+echo "cordova build" > ../buildandemulate.sh
+echo "cordova emulate" >> ../buildandemulate.sh
+
+echo "cordova build" > ../buildandrun.sh
+echo "cordova run" >> ../buildandrun.sh
+
+#Make sure you: sudo chmod a+x ../buildandrun.sh and sudo chmod a+x ../buildandemulate.sh to run those above made scripts.
 
 #<access subdomains="true" uri="*" origin="*" />
 #<preference name="websecurity" value="disable" /> <!--Default: enable: Dev only! -->

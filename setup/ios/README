@@ -1,6 +1,21 @@
 Ustad Mobile iOS builder
 17/Dec/2013 - Last updated by Varuna Singh
 
+Before you build: Pre-Requisites:
+
+Have Xcode
+Have iPhone SDK installed 
+(Typically post Mac OSX.7)
+Have cordova and npm
+
+run this before building and emulating.
+
+sudo npm install -g ios-sim
+The above command will make sure the project can be simulated (emulated) in the iOS simulator.
+
+Have fun!
+
+
 To build:
 
 ./setup-ios.sh 

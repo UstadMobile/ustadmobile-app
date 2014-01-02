@@ -1,6 +1,12 @@
 Ustad Mobile blackberry10 builder
 16/Dec/2013 - Last updated by Varuna Singh
 
+Pre-Requisits:
+
+Make sure you have Cordova, npm, Blackberry SDK, Blackberry 10 Simulator (for emulation).
+
+Before you emulate it, make sure the BB10 simulator is running. Or this will throw an error. 
+
 To build:
 
 ./setup-blackberry10.sh 
