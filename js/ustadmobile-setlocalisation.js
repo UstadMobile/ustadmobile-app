@@ -28,23 +28,41 @@ function onLanguageDeviceReady(){
     var devicelanguage = localStorage.getItem('checklanguage');
     console.log("Local Storage set Language is: " + selectedlanguage);
     console.log("Local Storage set Device Language is: " + devicelanguage);
-    if (selectedlanguage == null && devicelanguage != null ){   // If this is the app's first run (device language is set on ustadmobile.js file)
+    if (selectedlanguage == null && devicelanguage != null ){   // The app's first run (selectedlanguage is null) and detected a device language..
         selectedlanguage = devicelanguage;
-        console.log("Setting the default language as device's language: " + selectedlanguage);
+                            //To be replaced with filecheck logic.
+            //Language check.
+        if (selectedlanguage == "English"){
+            selectedlanguage = "en";
+            console.log("Setting the language as device's language: " + selectedlanguage);
+        }else if(selectedlanguage == "Arabic"){
+            selectedlanguage = "ar";
+            console.log("Setting the language as device's language: " + selectedlanguage);
+        }else{
+            selectedlanguage = "default";   //We set it at default as we will need to check again.
+            console.log("Setting the default language as device's language: " + selectedlanguage);
+        }
         setLanguageAppStart(selectedlanguage);
-    }else if (selectedlanguage == "default" && devicelanguage != null){    //Second run..
-        //Check if device language file is available. 
-        
-        //if Not, set default as: en 
+    }else if (selectedlanguage == "default" && devicelanguage != null){    //If app didn't get language first time, check again. (this occurs sometimes)
         selectedlanguage = devicelanguage;
-        console.log("App second run: Setting language as device: " + devicelanguage);
+                            //To be replaced with filecheck logic.
+        if (selectedlanguage == "English"){
+            selectedlanguage = "en";
+            console.log("Setting the language as device's language: " + selectedlanguage);
+        }else if(selectedlanguage == "Arabic"){
+            selectedlanguage = "ar";
+            console.log("Setting the language as device's language: " + selectedlanguage);
+        }else{
+            selectedlanguage = "en";        //English is the default language and it is set here.
+            console.log("Setting the language as default since language not configured in ustad mobile: " + selectedlanguage);
+        }
         setLanguageAppStart(selectedlanguage);
     }else if (selectedlanguage == null && devicelanguage == null){    //If ustadmobile.js fails to set the language / undestand the language of the device, default to English.
         selectedlanguage = "default";
-        console.log("App first run: Setting language as null.");
+        console.log("App first run: Setting language as default/english.");
         setLanguageAppStart(selectedlanguage);
-    }else if (selectedlanguage == null){    //First page load.
-        selectedlanguage = "en";
+    }else if (selectedlanguage == null){    //First page load. //Don't think this will ever be called..
+        selectedlanguage = "default";
         console.log("Setting the default language as English: " + selectedlanguage);
         setLanguageAppStart(selectedlanguage);
     }else{  // Second or more run of the App, ie: language has been already set by default or by the user.
