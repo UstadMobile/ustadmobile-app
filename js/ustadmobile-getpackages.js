@@ -805,8 +805,19 @@ If you need a commercial license to remove these restrictions please contact us 
             //if(fileXMLCallback != null && typeof fileXMLCallback === "function"){
                 alert("Download finished.");
             //}
-			debugLog("Now transfering ustadmobile javascripts and logic to the package folder: " + packageFolderName);
-			writeNextBase64ToFile(packageFolderName);
+
+
+		    //debugLog("Now transfering ustadmobile javascripts and logic to the package folder: " + packageFolderName);
+		    //writeNextBase64ToFile(packageFolderName);
+
+
+            if(fileXMLCallback != null && typeof fileXMLCallback === "function"){
+                console.log("You are testing. Good job!");       
+            }else{
+                debugLog("Now transfering ustadmobile javascripts and logic to the package folder: " + packageFolderName);
+		        writeNextBase64ToFile(packageFolderName);
+            }       
+            
             
             // For tests..
             if( allFileDownloadCallback != null) {
