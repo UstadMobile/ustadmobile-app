@@ -121,8 +121,10 @@ function startTestOnLoadCounter(){
     allBookFoundCallback = checkBooksOK;
     populateNextDir();
 	
-	var usern = "";
-	var passw = "";
+	//var usern = "";
+    var usern = prompt("Enter test username");
+	//var passw = "";
+    var passw = prompt("Enter test password");
 	//Code to get username (usern) and password (passw) goes here.
 
     umlogin(usern,passw, 'http://intranet.paiwastoon.net/umcloud/app/login.xhtml', checkLoginOK);

@@ -29,14 +29,21 @@ function onLanguageDeviceReady(){
     console.log("Local Storage set Language is: " + selectedlanguage);
     console.log("Local Storage set Device Language is: " + devicelanguage);
     if (selectedlanguage == null && devicelanguage != null ){   // The app's first run (selectedlanguage is null) and detected a device language..
+        var esp = 'espa' + '\u00f1' + 'ol';
+        var ara = '\u0627\u0644\u0639\u0631\u0628\u064A\u0629';
+        console.log("ara: " + ara);
         selectedlanguage = devicelanguage;
+        console.log("1The device lang is: |" + devicelanguage + "|");
                             //To be replaced with filecheck logic.
-            //Language check.
-        if (selectedlanguage == "English"){
+            //Language check. //español //العربية
+        if (devicelanguage == "English"){
             selectedlanguage = "en";
             console.log("Setting the language as device's language: " + selectedlanguage);
-        }else if(selectedlanguage == "Arabic"){
+        }else if(devicelanguage == ara){  // العربية
             selectedlanguage = "ar";
+            console.log("Setting the language as device's language: " + selectedlanguage);
+        }else if(devicelanguage == esp){ //español
+            selectedlanguage = "es";
             console.log("Setting the language as device's language: " + selectedlanguage);
         }else{
             selectedlanguage = "default";   //We set it at default as we will need to check again.
@@ -45,16 +52,24 @@ function onLanguageDeviceReady(){
         setLanguageAppStart(selectedlanguage);
     }else if (selectedlanguage == "default" && devicelanguage != null){    //If app didn't get language first time, check again. (this occurs sometimes)
         selectedlanguage = devicelanguage;
+        var esp = 'espa' + '\u00f1' + 'ol';
+        var ara = '\u0627\u0644\u0639\u0631\u0628\u064A\u0629';
+        console.log("ara: " + ara);
+        console.log("esp: " + esp);
+        console.log("2The device lang is: |" + devicelanguage + "|");
                             //To be replaced with filecheck logic.
-        if (selectedlanguage == "English"){
+        if (devicelanguage == "English"){
             selectedlanguage = "en";
             console.log("Setting the language as device's language: " + selectedlanguage);
-        }else if(selectedlanguage == "Arabic"){
+        }else if(devicelanguage == ara){ //العربية
             selectedlanguage = "ar";
+            console.log("Setting the language as device's language: " + selectedlanguage);
+        }else if(devicelanguage == esp){ //español
+            selectedlanguage = "es";
             console.log("Setting the language as device's language: " + selectedlanguage);
         }else{
             selectedlanguage = "en";        //English is the default language and it is set here.
-            console.log("Setting the language as default since language not configured in ustad mobile: " + selectedlanguage);
+            console.log("2Setting the language as default since language not configured in ustad mobile: " + selectedlanguage);
         }
         setLanguageAppStart(selectedlanguage);
     }else if (selectedlanguage == null && devicelanguage == null){    //If ustadmobile.js fails to set the language / undestand the language of the device, default to English.
