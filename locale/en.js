@@ -54,6 +54,8 @@ messages = {
 "List Courses from Server" : "List Courses from Server",
 "List Courses" : "List Courses",
 "Get Courses" : "Get Courses",
+"Back" : "Back",
+"Forward" : "Forward",
 
 };
 

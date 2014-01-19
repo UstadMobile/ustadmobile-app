@@ -101,7 +101,8 @@ if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("
 }
  */
 
-foldersToScan = ["/ext_card/ustadmobile", "/sdcard/ustadmobile", "/sdcard/ustadmobileContent", "/ustadmobileContent/umPackages/", "/ustadmobileContent/"];
+foldersToScan = ["/ext_card/ustadmobile", "/ext_card/ustadmobileContent", "/sdcard/ustadmobile", "/sdcard/ustadmobileContent", "/ustadmobileContent/umPackages/", "/ustadmobileContent/"];
+//we change this again below.
 
 //var foldersToScan = ["/ext_card/ustadmobile", "/sdcard/ustadmobile", "/sdcard/ustadmobileContent", "/ustadmobileContent/umPackages/", "/ustadmobileContent/"];
 
@@ -139,10 +140,10 @@ function onBLDeviceReady() {
         blackberry.io.sandbox = false;
         var bbumfolder = blackberry.io.SDCard + "/ustadmobileContent";
         console.log("Added: " + bbumfolder + " to UM Course List Folders To Scan.");
-        foldersToScan = ["/ext_card/ustadmobile", "/sdcard/ustadmobile", "/sdcard/ustadmobileContent", "/ustadmobileContent/umPackages/", "/ustadmobileContent/", bbumfolder];
+        foldersToScan = ["/ext_card/ustadmobile", "/ext_card/ustadmobileContent", "/sdcard/ustadmobile", "/sdcard/ustadmobileContent", "/ustadmobileContent/umPackages/", "/ustadmobileContent/", bbumfolder];
         
     }else{
-        foldersToScan = ["/ext_card/ustadmobile", "/sdcard/ustadmobile", "/sdcard/ustadmobileContent", "/ustadmobileContent/umPackages/", "/ustadmobileContent/"];
+        foldersToScan = ["/ext_card/ustadmobile", "/ext_card/ustadmobileContent", "/sdcard/ustadmobile", "/sdcard/ustadmobileContent", "/ustadmobileContent/umPackages/", "/ustadmobileContent/"];
     }
 
     var usern= localStorage.getItem('username');
@@ -370,7 +371,7 @@ function openBLPage(openFile){
     bookpath = bookpathSplit[bookpathSplit.length-1];
     var userSetLanguage = localStorage.getItem('language');
     console.log("The user selected language is : " + userSetLanguage + " and the current Book Path is: " + bookpath);
-    userSetLanguageString = "var ustadlocalelang = \"" + userSetLanguage + "\"; console.log(\"DAFT PUNK GET LUCKY\");";
+    userSetLanguageString = "var ustadlocalelang = \"" + userSetLanguage + "\"; console.log(\"DAFT PUNK GET LUCKY: \" + ustadlocalelang);";
     localStorage.setItem('ustadmobile-settings.js', userSetLanguageString);
     localStorageToFile(bookpath, "ustadmobile-settings.js", openFile);  //Also is the function that opens the book.
     //window.open(openFile);

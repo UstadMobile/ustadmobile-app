@@ -156,6 +156,9 @@ function callOnLanguageDeviceReady(){
         platform = "bb10";
         //alert("Blackberry detected in callOnLanguageDeviceReady()");
         onLanguageContentReady();
+    }else if(navigator.userAgent.indexOf("Mozilla") !== -1 && navigator.userAgent.indexOf("Gecko") !== -1 ){
+            console.log("Detected Mozilla Firefox Browser");
+            //onLanguageContentReady();
     }else{
         //alert("Could not verify your device or platform. Your device isn't tested with our developers. Error. Contact an ustad mobile developer.");
     }
@@ -164,8 +167,10 @@ function callOnLanguageDeviceReady(){
 
 function onLanguageContentReady(){
     console.log("*****************************IN ONLANGUAGECONTENTREADY()!!*******************************");
+    console.log("ustadlocalelang is: " + ustadlocalelang);
     if (typeof ustadlocalelang === 'undefined') {
-        var ustadlocalelang = "default";
+        //var ustadlocalelang = "default";
+        ustadlocalelang = "default";
         //ustadlocalelang = "default";
     }
 
@@ -190,6 +195,8 @@ function onLanguageContentReady(){
             console.log("Detected platform as : BB10");
             var baseURL = localStorage.getItem("baseURL");
             //alert("BB10TEST: baseUrl: " + baseURL);
+        }else if(navigator.userAgent.indexOf("Mozilla") !== -1 && navigator.userAgent.indexOf("Gecko") !== -1 ){
+            console.log("Detected Mozilla Firefox Browser");
         }else{
             console.log("Unable to verify your device or platform. Error.");
             //alert("Your device/platform isn't recgnized by this device. So there will/might be errors. Contact an Ustad Mobile Developer.");

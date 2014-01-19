@@ -47,5 +47,5 @@ If you need a commercial license to remove these restrictions please contact us 
 This has javascript settings.
 
 */
-var ustadlocale;
+//var ustadlocale;
 console.log("Current value for ustadlocale is: " + ustadlocale);

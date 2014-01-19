@@ -112,8 +112,15 @@ function checkBase64ToFileConversionOK(arg){
         });
 }
 
-function startTestOnLoadCounter(){
+function testLocalisationLanguage(arg){
+    test("Check localisation language sets properly..", function(){
+        ok(arg == "localisation language test success", "Language set verified");
+        });
+}
 
+function startTestOnLoadCounter(){
+    
+    
     setTimeout("checkSomethingElse()", 500);
 
     currentEntriesIndex = 0;
@@ -129,6 +136,8 @@ function startTestOnLoadCounter(){
 
     umlogin(usern,passw, 'http://intranet.paiwastoon.net/umcloud/app/login.xhtml', checkLoginOK);
 
+    testSetlanguage("es", "in", "en", testLocalisationLanguage);
+
     testPackageListXML('http://www.ustadmobile.com/books/all_ustadpkg_html5.xml', 'all', checkPackageListXMLProcessingOK);
 
     testPackageListXML('http://www.ustadmobile.com/books/measurementDemoV2AOL_ustadpkg_html5.xml', 'all/measurementDemoV2AOL', checkPackageXMLProcessingOK);    
@@ -138,7 +147,11 @@ function startTestOnLoadCounter(){
     //if(base64TestVar[1] == "base64UnitTestOutput.js"){
     //setTimeout("writeBase64(base64TestVar, checkBase64ToFileConversionOK)", 500);
     //}
-
+    
+    /*
+    testLocalisationLanguage (x, y, z);
+    */
+    
 
 
 }
