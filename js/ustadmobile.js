@@ -101,7 +101,13 @@ if(navigator.userAgent.indexOf("Android") !== -1){
         platform = "bb10";
         //alert("Blackberry detected in ustadmobile.js()");
  
-    }else{
+    }else if(navigator.userAgent.indexOf("Firefox") !== -1){
+        platform = "firefox";
+        debugLog("You are using Firefox on ustadmobile.js()"); 
+    }else if(navigator.userAgent.indexOf("Chrome") !== -1){
+        platform = "chrome";
+        debugLog("You are using Chrome on ustadmobile.js()"); 
+    }else{          // More to add: IE10: MSIE 10, etc.
         //alert("Could not verify your device or platform. Your device isn't tested with our developers. Error. Contact an ustad mobile developer.");
     }
 
@@ -156,10 +162,13 @@ function callOnLanguageDeviceReady(){
         platform = "bb10";
         //alert("Blackberry detected in callOnLanguageDeviceReady()");
         onLanguageContentReady();
-    }else if(navigator.userAgent.indexOf("Mozilla") !== -1 && navigator.userAgent.indexOf("Gecko") !== -1 ){
-            console.log("Detected Mozilla Firefox Browser");
-            //onLanguageContentReady();
-    }else{
+    }else if(navigator.userAgent.indexOf("Firefox") !== -1){
+        console.log("Detected Mozilla Firefox Browser");
+        onLanguageContentReady();
+    }else if(navigator.userAgent.indexOf("Chrome") !== -1){
+        console.log("Detected Chrome/Chromium Browser");
+        onLanguageContentReady();
+    }else{              // More to add: IE10: MSIE 10, etc.
         //alert("Could not verify your device or platform. Your device isn't tested with our developers. Error. Contact an ustad mobile developer.");
     }
     
@@ -167,11 +176,12 @@ function callOnLanguageDeviceReady(){
 
 function onLanguageContentReady(){
     console.log("*****************************IN ONLANGUAGECONTENTREADY()!!*******************************");
-    console.log("ustadlocalelang is: " + ustadlocalelang);
     if (typeof ustadlocalelang === 'undefined') {
         //var ustadlocalelang = "default";
         ustadlocalelang = "default";
         //ustadlocalelang = "default";
+    }else{
+        console.log("Already set ustadlocalelang is: " + ustadlocalelang);
     }
 
     console.log("App set language is: " + ustadlocalelang );
@@ -195,20 +205,28 @@ function onLanguageContentReady(){
             console.log("Detected platform as : BB10");
             var baseURL = localStorage.getItem("baseURL");
             //alert("BB10TEST: baseUrl: " + baseURL);
-        }else if(navigator.userAgent.indexOf("Mozilla") !== -1 && navigator.userAgent.indexOf("Gecko") !== -1 ){
+        }else if(navigator.userAgent.indexOf("Firefox") !== -1){
             console.log("Detected Mozilla Firefox Browser");
-        }else{
+            var baseURL = "";
+        }else if(navigator.userAgent.indexOf("Chrome") !== -1){
+            console.log("Detected Chrome/Chromium Browser");
+            var baseURL = "";
+        }else{                      // More to add: IE10: MSIE 10, etc.
             console.log("Unable to verify your device or platform. Error.");
             //alert("Your device/platform isn't recgnized by this device. So there will/might be errors. Contact an Ustad Mobile Developer.");
             var baseURL = localStorage.getItem("baseURL");
         }
-         //else, platform not set yet.
-        //backupfilename = baseURL + "/" + "en.js";
-      filename = baseURL + "/locale/" + ustadlocalelang + ".js";      
-      console.log("Loading language js: " + filename + " in course (dynamically)..");
-         //alert("BB10TEST: Loading language js: " + filename + " in course (dynamically)..");
-        //$('head').append($('<script>').attr('type', 'text/javascript').attr('src', backupfilename));
-      $('head').append($('<script>').attr('type', 'text/javascript').attr('src', filename));
+	
+	console.log("baseURL: " + baseURL);
+	if (baseURL == null || baseURL == ''){
+		baseURL='';
+	}else{
+		baseURL = baseURL + "/"; 
+	}
+      	filename = baseURL + "locale/" + ustadlocalelang + ".js";      
+      	console.log("Loading language js: " + filename + " in course (dynamically)..");
+     	 $('head').append($('<script>').attr('type', 'text/javascript').attr('src', filename));
+
      }
     console.log(" Content language javascript: " + filename + ".js Loading done.");
     localizePage();
