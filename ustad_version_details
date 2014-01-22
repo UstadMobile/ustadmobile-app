@@ -1,0 +1,3 @@
+0.0.85 :
+Ability to get courses from django server by id.: tested in dev mode and updated get packages java script. 
+It will go live in 0.0.9 when eXe is sorted and server too

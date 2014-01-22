@@ -43,6 +43,11 @@ If you need a commercial license to remove these restrictions please contact us 
    This is the javasript that accompanies the page where user requests for a list of ustad mobile packages available and is able to select and fetch all the files such that it will be available Over The Air on the device itself. 
 -->
 */
+
+    var server = "78.47.197.237:8010";
+    var serverEXeExport = "http://" + server + "/media/eXeExport/";
+    var serverGetCourse = "http://" + server + "/getcourse/?id=";
+    //"http://78.47.197.237:8010/getcourse/?id="
     var cowsdung; //BB10TEST: Testing purposes.
 
     var globalXMLListFolderName = "all";
@@ -392,6 +397,8 @@ If you need a commercial license to remove these restrictions please contact us 
     function startFileDownload(fileToDownload, folderName, callback){
         console.log("TESTS1: folderName: " + folderName);
         console.log("TESTS1: packageFolderName: " + packageFolderName);
+        console.log("fileToDownload is : " + fileToDownload);
+        console.log("packageString: " + packageString);
         var uriSplit = fileToDownload.split("/");
         var lastPos = uriSplit.length - 1;
     
@@ -416,6 +423,8 @@ If you need a commercial license to remove these restrictions please contact us 
         debugLog(" Downloading the file: " + fileToDownload + " to folder: " + rootPath + "/ustadmobileContent/" + folderName);
         var filePathDownload = ""; //nullify the path for every download.
         uri = encodeURI(fileToDownload); //needed by fileTransfer Cordova API.
+
+
         if (folderName == ""){
             if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1){
                 blackberry.io.sandbox = false;
@@ -427,9 +436,22 @@ If you need a commercial license to remove these restrictions please contact us 
             //fileToDownload = "http://www.ustadmobile.com/books/" + currentFileName;
             //filePathDownload = rootPath + "/ustadmobileContent/" + currentFileName;
         }else{ //If downloading the actual course.
-            
+            //We need to check here if it is from the django server or public server
             if(typeof fileFolder === 'undefined'){   //09122013
-                fileToDownload = "http://www.ustadmobile.com/books/" + folderName + "/" + currentFileName;
+
+                //if(packageString.indexOf("78.47.197.237") !== -1){        
+                if(packageString.indexOf(server) !== -1){
+                    var djangoserverurlSplit = packageString.split("/");
+                    var courseuuid = djangoserverurlSplit[5];
+                    console.log("course unique id: " + courseuuid);
+                    console.log("Downloading from Django server");
+                    //fileToDownload = "http://78.47.197.237:8010/media/eXeExport/" + courseuuid + "/" + folderName + "/" + currentFileName;
+                    fileToDownload = serverEXeExport + courseuuid + "/" + folderName + "/" + currentFileName;
+                }else{
+                    console.log("Downloading from ustadmobile.com/books server");
+                    fileToDownload = "http://www.ustadmobile.com/books/" + folderName + "/" + currentFileName;
+                }
+                //fileToDownload = "http://www.ustadmobile.com/books/" + folderName + "/" + currentFileName;
                 
                 if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1){ // Blackberry 10 platforms only.
                     blackberry.io.sandbox = false;
@@ -445,8 +467,8 @@ If you need a commercial license to remove these restrictions please contact us 
                 console.log("fileToDownload: " + fileToDownload + " filePathDownload: " + filePathDownload);
                 console.log("TESTS: folderName: " + folderName);
                 console.log("TESTS: packageFolderName: " + packageFolderName);
-            }else{  //09122013
-                if(fileFolder != "books" && currentFileName != "all_ustadpkg_html5.xml"){
+            }else{  //09122013 //20012014
+                if(fileFolder != "books" && currentFileName != "all_ustadpkg_html5.xml" && fileToDownload.indexOf(server) === -1){ //server = 78.47.197.237
 					//Windows Phone specific code to make that folder.
 					var getDir = fileFolder;
 					debugLog("Checking if Directory: " + fileFolder + " exists. If not, creating it.");
@@ -458,11 +480,34 @@ If you need a commercial license to remove these restrictions please contact us 
                         getDir = "ustadmobileContent/" + folderName + "/" + fileFolder;
                     }
 					//getDir = "ustadmobileContent/" + folderName + "/" + fileFolder;
-                        
-					fileSystem.root.getDirectory(getDir, {create:true, exclusive: false}, function(){
+                    console.log("getDir: " + getDir);
+
+                    //has its own fileSystem now because we are calling this to download from Django server. This fixes an issue with that.
+                    window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function(fileSystem2){fileSystem2.root.getDirectory(getDir, {create:true, exclusive: false}, function(){
+						debugLog("Creation of folder: " + fileFolder + " in Course folder is a success.");}, function(){debugLog("Creation of folder: " + fileFolder + " in Course folder failed!");});}, function(){console.log("Unable to get fileSystem in course sub folder creation");});
+
+                    //original
+                    //fileSystem.root.getDirectory(getDir, {create:true, exclusive: false}, function(){
+					//	debugLog("Creation of folder: " + fileFolder + " in Course folder is a success.");}, function(){debugLog("Creation of folder: " + fileFolder + " in Course folder failed!");});
+
+					/*setTimeout(function(){fileSystem.root.getDirectory(getDir, {create:true, exclusive: false}, function(){
 						debugLog("Creation of folder: " + fileFolder + " in Course folder is a success.");}, function(){debugLog("Creation of folder: " + fileFolder + " in Course folder failed!");});
-			
-                    fileToDownload = "http://www.ustadmobile.com/books/" + folderName + "/" + fileFolder + "/" + currentFileName;
+                        },5000);*/ //Not ideal/useful because only the code inside runs after the set time, everything outside it runs immediately. 
+			    
+                    if(packageString.indexOf(server) !== -1){  //server = 78.47.197.237
+                        var djangoserverurlSplit = packageString.split("/");
+                        var courseuuid = djangoserverurlSplit[5];
+                        console.log("course unique id: " + courseuuid);
+                        console.log("Downloading from Django server");
+                        //fileToDownload = "http://78.47.197.237:8010/media/eXeExport/" + courseuuid + "/" + folderName + "/" + fileFolder + "/" + currentFileName;
+                        fileToDownload = serverEXeExport + courseuuid + "/" + folderName + "/" + fileFolder + "/" + currentFileName;
+                    }else{
+                        console.log("Downloading from ustadmobile.com/books server");
+                        fileToDownload = "http://www.ustadmobile.com/books/" + folderName + "/" + fileFolder + "/" + currentFileName;
+                    }
+            
+                    //fileToDownload = "http://www.ustadmobile.com/books/" + folderName + "/" + fileFolder + "/" + currentFileName;
+
                     debugLog("Saving file: " + currentFileName + " to course folder: " + fileFolder);
                     
                     if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1){ // Platform is blackberry 10
@@ -497,16 +542,10 @@ If you need a commercial license to remove these restrictions please contact us 
         debugLog("File Path to Download: " + filePathDownload);
         debugLog("Downloading uri: " + uri);
         //blackberry.io.home = /accounts/1000/appdata/com.toughra.ustadmobile.testDev_ustadmobilea3b0f56a/data/"
-        var fileTransfer = new FileTransfer();
-        // Using fileTransfer Cordova plugin.
-        //fileTransfer.download(
-        //filePathDownload = blackberry.io.SDCard + "/BigBoobies.xml";
-        //filePathDownload = "/sdcard/external_sd/BigBoobies3.xml";
-        
+        var fileTransfer = new FileTransfer();   
         console.log("filePathDownload is: " + filePathDownload);
-        //if (umgpPlatform != "bb10"){
-        if(navigator.userAgent.indexOf("Safari") === -1 || navigator.userAgent.indexOf("BB10") === -1){
-        //blackberry.io.filetransfer.download(
+
+        if(navigator.userAgent.indexOf("Safari") === -1 || navigator.userAgent.indexOf("BB10") === -1){ //If platform is NOT blackberry
         fileTransfer.download(
             uri,
             filePathDownload,
@@ -543,7 +582,10 @@ If you need a commercial license to remove these restrictions please contact us 
 					    }
                     }
                 }else{
-                   
+                   /*setTimeout(function(){
+                        downloadNextFile();
+                        },800);//Just testing a few things..
+                    */
                     downloadNextFile();
                 }
                               
@@ -838,4 +880,45 @@ If you need a commercial license to remove these restrictions please contact us 
         }   
     }
 
+    
+    function checkCourseID(){
+        var courseid = $("#courseid").val();
+        courseid = courseid.trim();
+        console.log("Starting check for course id: " + courseid);
+        //courseidURL = "http://78.47.197.237:8010/getcourse/?id=" + courseid;
+        courseidURL = serverGetCourse + courseid;
 
+        $.ajax({
+            type:"GET",
+            url: courseidURL,
+            dataType:"text",
+            success: function(data, textStatus, jqxhr){
+				//alert("Checking course a success with code:" + jqxhr.status);
+                //var courseURL = "http://78.47.197.237:8010/media/eXeExport/" + jqxhr.getResponseHeader('xmlDownload');
+                var courseURL = serverEXeExport + jqxhr.getResponseHeader('xmlDownload');
+                console.log("The xml download url is: " + courseURL);
+                //call the download
+                someThing(courseURL);
+				
+				},
+			complete: function (jqxhr, txt_status) {
+				console.log("Ajax call completed to server. Status: " + jqxhr.status);
+				},
+			error: function (jqxhr,b,c){
+				//alert("Couldn't complete request. Status:" + jqxhr.status);
+                alert("Couldn't connect to server:" + jqxhr.status);
+                console.log("Couldn't complete connection to server. Status: " + jqxhr.status);
+                
+				},
+			statusCode: {
+				200: function(){
+					console.log("Status code: 200");            
+					},
+				0: function(){
+                    alert("Couldn't connect to server. Check connectivity or server status [0]");
+			        console.log("Status code 0, unable to connect to server or no internet/intranet access");
+						}
+				}
+            });
+       
+    }
