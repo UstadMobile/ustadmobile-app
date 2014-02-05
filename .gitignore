@@ -2,5 +2,5 @@ build
 *~
 release-settings-android.sh
 cordova.js.ignore
-node_modules/
+node_modules/*
 
