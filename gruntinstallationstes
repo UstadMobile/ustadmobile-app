@@ -1,0 +1,49 @@
+1. Install Grunt: 
+    sudo npm install grunt
+2. Install these dependencies:
+    sudo apt-get install libfontconfig1 fontconfig libfontconfig1-dev libfreetype6-dev
+3. Copy Gruntfile.js and package.json in project:
+varuna@Varuna-Toughra:~/UstadMobile/cordovagit/ustadmobil-codehtml5cordova$ cat Gruntfile.js 
+/*global module:false*/
+module.exports = function(grunt) {
+
+  // Project configuration.
+  grunt.initConfig({
+        pkg: grunt.file.readJSON('package.json'), // the package file to use
+ 
+        qunit: {
+            all: {
+                options: {
+                    /*urls: ['path/to/testfile.html'],*/
+		    urls: ['ustadmobile_tests.html'],
+			
+                    timeout: 120000
+                }
+            }
+        }
+    });
+  
+  // These plugins provide necessary tasks.
+  grunt.loadNpmTasks('grunt-contrib-qunit');
+
+  // Default task.
+  grunt.registerTask('default', ['qunit']);
+
+};
+varuna@Varuna-Toughra:~/UstadMobile/cordovagit/ustadmobil-codehtml5cordova$ cat package.json 
+{
+  "name": "ustadmobile-codehtml5cordova",
+  "version": "0.0.8",
+  "devDependencies": {
+    "grunt": "~0.4.2",
+    "grunt-contrib-qunit": "~0.4.0",
+    "grunt-contrib-watch": ">=0.3.1",
+    "grunt-contrib-concat": "~0.3.0"
+  },
+  "scripts": {
+    "test": "grunt --verbose"
+  }
+}
+
+4. RUN THIS: sudo npm install grunt-contrib-qunit --save-dev
+5. Youre done

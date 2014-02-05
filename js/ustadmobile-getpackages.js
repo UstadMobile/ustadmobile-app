@@ -44,7 +44,7 @@ If you need a commercial license to remove these restrictions please contact us 
 -->
 */
 
-    var server = "78.47.197.237:8010";
+    var server = "svr2.ustadmobile.com:8010";
     var serverEXeExport = "http://" + server + "/media/eXeExport/";
     var serverGetCourse = "http://" + server + "/getcourse/?id=";
     //"http://78.47.197.237:8010/getcourse/?id="

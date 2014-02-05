@@ -128,12 +128,14 @@ var allBookFoundCallback = null;
 //
 function onBookListLoad() {
     //$.mobile.loading('hide');
+    console.log("Checking if device is ready...");
     document.addEventListener("deviceready", onBLDeviceReady, false);
 }
 
 // PhoneGap is ready - scan the first directory
 //
 function onBLDeviceReady() {
+    console.log("onBLDeviceReady() : I'm inside!");
     if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1){
         umCLPlatform = "bb10";
         console.log("Detected Blackberry 10 device in Course List Scan.");

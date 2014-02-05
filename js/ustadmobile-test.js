@@ -118,9 +118,9 @@ function testLocalisationLanguage(arg){
         });
 }
 
-function startTestOnLoadCounter(){
+function startTestOnLoadCounter(device){
     
-    
+    /*
     setTimeout("checkSomethingElse()", 500);
 
     currentEntriesIndex = 0;
@@ -147,12 +147,45 @@ function startTestOnLoadCounter(){
     //if(base64TestVar[1] == "base64UnitTestOutput.js"){
     //setTimeout("writeBase64(base64TestVar, checkBase64ToFileConversionOK)", 500);
     //}
-    
-    /*
-    testLocalisationLanguage (x, y, z);
     */
     
+    if (device == 'app'){
+	console.log("You are testing inside the app");
 
+	    //setTimeout("checkSomethingElse()", 500);
+        checkSomethingElse()
+	
+	    currentEntriesIndex = 0;
+    	currentFolderIndex = 0;
+    	allBookFoundCallback = checkBooksOK;
+    	populateNextDir();
+
+
+     	//var usern = "";
+    	var usern = prompt("Enter test username");
+        //var passw = "";
+    	var passw = prompt("Enter test password");
+        //Code to get username (usern) and password (passw) goes here.
+
+    	umlogin(usern,passw, 'http://intranet.paiwastoon.net/umcloud/app/login.xhtml', checkLoginOK);
+
+    	testSetlanguage("es", "in", "en", testLocalisationLanguage);
+
+    	testPackageListXML('http://www.ustadmobile.com/books/all_ustadpkg_html5.xml', 'all', checkPackageListXMLProcessingOK);
+
+    	testPackageListXML('http://www.ustadmobile.com/books/measurementDemoV2AOL_ustadpkg_html5.xml', 'all/measurementDemoV2AOL', checkPackageXMLProcessingOK);
+
+	
+
+    }else{
+	console.log("You are testing outside the app.");
+
+	    //setTimeout("checkSomethingElse()", 500);
+        checkSomethingElse();
+	
+	    testSetlanguage("es", "in", "en", testLocalisationLanguage);
+
+    }
 
 }
 

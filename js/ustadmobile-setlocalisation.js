@@ -28,7 +28,16 @@ function onLanguageDeviceReady(){
     var devicelanguage = localStorage.getItem('checklanguage');
     console.log("Local Storage set Language is: " + selectedlanguage);
     console.log("Local Storage set Device Language is: " + devicelanguage);
+    console.log("In here out!");
+    if (typeof selectedlanguage === 'undefined' || selectedlanguage === 'undefined'){
+        selectedlanguage = null;
+        console.log("selectedlanguage is nulled because it is not defined");
+    }else{
+        console.log("selectedlanguage is NOT undefined.");
+    }
     if (selectedlanguage == null && devicelanguage != null ){   // The app's first run (selectedlanguage is null) and detected a device language..
+    //if (typeof selectedlanguage === 'undefined' && devicelanguage != null ){   // The app's first run (selectedlanguage is null) and detected a device language..
+        console.log("In here you!");
         var esp = 'espa' + '\u00f1' + 'ol';
         var ara = '\u0627\u0644\u0639\u0631\u0628\u064A\u0629';
         var hin = '\u0939\u093F\u0928\u094D\u0926\u0940';
