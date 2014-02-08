@@ -59,6 +59,7 @@ $( document ).bind( "mobileinit", function() {
 
 //Set to 1 for Debug mode, otherwise 0 (will silence console.log messages)
 var USTADDEBUGMODE = 1;
+//var USTAD_VERSION = "0.0.86";
 
 /*
 Output msg to console.log if in debug mode

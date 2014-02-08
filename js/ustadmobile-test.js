@@ -46,6 +46,126 @@ If you need a commercial license to remove these restrictions please contact us 
     The javascript associated with qunit testing of ustad mobile application.
 */
 
+var qunitOutput = localStorage.getItem('qunitOutput');
+var milliseconds = (new Date).getTime();
+
+if (typeof qunitOutput === 'undefined' || qunitOutput == null || qunitOutput == "|"){
+    qunitOutput = "|";
+    console.log("Initiating Output for Qunit tests..");
+}else{
+    console.log("Tests already pending to be sent to server..");
+    console.log("Tests pending: " + qunitOutput);
+    //do nothing
+    //maybe check things
+}
+
+function sendOutput(){
+    var toSend = localStorage.getItem('qunitOutput');
+    if (toSend == null || typeof toSend === 'undefined' || toSend == "|"){
+        console.log("Corrupt unit test results or empty.");
+    }else{
+        console.log("Going to send the following test results to the server: " + toSend);
+        var param = 'unittestoutput=' + toSend;
+        var url = 'http://your.server/address/goes/here.html';
+        
+		$.ajax({
+			url: url,  
+			type: 'POST',        
+			data: param,
+			datatype: 'text',
+			success: function(data, textStatus, jqxhr){
+				debugLog("Logging to server: " + url + " a success with code:" + jqxhr.status);
+				runcallback(callback, jqxhr.status);
+				},
+			complete: function (jqxhr, txt_status) {
+				debugLog("Ajax call completed to server. Status: " + jqxhr.status);
+				},
+			error: function (jqxhr,b,c){
+				alert("Couldn't connect to server. Status Code:" + jqxhr.status);
+				debugLog("Couldn't connect to server. Status Code:" + jqxhr.status);
+				},
+			statusCode: {
+				200: function(){
+					//alert("Login success on the server!");
+					debugLog("Connection to server a success with statusCode 200.");
+                    var nothing = "";
+					localStorage.setItem('qunitOutput',nothing);
+					console.log("Qunit test Output reset to null.");
+					},
+				0: function(){
+					debugLog("Status code 0, unable to connect to server or no internet/intranet access");
+						}
+						}
+				
+		});
+    }
+}
+
+console.log ("With Qunit logs in 01");
+
+//Order by which tests run.
+//1.
+QUnit.begin(function( details ) {
+    console.log( "QUnit: Test Suit Starting." );
+});
+
+//2.
+QUnit.moduleStart(function( details ) {
+    console.log( "QUnit: Starting module: ", details.module );
+}); 
+
+//3.
+QUnit.testStart(function( details ) {
+    console.log( "QUnit: Now Running Test: ", details.module, details.name );
+});
+
+//4.
+QUnit.log(function( details ) {
+    console.log( "QUnit: Assertion complete. Details: ", details.result, details.message );
+});
+
+//5.
+QUnit.testDone(function( details ) {
+    var result = "fail";
+    //var platform = "";
+    var ustad_version = "ustad version";  
+    //var milliseconds = (new Date).getTime();
+    console.log( "QUnit: Finished Running Test: ", details.module, details.name, "Failed/total: ", details.failed, details.total, details.duration );
+    //call the function that packages and sends the test results as a HttpRequestHeader
+    if (details.failed == 0 ){
+        result = "pass";
+    }else{
+        result = "fail";
+    }
+    qunitOutput = qunitOutput + "new|" + details.name + "|" + result + "|" + details.duration + "ms|" +  milliseconds + "|" + platform + "|" + ustad_version + "|";
+    console.log("What the output looks so far: " + qunitOutput);
+    localStorage.setItem('qunitOutput', qunitOutput);
+    console.log("qunitOutput localStorage: " + localStorage.getItem('qunitOutput'));
+    //call httprequest function
+});
+
+
+
+//Final.
+QUnit.done(function( details ) {
+    console.log( "QUnit: Test Suit Ending. Results: Total: ", details.total, " Failed: ", details.failed, " Passed: ", details.passed, " Runtime: ", details.runtime );
+    //call httprequest function
+    sendOutput();
+});
+ 
+
+QUnit.moduleDone(function( details ) {
+    console.log( "QUnit: Finished Running Module: ", details.name, "Failed/total: ", details.failed, details.total );
+});
+
+ 
+
+ 
+
+ 
+
+
+
 var startTime = new Date().getTime();
 
 function checkBooksOK() {
