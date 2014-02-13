@@ -285,7 +285,8 @@ function findEXEFileMarkerSuccess(fileEntry) {
         debugLog("The full path = " + parentEntry.fullPath);
         folderName = parentEntry.name;  
         booksFound[booksFound.length] = folderName;
-        $("#UMBookList").append("<a onclick='openBLPage(\"" + fileFullPath + "\")' href=\"#\" data-role=\"button\" data-icon=\"star\" data-ajax=\"false\">" + folderName + "</a>").trigger("create");
+	//$("#UMBookList").append("<a onclick='openBLPage(\"" + fileFullPath + "\")' href=\"#\" data-role=\"button\" data-icon=\"star\" data-ajax=\"false\">" + folderName + "</a>").trigger("create");
+          $("#UMBookList").append("<a onclick='openBLPage(\"" + fileFullPath + "\" \, \"normal\" )' href=\"#\" data-role=\"button\" data-icon=\"star\" data-ajax=\"false\">" + folderName + "</a>").trigger("create");
         }, function(error){
             debugLog("failed to get parent directory folderName: " + folderName + " with an error: " + error);
         }
@@ -354,7 +355,14 @@ function failDirectoryReader(error) {
 /*
 Simple Open page wrapper (+ sets language of the opened book ?)
 */
-function openBLPage(openFile){
+function openBLPage(openFile, mode){
+    if (mode == "test"){
+	CONTENT_MODE = mode;
+	console.log("booklist: The CONTENT_MODE is: " + CONTENT_MODE);
+    }else{ //openBLPage will set mode to "normal" by default
+	CONTENT_MODE = mode;
+	console.log("booklist: The CONTENT_MODE is normal: " + CONTENT_MODE);
+    }
     $.mobile.loading('show', {
         text: x_('Ustad Mobile: Loading..'),
         textVisible: true,
@@ -373,7 +381,14 @@ function openBLPage(openFile){
     bookpath = bookpathSplit[bookpathSplit.length-1];
     var userSetLanguage = localStorage.getItem('language');
     console.log("The user selected language is : " + userSetLanguage + " and the current Book Path is: " + bookpath);
-    userSetLanguageString = "var ustadlocalelang = \"" + userSetLanguage + "\"; console.log(\"DAFT PUNK GET LUCKY: \" + ustadlocalelang);";
+    if (mode == "test"){
+	userSetLanguageString = "var ustadlocalelang = \"" + userSetLanguage + "\"; console.log(\"DAFT PUNK GET LUCKY: \" + ustadlocalelang); var CONTENT_MODELS = \"test\"; console.log(\"CONTEN_MODELS is: \" + CONTENT_MODELS);"
+	console.log("booklist: CONTENT_MODELS is set to test mode. ");
+    }else{
+	userSetLanguageString = "var ustadlocalelang = \"" + userSetLanguage + "\"; console.log(\"DAFT PUNK GET LUCKY: \" + ustadlocalelang);";
+	console.log("booklist: CONTENT_MODELS is not set, You are in normal mode.");
+    }
+    //userSetLanguageString = "var ustadlocalelang = \"" + userSetLanguage + "\"; console.log(\"DAFT PUNK GET LUCKY: \" + ustadlocalelang);";
     localStorage.setItem('ustadmobile-settings.js', userSetLanguageString);
     localStorageToFile(bookpath, "ustadmobile-settings.js", openFile);  //Also is the function that opens the book.
     //window.open(openFile);

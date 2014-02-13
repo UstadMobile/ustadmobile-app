@@ -1,3 +1,10 @@
+0. install npm and register the rregistry"
+    apt-get install npm
+    npm config set registry http://registry.npmjs.org/
+    sudo apt-get install python-software-properties python g++ make
+    add-apt-repository ppa:chris-lea/node.js
+    apt-get update
+    apt-get install nodejs
 1. Install Grunt: 
     sudo npm install grunt
 2. Install these dependencies:
@@ -46,4 +53,5 @@ varuna@Varuna-Toughra:~/UstadMobile/cordovagit/ustadmobil-codehtml5cordova$ cat 
 }
 
 4. RUN THIS: sudo npm install grunt-contrib-qunit --save-dev
+5. npm install -g grunt-cli
 5. Youre done

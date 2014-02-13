@@ -27,7 +27,7 @@ cd $TARGETDIR
 cordova create ustadmobile com.toughra.ustadmobile UstadMobile
 cd ustadmobile
 cordova platform add android
-PLUGINLIST="org.apache.cordova.device org.apache.cordova.network-information org.apache.cordova.battery-status org.apache.cordova.device-motion org.apache.cordova.device-orientation org.apache.cordova.file org.apache.cordova.file-transfer org.apache.cordova.globalization org.apache.cordova.console "
+PLUGINLIST="org.apache.cordova.device org.apache.cordova.network-information org.apache.cordova.battery-status org.apache.cordova.device-motion org.apache.cordova.device-orientation org.apache.cordova.file@0.2.5 org.apache.cordova.file-transfer@0.4.0 org.apache.cordova.globalization org.apache.cordova.console "
 
 #For splash screen, need to add splashscreen plugin: org.apache.cordova.splashscreen
 
@@ -57,7 +57,7 @@ if [ -e spec.html ]; then
 fi
 
 echo "copying assets";
-cp -r *.html img js jqm res locale $FILEDEST
+cp -r *.html img js jqm res locale ustad_version $FILEDEST
 
 cp css/index.css css/jquery.mobile-1.3.2.min.css css/qunit-1.12.0.css $FILEDEST/css
 

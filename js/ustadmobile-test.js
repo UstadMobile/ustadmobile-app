@@ -48,9 +48,17 @@ If you need a commercial license to remove these restrictions please contact us 
 
 var qunitOutput = localStorage.getItem('qunitOutput');
 var milliseconds = (new Date).getTime();
+var ustad_version = '';
+$.get('ustad_version', function(data){
+	dataline = data.split("\n");
+	ustad_version = dataline[0];
+	console.log("Ustad version is: " + ustad_version);
+});
+console.log ("With Qunit logs in 01");
 
 if (typeof qunitOutput === 'undefined' || qunitOutput == null || qunitOutput == "|"){
-    qunitOutput = "|";
+    //qunitOutput = "|";
+    qunitOutput = "";
     console.log("Initiating Output for Qunit tests..");
 }else{
     console.log("Tests already pending to be sent to server..");
@@ -60,13 +68,44 @@ if (typeof qunitOutput === 'undefined' || qunitOutput == null || qunitOutput == 
 }
 
 function sendOutput(){
+    
+    //gets the django unit test password to authenticate the logs being sent.
+    $.get('umpassword.html', function(data) {
+      	var fileContents = data;
+	    sendAuthOutput(fileContents);
+    });
+
+    /*
+    var file = '';
+    $.ajax({
+        type: 'GET',
+        url: '/mypage.html',
+        success: function (file_html) {
+            // pass the data to the var
+            var file = file_html;
+
+            // success
+            alert('success : ' + file);
+        }
+    });
+    */
+}
+
+function sendAuthOutput(fileContents){
+	
+    var qunitpassword = $.trim(fileContents);
     var toSend = localStorage.getItem('qunitOutput');
     if (toSend == null || typeof toSend === 'undefined' || toSend == "|"){
         console.log("Corrupt unit test results or empty.");
     }else{
         console.log("Going to send the following test results to the server: " + toSend);
-        var param = 'unittestoutput=' + toSend;
-        var url = 'http://your.server/address/goes/here.html';
+	//var param = 'userid=' + username + '&password=' + password; //format
+	var qunitusername = "test";
+        var param = 'appunittestoutput=' + toSend + '&username=' + qunitusername + '&password=' + qunitpassword;
+	
+        //var url = 'http://your.server/address/goes/here.html';
+        //var url = "http://127.0.0.1:8010/sendtestlog/";
+	var url = "http://svr2.ustadmobile.com:8010/sendtestlog/";
         
 		$.ajax({
 			url: url,  
@@ -75,7 +114,7 @@ function sendOutput(){
 			datatype: 'text',
 			success: function(data, textStatus, jqxhr){
 				debugLog("Logging to server: " + url + " a success with code:" + jqxhr.status);
-				runcallback(callback, jqxhr.status);
+				//runcallback(callback, jqxhr.status);
 				},
 			complete: function (jqxhr, txt_status) {
 				debugLog("Ajax call completed to server. Status: " + jqxhr.status);
@@ -101,9 +140,9 @@ function sendOutput(){
     }
 }
 
-console.log ("With Qunit logs in 01");
 
 //Order by which tests run.
+
 //1.
 QUnit.begin(function( details ) {
     console.log( "QUnit: Test Suit Starting." );
@@ -128,7 +167,7 @@ QUnit.log(function( details ) {
 QUnit.testDone(function( details ) {
     var result = "fail";
     //var platform = "";
-    var ustad_version = "ustad version";  
+    //var ustad_version = "ustad version";  
     //var milliseconds = (new Date).getTime();
     console.log( "QUnit: Finished Running Test: ", details.module, details.name, "Failed/total: ", details.failed, details.total, details.duration );
     //call the function that packages and sends the test results as a HttpRequestHeader
@@ -141,7 +180,6 @@ QUnit.testDone(function( details ) {
     console.log("What the output looks so far: " + qunitOutput);
     localStorage.setItem('qunitOutput', qunitOutput);
     console.log("qunitOutput localStorage: " + localStorage.getItem('qunitOutput'));
-    //call httprequest function
 });
 
 

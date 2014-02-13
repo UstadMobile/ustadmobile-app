@@ -3,4 +3,5 @@ build
 release-settings-android.sh
 cordova.js.ignore
 node_modules/*
+umpassword.html
 

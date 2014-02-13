@@ -53,6 +53,7 @@ var exeMenuPage2 = "ustadmobile_menuPage2.html";
 //localStorage.setItem('exeMenuPage',exeMenuP);
 var globalXMLListFolderName = "all";
 
+console.log("HERE IN COMMON!");
 
 document.addEventListener('deviceready', function(){
                           if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1){
@@ -66,7 +67,7 @@ document.addEventListener('deviceready', function(){
                           //}
                             }
                           }
-                          ,false);
+                          ,commonfail);
 
 function _(msgid) {
     if (msgid in messages) {

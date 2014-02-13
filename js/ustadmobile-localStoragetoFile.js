@@ -50,6 +50,7 @@ If you need a commercial license to remove these restrictions please contact us 
 		}
         var fileToOpen;
 		function localStorageToFile(bookpath, localStorageVariable, openFile){
+		console.log("bookpath: " + bookpath + " localStorageVariable: " + localStorageVariable, + " openFile: " + openFile);
             fileToOpen = openFile;
             //var r = $.Deferred();
             //alert("5");

@@ -48,6 +48,12 @@ This javascript creates the header and footer of ustad mobile content in package
 
 */
 
+//For testing content we have a flag. 
+var CONTENT_MODE;
+if (typeof CONTENT_MODE !== 'undefined'){
+	console.log("ustadmobile.js: CONTENT_MODE is: " + CONTENT_MODE);
+}
+
 //For jQuery mobile and Cordova/PhoneGap framework configurations.
 $( document ).bind( "mobileinit", function() {
     // Make your jQuery Mobile framework configuration changes here!
@@ -238,13 +244,30 @@ function onLanguageContentReady(){
 $(document).on("pageload", function(event, ui) { //pageLoad only gets triggered when we do a mobile.changePage() from within the code. Not when the app starts.
     console.log("In pageload");
 });
+*/
 
 $(document).on("pageinit", function(event, ui) { //pageinit gets triggered when app start.
     console.log("In pageinit");
     //onLanguageDeviceReady(); //Set / Check the language first. //Commented out because it works in pagebeforecreate instead and hence works with all html strings.
     //localizePage();
+
+	/*
+	if(typeof CONTENT_MODELS !== 'undefined' && CONTENT_MODELS == "test"){
+        console.log("Test mode and current page done.");
+        //exeNextPageOpen();
+        var nextPageHREF = $(".ui-page-active #exeNextPage").attr("href");
+        nextPageHREF = $.trim(nextPageHREF);
+        if (nextPageHREF != null){
+                console.log("Next Page exists..");
+                exeNextPageOpen();
+        }
+
+    }
+	*/
+
+
 });
-*/
+
 
 
 /*
@@ -255,6 +278,21 @@ $(document).on("pageshow", function(event, ui) {
     console.log("In pageshow"); //Means nothing. You can delete this.
     //ui.prevPage.remove(); 
     //Commented out because it messes with going back from a page (it is removed, so throws error)
+ 
+/*   
+    if(typeof CONTENT_MODELS !== 'undefined' && CONTENT_MODELS == "test"){
+        console.log("Test mode and current page done.");
+        //exeNextPageOpen();
+        var nextPageHREF = $(".ui-page-active #exeNextPage").attr("href");
+        nextPageHREF = $.trim(nextPageHREF);
+        if (nextPageHREF != null){
+                console.log("Next Page exists..");
+                exeNextPageOpen();
+        }
+    }
+*/
+
+    
 });
 
 
@@ -294,6 +332,22 @@ $(document).on("pagechange", function(event){
         //Default is 75px, set to 200 in Ustad Mobile to reduce error reproduction.
          threshold:200,
       }); 
+
+
+         if(typeof CONTENT_MODELS !== 'undefined' && CONTENT_MODELS == "test"){
+ 	       console.log("Test mode and current page done.");
+       		//exeNextPageOpen();
+        	var nextPageHREF = $(".ui-page-active #exeNextPage").attr("href");
+        	nextPageHREF = $.trim(nextPageHREF);
+        	if (nextPageHREF != null && nextPageHREF !="#" ){
+                	console.log("on pagechange: Next Page exists: " + nextPageHREF);
+                	exeNextPageOpen();
+        	}else{
+			console.log("No more pages to go to.");
+			//runcallback(callback, "checkContentPageLoad success");
+		}
+    	}
+
 });
 
 
@@ -391,6 +445,45 @@ function getAppLocation(){ //function to get the root of the device.
 
 }
 */
+
+
+
+//This function will get called when umlogin proceeds with success or error. The arg is the statusCode that will get
+//passed to the
+function runcallback(callbackfunction, arg) {
+    if (callbackfunction != null && typeof callbackfunction === "function") {
+        debugLog("Within the call back function with arg: " + arg );
+        callbackfunction(arg);
+    }
+}
+
+
+function testContent(type, callback){
+    //testContent('pageload', checkContentPageLoadOK);
+    if (type == 'pageload'){
+        //Code for test pageload goes here.
+
+    }else{
+        console.log("Test failed. Type is not recognised. What are you testing again? You gave me: " + type);
+    }
+}
+
+
+//$(document).ready(function(){
+//$(document).onload(function(){
+$(window).load(function(){
+    if(typeof CONTENT_MODELS !== 'undefined' && CONTENT_MODELS == "test"){
+	console.log("Test mode and current page done.");
+	//exeNextPageOpen();
+	var nextPageHREF = $(".ui-page-active #exeNextPage").attr("href");
+	nextPageHREF = $.trim(nextPageHREF);
+	if (nextPageHREF != null && nextPageHREF != "#"){
+		console.log("Next Page exists..");
+		exeNextPageOpen();
+	}
+    }
+});
+
 
 //Function to handle Previous Page button within eXe content's footer.
 function exePreviousPageOpen(){
