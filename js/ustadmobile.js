@@ -673,6 +673,15 @@ function openLoginPage(){
 	openMenuLink("ustadmobile_login2.html", "slide");
 }
 
+//Go back function
+function goBackBookList(){
+    //$.mobile.back();
+    //history.back();
+    $.mobile.changePage('ustadmobile_booklist.html', {
+            reverse: true
+        });
+}
+
 //This function is called from the Book List Meny to go to the download pakcages Page from the Menu.
 //We have decided to not allow user to access the Download Packages page whilist in a book (for reduction in complexity).
 function openGetPackagesPage(){

@@ -211,7 +211,7 @@ function populateNextDir() {
     }else {
         $.mobile.loading('hide');
         debugLog("No more folders to scan for ustad mobile packages.");
-        $("#UMBookList").append("<p><i>Go to Menu > Download Courses to get more courses from the online library</i></p>").trigger("create");
+        $("#UMBookList").append("<p><i>Click on Download Courses to get more courses from the online library</i></p>").trigger("create");
         if(allBookFoundCallback != null) {
             if (typeof allBookFoundCallback === "function") {
                 allBookFoundCallback();

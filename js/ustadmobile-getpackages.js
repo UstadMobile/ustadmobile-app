@@ -44,6 +44,7 @@ If you need a commercial license to remove these restrictions please contact us 
 -->
 */
 
+    var buttonBOOLEAN = true;   //If true, then ability to click on the button and download / get course by id. If set to false, then something is waiting to get over.
     var server = "svr2.ustadmobile.com:8010";
     var serverEXeExport = "http://" + server + "/media/eXeExport/";
     var serverGetCourse = "http://" + server + "/getcourse/?id=";
@@ -321,12 +322,12 @@ If you need a commercial license to remove these restrictions please contact us 
     
     //Cordova check if device is ready
     function onPackageTransfer(){
-        document.addEventListener('deviceready', beginPackageTransfer, function(){alert("Something went wrong in checking Cordova ready."); debugLog("Something went wrong on deviceready at function: onPackageTransfer()");});
+        document.addEventListener('deviceready', beginPackageTransfer, function(){ buttonBOOLEAN = true; console.log("buttonBOOLEAN is set to true because of failure. Can try again.."); alert("Something went wrong in checking Cordova ready."); debugLog("Something went wrong on deviceready at function: onPackageTransfer()");});
     }
     
     //Cordova get File System
     function beginPackageTransfer(){
-        window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, gotRootDirPackage, function(){alert("Something went wrong in getting File System of Package XML"); debugLog("Something went wrong in beginPackageTransfer()");});
+        window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, gotRootDirPackage, function(){ buttonBOOLEAN = true; console.log("buttonBOOLEAN is set to true because of failure. Can try again.."); alert("Something went wrong in getting File System of Package XML"); debugLog("Something went wrong in beginPackageTransfer()");});
     }
 
     /* Gets the root path and initiates packageString xml file to be downloaded (set previously) to calculated folder.*/
@@ -373,11 +374,12 @@ If you need a commercial license to remove these restrictions please contact us 
 						startFileDownload(packageString, packageFolderName);
 					}
 					else{
+                      buttonBOOLEAN = true; console.log("buttonBOOLEAN is set to true because of failure. Can try again..");                    
 					  alert("Sorry, please input a valid ustadmobile xml, " + fileNameCheck);
 					  debugLog("Invalid package name. Not an xml or doesnt end with ustadpkg_html5..");
 					}
 					
-				}, function(){debugLog("Creating package XML Dir unsuccess.");$.mobile.loading('hide'); alert("Unable to download package to your device and file system.");});
+				}, function(){buttonBOOLEAN = true; console.log("buttonBOOLEAN is set to true because of failure. Can try again.."); debugLog("Creating package XML Dir unsuccess.");$.mobile.loading('hide'); alert("Unable to download package to your device and file system.");});
 		
 		
 		
@@ -579,6 +581,7 @@ If you need a commercial license to remove these restrictions please contact us 
 						    readPackageFile("hi"); // this function will be called that goes through the package xml file and download every file one by one.
 					    }else{
 						    debugLog("Download start cancelled by user. Nothing got downloaded.");
+                            buttonBOOLEAN = true; console.log("buttonBOOLEAN is set to true because of failure. Can try again..");
 					    }
                     }
                 }else{
@@ -592,6 +595,7 @@ If you need a commercial license to remove these restrictions please contact us 
                 //alert("Download complete! Path: " + entry.fullPath); // If you ever want to notify the user that the file has finished downloading.
             },
             function(error){
+                buttonBOOLEAN = true; console.log("buttonBOOLEAN is set to true because of failure. Can try again..");
                 debugLog("download error source " + error.source);
                 debugLog("download error target " + error.target);
                 debugLog("upload error code" + error.code);
@@ -659,6 +663,7 @@ If you need a commercial license to remove these restrictions please contact us 
                                    readPackageFile("hi"); // this function will be called that goes through the package xml file and download every file one by one.
                                    }else{
                                    debugLog("Download start cancelled by user. Nothing got downloaded.");
+                                    buttonBOOLEAN = true; console.log("buttonBOOLEAN is set to true because of failure. Can try again..");
                                    }
                                    }
                                    }else{
@@ -670,6 +675,7 @@ If you need a commercial license to remove these restrictions please contact us 
                                   //alert("Download complete! Path: " + entry.fullPath); // If you ever want to notify the user that the file has finished downloading.
                                   },
                                   function(error){
+                                  buttonBOOLEAN = true; console.log("buttonBOOLEAN is set to true because of failure. Can try again..");
                                   debugLog("download error source " + error.source);
                                   debugLog("download error target " + error.target);
                                   debugLog("upload error code" + error.code);
@@ -715,10 +721,10 @@ If you need a commercial license to remove these restrictions please contact us 
         
         if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1){ //if blackberry 10 device.
             console.log("Detecting your device as a Blackberry 10 devie. Continuing with Course content downloads..");
-            window.webkitRequestFileSystem(window.PERSISTENT, 0, getXMLFile, function(){alert("Something went wrong in getting the file system of the package file. Internal Error."); debugLog("Something went wrong in readPackageFile(msg) ");}); // errorfilesystem (messages->en.js)
+            window.webkitRequestFileSystem(window.PERSISTENT, 0, getXMLFile, function(){buttonBOOLEAN = true; console.log("buttonBOOLEAN is set to true because of failure. Can try again.."); alert("Something went wrong in getting the file system of the package file. Internal Error."); debugLog("Something went wrong in readPackageFile(msg) ");}); // errorfilesystem (messages->en.js)
             
         }else{ // Other devies (not blackberry 10)
-            window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, getXMLFile, function(){alert("Something went wrong in getting the file system of the package file. Internal Error."); debugLog("Something went wrong in readPackageFile(msg) ");}); // errorfilesystem (messages->en.js)
+            window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, getXMLFile, function(){buttonBOOLEAN = true; console.log("buttonBOOLEAN is set to true because of failure. Can try again.."); alert("Something went wrong in getting the file system of the package file. Internal Error."); debugLog("Something went wrong in readPackageFile(msg) ");}); // errorfilesystem (messages->en.js)
         
         }
         //window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, getXMLFile, function(){alert("Something went wrong in getting the file system of the package file. Internal Error."); debugLog("Something went wrong in readPackageFile(msg) ");}); // errorfilesystem (messages->en.js)
@@ -753,12 +759,12 @@ If you need a commercial license to remove these restrictions please contact us 
             debugLog("forxml is: " + forxml);   
             debugLog("GETTING THE XML!");
             fileSystem.root.getFile(forxml, {create:false, exclusive:false}, gotXMLFile, function(){alert("Something went wrong in getting the file XML Package "); debugLog("Something went wrong in getXMLFile(fileSystem) ");});
-        }, function(){debugLog("Creating package Dir unsuccess.");$.mobile.loading('hide'); alert("Getting Package file on to your device failed.");});
+        }, function(){buttonBOOLEAN = true; console.log("buttonBOOLEAN is set to true because of failure. Can try again.."); debugLog("Creating package Dir unsuccess.");$.mobile.loading('hide'); alert("Getting Package file on to your device failed.");});
     }
     /* function to get the file after finding it */    
     function gotXMLFile(fileEntry){
         debugLog("Got XML file.");
-        fileEntry.file(gotFile,function(){alert("Something went wrong in getting Package XML file"); debugLog("Something went wrong in gotXMLFile(fileEntry)");});
+        fileEntry.file(gotFile,function(){buttonBOOLEAN = true; console.log("buttonBOOLEAN is set to true because of failure. Can try again.."); alert("Something went wrong in getting Package XML file"); debugLog("Something went wrong in gotXMLFile(fileEntry)");});
     }
     /* function to read the file. */
     function gotFile(file){
@@ -845,7 +851,7 @@ If you need a commercial license to remove these restrictions please contact us 
             debugLog("No more files left to scan in the package: " + fileName);          
             $.mobile.loading('hide');
             //if(fileXMLCallback != null && typeof fileXMLCallback === "function"){
-                alert("Download finished.");
+                alert("Download finished");
             //}
 
 
@@ -858,6 +864,7 @@ If you need a commercial license to remove these restrictions please contact us 
             }else{
                 debugLog("Now transfering ustadmobile javascripts and logic to the package folder: " + packageFolderName);
 		        writeNextBase64ToFile(packageFolderName);
+                buttonBOOLEAN = true; console.log("buttonBOOLEAN is set to true because of failure. Can try again..");
             }       
             
             
@@ -882,6 +889,20 @@ If you need a commercial license to remove these restrictions please contact us 
 
     
     function checkCourseID(){
+        
+      console.log("BUTTON PRESSED: Checking if previous task is over..");
+      if (buttonBOOLEAN == true){
+
+        $.mobile.loading('show', {
+            text: x_('Checking..'),
+            textVisible: true,
+            theme: 'b',
+            html: ""});
+    
+        console.log("BUTTON PRESSED: Okay to proceed, setting flag as busy..");
+        //ButtonBoolean FALSE : Cannot press button again.
+        buttonBOOLEAN = false;
+        
         var courseid = $("#courseid").val();
         courseid = courseid.trim();
         console.log("Starting check for course id: " + courseid);
@@ -903,22 +924,55 @@ If you need a commercial license to remove these restrictions please contact us 
 				},
 			complete: function (jqxhr, txt_status) {
 				console.log("Ajax call completed to server. Status: " + jqxhr.status);
+                    switch (jqxhr.status) {
+                        case 0:
+                            //alert;
+                            break;
+                        case 200:
+                            //alert("200 received! yay!");
+                            break;
+                        case 404:
+                            //alert("404 received! boo!");
+                            break;
+                        case 500:
+                            //something;
+                            break;
+                        default:
+                            //alert("I don't know what I just got but it ain't good!");
+                            alert("Could not find course / connect to server. Please check your internet connection and course ID.");
+                    }
 				},
 			error: function (jqxhr,b,c){
 				//alert("Couldn't complete request. Status:" + jqxhr.status);
-                alert("Couldn't connect to server:" + jqxhr.status);
-                console.log("Couldn't complete connection to server. Status: " + jqxhr.status);
-                
+                //alert("Couldn't connect to server:" + jqxhr.status); //disable this kind of error message.
+                //alert("Could not find course / connect to server. Please check your internet connection and course ID.");
+                console.log("ERROR: Couldn't complete connection to server. Status: " + jqxhr.status);
+                //Corse not found or server error.
+                //ButtonBoolean TRUE
+                buttonBOOLEAN = true;
+                $.mobile.loading('hide');
 				},
 			statusCode: {
 				200: function(){
-					console.log("Status code: 200");            
+					console.log("Status code: 200 which is a success.");            
 					},
 				0: function(){
                     alert("Couldn't connect to server. Check connectivity or server status [0]");
 			        console.log("Status code 0, unable to connect to server or no internet/intranet access");
+                    //ButtonBoolean TRUE
+                    buttonBOOLEAN = true;
+						},
+                500: function(){
+                    alert("Could not find a course with that ID.");
+			        console.log("Status code 0, unable to connect get a success response from server or no internet/intranet access. Course probably doesn't exists or server error.");
+                    //ButtonBoolean TRUE
+                    buttonBOOLEAN = true;
+                    $.mobile.loading('hide');
 						}
 				}
             });
-       
+      }else{
+        console.log("BUTTON PRESSED: Still waiting for previous task to get over...");
+        console.log("BUTTON PRESSED: Try again?");
+      }
     }
