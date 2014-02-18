@@ -337,7 +337,7 @@ $(document).on("pagechange", function(event){
          threshold:200,
       }); 
 
-	console.log("THE CONTENT_MODELS IS: " + CONTENT_MODELS);
+	//console.log("THE CONTENT_MODELS IS: " + CONTENT_MODELS);
          if(typeof CONTENT_MODELS !== 'undefined' && CONTENT_MODELS == "test"){
  	       console.log("Test mode and current page done.");
        		//exeNextPageOpen();
