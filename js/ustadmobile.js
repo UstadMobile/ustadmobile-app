@@ -49,6 +49,10 @@ This javascript creates the header and footer of ustad mobile content in package
 */
 
 //For testing content we have a flag. 
+
+var changePageFlag = true;
+console.log("TESTING 1, 2, 3");
+
 var CONTENT_MODE;
 if (typeof CONTENT_MODE !== 'undefined'){
 	console.log("ustadmobile.js: CONTENT_MODE is: " + CONTENT_MODE);
@@ -333,7 +337,7 @@ $(document).on("pagechange", function(event){
          threshold:200,
       }); 
 
-
+	console.log("THE CONTENT_MODELS IS: " + CONTENT_MODELS);
          if(typeof CONTENT_MODELS !== 'undefined' && CONTENT_MODELS == "test"){
  	       console.log("Test mode and current page done.");
        		//exeNextPageOpen();
@@ -344,7 +348,10 @@ $(document).on("pagechange", function(event){
                 	exeNextPageOpen();
         	}else{
 			console.log("No more pages to go to.");
-			//runcallback(callback, "checkContentPageLoad success");
+			if(changePageFlag == false ){
+			runcallback(testContentCallback, "checkContentPageLoad success");
+			}
+			changePageFlag = false;
 		}
     	}
 
@@ -448,7 +455,7 @@ function getAppLocation(){ //function to get the root of the device.
 
 
 
-//This function will get called when umlogin proceeds with success or error. The arg is the statusCode that will get
+//This is the runcallback function
 //passed to the
 function runcallback(callbackfunction, arg) {
     if (callbackfunction != null && typeof callbackfunction === "function") {
@@ -456,6 +463,61 @@ function runcallback(callbackfunction, arg) {
         callbackfunction(arg);
     }
 }
+
+function checkSomethingElse() {
+    test( "1 really is 1", function() {
+        ok( 1 == 1, "1 is 1");
+    });
+}
+
+
+//The CALLBACK
+function testContentCallback(arg){
+    console.log("TESTING 07");
+	
+	if (typeof test === "function" && test != null ){
+		//dummy test:
+		//checkSomethingElse();
+
+		console.log("Deteted Qunit test.");
+    	/*	test("Scan through the content all pages.", function(){
+			ok(arg == "checkContentPageLoad success", "Scan content pages okay.");
+			console.log("TESTING OK 08");
+    		});*/
+	//}else{
+	}
+		console.log("Detected no qunit tests.");
+		if (arg ==  "checkContentPageLoad success" ){
+			console.log("Scan content page okay.");
+			console.log("Success");
+			var path = window.location.pathname;
+			var pathParts = path.split("/");
+			var courseName = pathParts[pathParts.length - 2];
+			console.log("In file: " + pathParts[pathParts.length -1]);
+			console.log("folder: " + courseName );
+			var result = "pass";
+			var runtime = "";
+			var dategroup = "grunt";
+			var courseID = "Course ID: ";
+			//Send test results to server about course test completion.
+		
+			var courseTestOutput = "new|" + courseName + "|" + result + "|" + runtime + "|" + dategroup + "|" + courseID + "|" ;
+
+    			console.log("What the test output looks so far: " + courseTestOutput);
+    			localStorage.setItem('courseTestOutput', courseTestOutput);
+    			console.log("courseTestOutput localStorage: " + localStorage.getItem('courseTestOutput'));
+			sendOutput('courseTestOutput');
+			
+		}
+}
+
+//The XML CALLBACK
+function checkPackageXMLProcessingOK(arg){
+    test("Scan downloaded package xml file and extract file tag information", function(){
+        ok( arg == "xml processing pass", "Package XML Downloaded and Scan okay");
+    });
+}
+
 
 
 function testContent(type, callback){
@@ -472,6 +534,7 @@ function testContent(type, callback){
 //$(document).ready(function(){
 //$(document).onload(function(){
 $(window).load(function(){
+    //console.log("THE CONTENT_MODELS in .load() IS: " + CONTENT_MODELS);
     if(typeof CONTENT_MODELS !== 'undefined' && CONTENT_MODELS == "test"){
 	console.log("Test mode and current page done.");
 	//exeNextPageOpen();
@@ -673,15 +736,6 @@ function openLoginPage(){
 	openMenuLink("ustadmobile_login2.html", "slide");
 }
 
-//Go back function
-function goBackBookList(){
-    //$.mobile.back();
-    //history.back();
-    $.mobile.changePage('ustadmobile_booklist.html', {
-            reverse: true
-        });
-}
-
 //This function is called from the Book List Meny to go to the download pakcages Page from the Menu.
 //We have decided to not allow user to access the Download Packages page whilist in a book (for reduction in complexity).
 function openGetPackagesPage(){
@@ -789,4 +843,7 @@ function tocTrigger(tocId, toShow) {
     }    
 }
 
+function _onLoadFunction(){
+	console.log("Dummy _onLoadFunction()..");
+}
 

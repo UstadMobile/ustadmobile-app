@@ -67,12 +67,13 @@ if (typeof qunitOutput === 'undefined' || qunitOutput == null || qunitOutput == 
     //maybe check things
 }
 
-function sendOutput(){
+function sendOutput(localStorageVariable){
     
     //gets the django unit test password to authenticate the logs being sent.
     $.get('umpassword.html', function(data) {
       	var fileContents = data;
-	    sendAuthOutput(fileContents);
+	    //sendAuthOutput(fileContents);
+	    sendAuthOutput(fileContents, localStorageVariable);
     });
 
     /*
@@ -91,10 +92,10 @@ function sendOutput(){
     */
 }
 
-function sendAuthOutput(fileContents){
+function sendAuthOutput(fileContents, localStorageValue){
 	
     var qunitpassword = $.trim(fileContents);
-    var toSend = localStorage.getItem('qunitOutput');
+    var toSend = localStorage.getItem(localStorageValue);
     if (toSend == null || typeof toSend === 'undefined' || toSend == "|"){
         console.log("Corrupt unit test results or empty.");
     }else{
@@ -128,7 +129,7 @@ function sendAuthOutput(fileContents){
 					//alert("Login success on the server!");
 					debugLog("Connection to server a success with statusCode 200.");
                     var nothing = "";
-					localStorage.setItem('qunitOutput',nothing);
+					localStorage.setItem(localStorageValue,nothing);
 					console.log("Qunit test Output reset to null.");
 					},
 				0: function(){
@@ -176,7 +177,7 @@ QUnit.testDone(function( details ) {
     }else{
         result = "fail";
     }
-    qunitOutput = qunitOutput + "new|" + details.name + "|" + result + "|" + details.duration + "ms|" +  milliseconds + "|" + platform + "|" + ustad_version + "|";
+    qunitOutput = qunitOutput + "new|" + details.name + "|" + result + "|" + details.duration + "mis|" +  milliseconds + "|" + platform + "|" + ustad_version + "|";
     console.log("What the output looks so far: " + qunitOutput);
     localStorage.setItem('qunitOutput', qunitOutput);
     console.log("qunitOutput localStorage: " + localStorage.getItem('qunitOutput'));
@@ -188,7 +189,8 @@ QUnit.testDone(function( details ) {
 QUnit.done(function( details ) {
     console.log( "QUnit: Test Suit Ending. Results: Total: ", details.total, " Failed: ", details.failed, " Passed: ", details.passed, " Runtime: ", details.runtime );
     //call httprequest function
-    sendOutput();
+    sendOutput('qunitOutput');
+    //sendOutput('courseOutput');
 });
  
 
@@ -346,5 +348,6 @@ function startTestOnLoadCounter(device){
     }
 
 }
+
 
 
