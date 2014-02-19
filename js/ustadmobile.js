@@ -48,10 +48,11 @@ This javascript creates the header and footer of ustad mobile content in package
 
 */
 
-//For testing content we have a flag. 
+//Flag for unit testing
+var unitTestFlag = false;
 
+//For testing content we have a flag. 
 var changePageFlag = true;
-console.log("TESTING 1, 2, 3");
 
 var CONTENT_MODE;
 if (typeof CONTENT_MODE !== 'undefined'){

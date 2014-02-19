@@ -45,7 +45,6 @@ If you need a commercial license to remove these restrictions please contact us 
 /*
     The javascript associated with ustad mobile login actions and login page on ustad mobil app.
 */
-//alert("Starting login.js..");
 //var username="";
 //var password="";
 
@@ -84,7 +83,9 @@ If you need a commercial license to remove these restrictions please contact us 
 }
 */
 function fail(evt) {
-    alert( x_("something went wrong: ") + evt.target.error.code);
+    if(unitTestFlag == false){
+    	alert( x_("something went wrong: ") + evt.target.error.code);
+    }
     console.log(evt.target.error.code);
 	debugLog("Something went wrong");
 }
@@ -107,8 +108,6 @@ function onLoginDeviceReady() {
 //The form in html calls this with the values. We seperate the form arguments with actual function of login for
 //testing and code-reuse purposes.
 function umloginFromForm() {
-    //var msg = messages['loggingintoserver'];
-    //alert(msg);
      $.mobile.loading('show', {
         text: x_("Logging in to umcloud.."),
         textVisible: true,
@@ -136,7 +135,9 @@ function umloginredirect(statuscode) {
         openPage("ustadmobile_booklist.html").trigger("create");
 		//openPage("//www/ustadmobile_booklist.html").trigger("create"); // Changes for Windows Phone. added //www/
     }else {
-        alert(x_("Wrong username/password combination, or Please check that you are able to connect to the internet and your server."));
+        if(unitTestFlag == false){
+        	alert(x_("Wrong username/password combination, or Please check that you are able to connect to the internet and your server."));
+	}
     }
 }
 
@@ -177,8 +178,10 @@ function umlogin(username, password, url, callback){
 				debugLog("Ajax call completed to server. Status: " + jqxhr.status);
 				},
 			error: function (jqxhr,b,c){
-			
-				alert(x_("Wrong username/password combination or server error. Status Code:") + jqxhr.status);
+
+				if(unitTestFlag == false){
+					alert(x_("Wrong username/password combination or server error. Status Code:") + jqxhr.status);
+				}
 				debugLog("Wrong username/password combination or server error. Status Code:" + jqxhr.status);
                 $.mobile.loading('hide');
 				runcallback(callback, jqxhr.status);

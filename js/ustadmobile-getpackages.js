@@ -76,7 +76,9 @@ If you need a commercial license to remove these restrictions please contact us 
     /* General, all purpose fail function.*/
     function fail2(){
       debugLog("Something went wrong");
-      alert("Something went wrong");//errorunknown (messages from en.js)
+      if(unitTestFlag == false){
+      	alert("Something went wrong");//errorunknown (messages from en.js)
+      }
       $.mobile.loading('hide');
     }
 
@@ -90,7 +92,9 @@ If you need a commercial license to remove these restrictions please contact us 
     /* Download fail function when one file (List xml or Package xml) file is unable to be downloaded. */
     function downloadfail(currentFileN){
         debugLog("!Couldn not download a file: " + currentFileN);        
-        alert("Could not download the file. Check if path is correct on the server list.");
+	if(unitTestFlag == false){
+        	alert("Could not download the file. Check if path is correct on the server list.");
+	}
     }
 
 
@@ -117,7 +121,12 @@ If you need a commercial license to remove these restrictions please contact us 
     // Check to see if Cordova is ready and following functions to get rootPath through file System.
     // Needed as this will be the first call to the server.
     function onPackageListTransfer(){
-        document.addEventListener('deviceready', beginPackageListTransfer, function(){alert("Something went wrong in checking Cordova ready."); debugLog("Something went wrong on deviceready at function: onPackageListTransfer()");});
+        document.addEventListener('deviceready', beginPackageListTransfer, function(){
+									if(unitTestFlag == false){
+										alert("Something went wrong in checking Cordova ready.");
+									} 
+									debugLog("Something went wrong on deviceready at function: onPackageListTransfer()");
+									});
     }
 
     function beginPackageListTransfer(){
@@ -131,16 +140,16 @@ If you need a commercial license to remove these restrictions please contact us 
             //requestFileSystem(LocalFileSystem.PERSISTENT, 1024 * 1024 * 1024, gotRootListDirPackage, function(){alert("Something went wrong in getting the fileSystem."); debugLog("Something went wrong in getting file system, beginPackageListTransfer()");});
             
             //default:
-            window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, gotRootListDirPackage, function(){alert("Something went wrong in getting the fileSystem."); debugLog("Something went wrong in getting file system, beginPackageListTransfer()");});
+            window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, gotRootListDirPackage, function(){if(unitTestFlag == false){alert("Something went wrong in getting the fileSystem.");} debugLog("Something went wrong in getting file system, beginPackageListTransfer()");});
             
             //BB10 specific (using webkit):
-            //window.webkitRequestFileSystem(window.PERSISTENT, 1024*1024*1024, gotRootListDirPackage, function(){alert("Something went wrong in getting the fileSystem."); debugLog("Something went wrong in getting file system, beginPackageListTransfer()");});
+            //window.webkitRequestFileSystem(window.PERSISTENT, 1024*1024*1024, gotRootListDirPackage, function(){if(unitTestFlag == false){alert("Something went wrong in getting the fileSystem.");} debugLog("Something went wrong in getting file system, beginPackageListTransfer()");});
             
 
         }else{
             umgpPlatform = "NOTbb10";
             console.log("NOT BB!");
-        window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, gotRootListDirPackage, function(){alert("Something went wrong in getting the fileSystem."); debugLog("Something went wrong in getting file system, beginPackageListTransfer()");});
+        window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, gotRootListDirPackage, function(){if(unitTestFlag==false){alert("Something went wrong in getting the fileSystem.");} debugLog("Something went wrong in getting file system, beginPackageListTransfer()");});
         }
     }
 
@@ -170,7 +179,9 @@ If you need a commercial license to remove these restrictions please contact us 
             startFileDownload(packageListString, packageListFolderName);
         }
         else{
-            alert("Unable to fetch list of available packages on the server. Check if path to list is correct:" + fileNameCheck);
+	    if(unitTestFlag == false){
+            	alert("Unable to fetch list of available packages on the server. Check if path to list is correct:" + fileNameCheck);
+	    }
             debugLog("Invalid package name. Not a package list xml or doesnt end with all_ustadpkg_html5..");
         }
     }
@@ -214,7 +225,6 @@ If you need a commercial license to remove these restrictions please contact us 
 
     // This function calls the file getting method of FileEntry.
     function getXMLListFile(fileSystem){
-        //alert("message: " + msg);
         debugLog("Got XML List FileSystem.");
             rootPath = fileSystem.root.fullPath;
         //var forxml = "ustadmobileContent/" + packageListFolderName + "/" + packageListFileName;
@@ -851,7 +861,9 @@ If you need a commercial license to remove these restrictions please contact us 
             debugLog("No more files left to scan in the package: " + fileName);          
             $.mobile.loading('hide');
             //if(fileXMLCallback != null && typeof fileXMLCallback === "function"){
-                alert("Download finished");
+		if(unitTestFlag == false){
+                	alert("Download finished");
+		}
             //}
 
 

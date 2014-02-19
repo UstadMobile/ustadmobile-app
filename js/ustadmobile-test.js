@@ -71,7 +71,9 @@ function sendOutput(localStorageVariable){
     
     //gets the django unit test password to authenticate the logs being sent.
     $.get('umpassword.html', function(data) {
-      	var fileContents = data;
+      	//var fileContents = data;
+	var datalines = data.split("\n");
+        var fileContents = datalines[0];
 	    //sendAuthOutput(fileContents);
 	    sendAuthOutput(fileContents, localStorageVariable);
     });
@@ -279,36 +281,7 @@ function testLocalisationLanguage(arg){
 }
 
 function startTestOnLoadCounter(device){
-    
-    /*
-    setTimeout("checkSomethingElse()", 500);
-
-    currentEntriesIndex = 0;
-    currentFolderIndex = 0;
-    allBookFoundCallback = checkBooksOK;
-    populateNextDir();
-	
-	//var usern = "";
-    var usern = prompt("Enter test username");
-	//var passw = "";
-    var passw = prompt("Enter test password");
-	//Code to get username (usern) and password (passw) goes here.
-
-    umlogin(usern,passw, 'http://intranet.paiwastoon.net/umcloud/app/login.xhtml', checkLoginOK);
-
-    testSetlanguage("es", "in", "en", testLocalisationLanguage);
-
-    testPackageListXML('http://www.ustadmobile.com/books/all_ustadpkg_html5.xml', 'all', checkPackageListXMLProcessingOK);
-
-    testPackageListXML('http://www.ustadmobile.com/books/measurementDemoV2AOL_ustadpkg_html5.xml', 'all/measurementDemoV2AOL', checkPackageXMLProcessingOK);    
-    
-    //base64FileFolder = "/ustadmobileContent/all/";
-    //var base64TestVar = ["DQp2YXIgZXhlTGFzdFBhZ2UgPSAiLi4vIjsNCnZhciBleGVNZW51UGFnZSA9ICJ1c3RhZG1vYmlsZV9tZW51UGFnZS5odG1sIjsNCi8vbG9jYWxTdG9yYWdlLnNldEl0ZW0oJ2V4ZU1lbnVQYWdlJyxleGVNZW51UCk7DQp2YXIgZ2xvYmFsWE1MTGlzdEZvbGRlck5hbWUgPSAiYWxsIjsNCg==", "base64UnitTestOutput.js"];    
-    //if(base64TestVar[1] == "base64UnitTestOutput.js"){
-    //setTimeout("writeBase64(base64TestVar, checkBase64ToFileConversionOK)", 500);
-    //}
-    */
-    
+    unitTestFlag = true;
     if (device == 'app'){
 	console.log("You are testing inside the app");
 
@@ -320,12 +293,30 @@ function startTestOnLoadCounter(device){
     	allBookFoundCallback = checkBooksOK;
     	populateNextDir();
 
+	var testuser;
+    	var testpass;
+    	console.log("Attempting to check credentials file..");
+    	$.get('umpassword.html', function(data){
+        	debugLog("Credential File exists!: " + data);
+        	var datalines = data.split("\n");
+        	testuser = datalines[1];
+        	testpass = datalines[2];
+        	debugLog("Test user is: " + testuser);
+    	});
 
-     	//var usern = "";
-    	var usern = prompt("Enter test username");
-        //var passw = "";
-    	var passw = prompt("Enter test password");
-        //Code to get username (usern) and password (passw) goes here.
+    	if (typeof testuser !== 'undefined' && testuser != null && typeof testpass !== 'undefined' && testpass != null){
+
+
+        	//var usern = "";
+        	var usern = prompt("Enter test username");
+        	//var passw = "";
+        	var passw = prompt("Enter test password");
+        	//Code to get username (usern) and password (passw) goes here.
+    	}else{
+                console.log("Username and Password already set.");
+    	}
+
+
 
     	umlogin(usern,passw, 'http://intranet.paiwastoon.net/umcloud/app/login.xhtml', checkLoginOK);
 
