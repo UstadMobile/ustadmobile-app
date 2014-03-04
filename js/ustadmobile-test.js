@@ -168,31 +168,43 @@ QUnit.log(function( details ) {
 
 //5.
 QUnit.testDone(function( details ) {
-    var result = "fail";
-    //var platform = "";
-    //var ustad_version = "ustad version";  
-    //var milliseconds = (new Date).getTime();
-    console.log( "QUnit: Finished Running Test: ", details.module, details.name, "Failed/total: ", details.failed, details.total, details.duration );
-    //call the function that packages and sends the test results as a HttpRequestHeader
-    if (details.failed == 0 ){
-        result = "pass";
-    }else{
-        result = "fail";
-    }
-    qunitOutput = qunitOutput + "new|" + details.name + "|" + result + "|" + details.duration + "mis|" +  milliseconds + "|" + platform + "|" + ustad_version + "|";
-    console.log("What the output looks so far: " + qunitOutput);
-    localStorage.setItem('qunitOutput', qunitOutput);
-    console.log("qunitOutput localStorage: " + localStorage.getItem('qunitOutput'));
+    if(typeof CONTENT_MODELS !== 'undefined' && CONTENT_MODELS == "test"){
+               	console.log("Test mode and current page done.");
+		var result = "fail";
+    		//var platform = "";
+    		//var ustad_version = "ustad version";  
+    		//var milliseconds = (new Date).getTime();
+    		console.log( "QUnit: Finished Running Test: ", details.module, details.name, "Failed/total: ", details.failed, details.total, details.duration );
+    		//call the function that packages and sends the test results as a HttpRequestHeader
+    		if (details.failed == 0 ){
+        		result = "pass";
+    		}else{
+        		result = "fail";
+    		}
+    		qunitOutput = qunitOutput + "new|" + details.name + "|" + result + "|" + details.duration + "mis|" +  milliseconds + "|" + platform + "|" + ustad_version + "|";
+    		console.log("What the output looks so far: " + qunitOutput);
+    		localStorage.setItem('qunitOutput', qunitOutput);
+    		console.log("qunitOutput localStorage: " + localStorage.getItem('qunitOutput'));
+	}else{
+		console.log("Not testing, not going to log anything..");
+	}
+
 });
 
 
 
 //Final.
 QUnit.done(function( details ) {
-    console.log( "QUnit: Test Suit Ending. Results: Total: ", details.total, " Failed: ", details.failed, " Passed: ", details.passed, " Runtime: ", details.runtime );
-    //call httprequest function
-    sendOutput('qunitOutput');
-    //sendOutput('courseOutput');
+    if(typeof CONTENT_MODELS !== 'undefined' && CONTENT_MODELS == "test"){
+	console.log("Test mode is on. Going to send the logs as: ");
+    	console.log( "QUnit: Test Suit Ending. Results: Total: ", details.total, " Failed: ", details.failed, " Passed: ", details.passed, " Runtime: ", details.runtime );
+    	//call httprequest function
+    	sendOutput('qunitOutput');
+    	//sendOutput('courseOutput');
+    }else{
+	console.log("Not testing, not going to send anything..");
+    }
+
 });
  
 

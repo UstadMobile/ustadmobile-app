@@ -23,4 +23,9 @@ Notes:
 
 Icons come from res/icons/android
 
+To test app (unit tests automatically in emulator)
 
+Then run: ./unit-test-setup-android.sh emulate
+You could run the tests on device directly: ./unit-test-setup-android.sh run
+
+The test results will be sent to UstadMobile Cloud (umclouddj)

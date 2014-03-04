@@ -13,7 +13,7 @@ TARGETDIR="./build-test"
 
 #clean
 if [ -d $TARGETDIR ]; then
-    echo "deleting (cleaning) old build dir"
+    echo "deleting (cleaning) old build-test dir"
     rm -rf $TARGETDIR 
 fi
      

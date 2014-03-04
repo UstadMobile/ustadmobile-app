@@ -45,48 +45,13 @@ If you need a commercial license to remove these restrictions please contact us 
 /*
     The javascript associated with ustad mobile login actions and login page on ustad mobil app.
 */
-//var username="";
-//var password="";
-
-//$.mobile.loading('show', {
-//    text: 'Loading Ustad Mobile',
-//    textVisible: true,
-//    theme: 'b',
-//    html: ""}
-//); 
 
 
-    // Wait for device API libraries to load
-    //
-  //document.addEventListener("deviceready", onLoginDeviceReady2, false);
-
-    // device APIs are available
-    //
-    function onLoginDeviceReady2() {
-        debugLog("Ustad Mobile Startup: In onLoginDeviceReady2()");
-        //navigator.splashscreen.show(); //Only to be uncommented when splashscreen support is enabled.
-        
-    }
-/*
-    document.addEventListener("deviceready", onLangDeviceReady, false);
-    function onLangDeviceReady(){
-        debugLog("in onLangDeviceReady()");
-        navigator.globalization.getPreferredLanguage(
-    
-    function langsuccess(language){
-       debugLog("Your device's language is: " +  language.value + "\n");
-    },
-    function errorCB(){
-        debugLog("Failed to get your device's language.");
-    }
-    );
-}
-*/
 function fail(evt) {
     if(unitTestFlag == false){
     	alert( x_("something went wrong: ") + evt.target.error.code);
     }
-    console.log(evt.target.error.code);
+    debugLog(evt.target.error.code);
 	debugLog("Something went wrong");
 }
 
@@ -98,6 +63,8 @@ function onLoginLoad() {
 }
 
 // PhoneGap is ready
+// Wait for device API libraries to load
+// device APIs are available
 //
 function onLoginDeviceReady() {
     $.mobile.loading('hide');
@@ -119,22 +86,54 @@ function umloginFromForm() {
     
     debugLog("User name and password is: " + username + " / " + password);
     if (!url){
-    var url = 'http://intranet.paiwastoon.net/umcloud/app/login.xhtml';
+        //var url = 'http://intranet.paiwastoon.net/umcloud/app/login.xhtml'; //Should be part of a config file for different TIN CAN LRS's
+        var url = 'http://svr2.ustadmobile.com:8001/xAPI/statements?limit=1'; //Should be part of a config file for different TIN CAN LRS's
+        
     }
     umlogin(username, password, url, umloginredirect);
 }
 
-function umloginredirect(statuscode) {
+function umloginredirect(statuscode, password) {
+    console.log("Password is: " + password);
     debugLog("Status code is: " + statuscode);
     if(statuscode == 200) {
+        //Get password,
+        //Encryt it
+        //Save it as localStorage
+        var password_hash = CryptoJS.SHA3(password, { outputLength: 512 });
+        if(typeof password_hash !== 'undefined' && password_hash != null){
+            localStorage.setItem('password_hash', password_hash);
+            console.log("password_hash set to: " + localStorage.getItem('password_hash'));
+        }
         localStorage.setItem('username',username);
         localStorage.setItem('password',password);
+        localStorage.setItem('oldusername', username);
 		var un = localStorage.getItem('username');
 		var pw = localStorage.getItem('password');
 		console.log("U/P: " + un + "/" + pw);
         openPage("ustadmobile_booklist.html").trigger("create");
-		//openPage("//www/ustadmobile_booklist.html").trigger("create"); // Changes for Windows Phone. added //www/
-    }else {
+    }else if(statuscode == 0){
+        console.log("No internet connectivity.. Still checking password from cache..");
+        var password_hash = CryptoJS.SHA3(password, { outputLength: 512 });
+        var password_hash_ls = localStorage.getItem('password_hash');
+        localStorage.setItem('username', username);
+        var newusername = localStorage.getItem('username');
+        var oldusername = localStorage.getItem('oldusername');
+        console.log("new user name: " + newusername);
+        console.log("old user name: " + oldusername);
+        console.log("oldusername : " + localStorage.getItem('oldusername'));
+        console.log("variables:" + newusername + "|" + oldusername + "|" + password_hash + "|" + password_hash_ls);
+
+        if (newusername == oldusername && password_hash == password_hash_ls){
+            console.log("Old username and new username matches. The passwords match as well.");
+            openPage("ustadmobile_booklist.html").trigger("create");
+        }else{
+            if(unitTestFlag == false){
+					alert(x_("Wrong username/password combination or server error. Status Code:") + statuscode);
+				}
+        }    
+
+    }else{
         if(unitTestFlag == false){
         	alert(x_("Wrong username/password combination, or Please check that you are able to connect to the internet and your server."));
 	}
@@ -150,22 +149,85 @@ function runcallback(callbackfunction, arg) {
     }
 }
 
+function runcallbackwp(callbackfunction, arg1, arg2){
+     if (callbackfunction != null && typeof callbackfunction === "function") {
+        debugLog("Within the call back function with arg: " + arg1 + " and password too!: " + arg2);
+        callbackfunction(arg1, arg2);
+    } 
+}
+
 /*
 This function logs the user to the specified server and credentials. Initially, server being UmCloud(Toughra). This uses Ajax to authenticate.
 */
 function umlogin(username, password, url, callback){
 
     var param = 'userid=' + username + '&password=' + password;
-    //var url = 'http://intranet.paiwastoon.net/umcloud/app/login.xhtml';
+
+    //for TIN CAN server
+    /*
+        #BASIC AUTHENTICATION
+        username="testuser"
+        password="testpassword"
+        req = urllib2.Request(lrsurl)
+        base64string = base64.encodestring('%s:%s' % (username, password)).replace('\n', '')
+        req.add_header("Authorization", "Basic %s" % base64string)
+        req.add_header("X-Experience-API-Version", "1.0.1")
+
+    */
+    
 	if( username == "umdev" && password == "umdev" ){
 		localStorage.setItem('username',username);
         localStorage.setItem('password',password);
         window.open("ustadmobile_developerPage.html", '_self').trigger("create");
-        //BB10 specific changes.
-		////www/ustadmobile_developerPage.html
-        //$.mobile.changePage( "ustadmobile_developerPage.html", { transition: "slideup" } );
 	}else{
-		$.ajax({
+
+        $.ajax({
+			url: url,  
+			type: 'GET',   
+            beforeSend: function (request)
+            {
+                request.setRequestHeader("X-Experience-API-Version", "1.0.1");
+                console.log(btoa(username + ":" + password));
+                request.setRequestHeader("Authorization", "Basic " + btoa(username + ":" + password));
+                
+            },
+			datatype: 'json',
+			success: function(data, textStatus, jqxhr){
+				debugLog("Logging to server: " + url + " a success with code:" + jqxhr.status);
+				runcallbackwp(callback, jqxhr.status, password);
+				},
+			complete: function (jqxhr, txt_status) {
+				debugLog("Ajax call completed to server. Status: " + jqxhr.status);
+				},
+			error: function (jqxhr,b,c){
+                
+				if(unitTestFlag == false && jqxhr.status != 0){
+					alert(x_("Wrong username/password combination or server error. Status Code:") + jqxhr.status);
+				}
+				debugLog("Wrong username/password combination or server error. Status Code:" + jqxhr.status);
+                $.mobile.loading('hide');
+				runcallbackwp(callback, jqxhr.status, password);
+				},
+			statusCode: {
+				200: function(){
+					//alert("Login success on the server!");
+					debugLog("Login success on the server with statusCode 200.");
+					localStorage.setItem('username',username);
+					localStorage.setItem('password',password);
+					console.log("Username and Password set in statusCode");
+					},
+				0: function(){
+                    localStorage.setItem('newusername',username);
+                    console.log("newusername is: " + localStorage.getItem('newusername'));
+					debugLog("Status code 0, unable to connect to server or no internet/intranet access");
+						}
+			}
+				
+	    });
+
+/*	
+        //Old server (umcloud) login..
+    	$.ajax({
 			url: url,  
 			type: 'POST',        
 			data: param,
@@ -200,6 +262,7 @@ function umlogin(username, password, url, callback){
 						}
 				
 			});
+*/
 		}
 }
 
