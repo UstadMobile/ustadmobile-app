@@ -95,6 +95,7 @@ function umloginFromForm() {
 
 function umloginredirect(statuscode, password) {
     console.log("Password is: " + password);
+    var pass = password.trim();
     debugLog("Status code is: " + statuscode);
     if(statuscode == 200) {
         //Get password,
@@ -114,22 +115,30 @@ function umloginredirect(statuscode, password) {
         openPage("ustadmobile_booklist.html").trigger("create");
     }else if(statuscode == 0){
         console.log("No internet connectivity.. Still checking password from cache..");
-        var password_hash = CryptoJS.SHA3(password, { outputLength: 512 });
+        
+        console.log("Password given is: " + pass);
+        var pass_hash = CryptoJS.SHA3(pass, { outputLength: 512 });
+        console.log("pass_hash is: " + pass_hash);
         var password_hash_ls = localStorage.getItem('password_hash');
-        localStorage.setItem('username', username);
-        var newusername = localStorage.getItem('username');
+        localStorage.setItem('newusername', username);
+        //var newusername = localStorage.getItem('username');
         var oldusername = localStorage.getItem('oldusername');
+        newusername = localStorage.getItem('newusername');
         console.log("new user name: " + newusername);
-        console.log("old user name: " + oldusername);
+        console.log("old (working) user name: " + oldusername);
         console.log("oldusername : " + localStorage.getItem('oldusername'));
-        console.log("variables:" + newusername + "|" + oldusername + "|" + password_hash + "|" + password_hash_ls);
+        console.log("variables:" + newusername + "|" + oldusername + "|" + pass_hash + "|" + password_hash_ls);
 
-        if (newusername == oldusername && password_hash == password_hash_ls){
+        if (newusername == oldusername && pass_hash == password_hash_ls){
+            localStorage.setItem('username',username);
             console.log("Old username and new username matches. The passwords match as well.");
             openPage("ustadmobile_booklist.html").trigger("create");
         }else{
+            console.log("Cache username and password do NOT match!");
             if(unitTestFlag == false){
 					alert(x_("Wrong username/password combination or server error. Status Code:") + statuscode);
+                    console.log("Wrong username/password combination or server error. Status code: " + statuscode);
+                    openPage("ustadmobile_login.html").trigger("create");
 				}
         }    
 
