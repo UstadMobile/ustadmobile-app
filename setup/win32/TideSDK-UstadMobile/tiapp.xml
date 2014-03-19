@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<ti:app xmlns:ti='http://ti.appcelerator.org'>
+<id>com.ustadmobile.ustadmobile</id>
+<name>UstadMobile</name>
+<version>replacethis</version>
+<publisher>Ustad Mobile</publisher>
+<url>http//www.ustadmobile.com</url>
+<icon>ustadmobile-icon-96-xhdpi.png</icon>
+<copyright>2014 by Varuna Singh and Mike Dawson</copyright>
+<!-- Window Definition - these values can be edited -->
+<window>
+<id>initial</id>
+<title>UstadMobile</title>
+<url>app://index.html</url>
+<width>700</width>
+<max-width>3000</max-width>
+<min-width>0</min-width>
+<height>500</height>
+<max-height>3000</max-height>
+<min-height>0</min-height>
+<fullscreen>false</fullscreen>
+<resizable>true</resizable>
+<chrome scrollbars="true">true</chrome>
+<maximizable>true</maximizable>
+<minimizable>true</minimizable>
+<closeable>true</closeable>
+</window>
+</ti:app>
