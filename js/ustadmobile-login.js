@@ -60,6 +60,14 @@ function fail(evt) {
 function onLoginLoad() {
     debugLog("Starting onLoginLoad..");
     document.addEventListener("deviceready", onLoginDeviceReady, false);
+	//For desktop - tidesdk: triggering device ready
+	if(navigator.userAgent.indexOf("TideSDK") !== -1){
+		debugLog("TideSDK: ustadmobile-login.js: Triggering device ready..");
+		//Device ready and will call function directly on TideSDK.
+		onLoginDeviceReady();
+	}else{
+		debugLog("Running on mobile device and not desktop..");
+	}
 }
 
 // PhoneGap is ready
@@ -169,6 +177,7 @@ function runcallbackwp(callbackfunction, arg1, arg2){
 This function logs the user to the specified server and credentials. Initially, server being UmCloud(Toughra). This uses Ajax to authenticate.
 */
 function umlogin(username, password, url, callback){
+    console.log("TESTING LOGIN: username|password|url: " + username + "|" + password + "|" + url);
 
     var param = 'userid=' + username + '&password=' + password;
 
@@ -284,7 +293,12 @@ function checkLoggedIn(){
         textVisible: true,
         theme: 'b',
         html: ""}
-    ); 
+    );
+	
+	//Testing purposes..
+    //localStorage.setItem('username', 'tidetest');
+	
+    console.log("Username stored before: " + localStorage.getItem('username'));
 
     if (localStorage.getItem('username')){
         openPage("ustadmobile_booklist.html");
@@ -311,5 +325,6 @@ function openPage(openFile){
 	//window.open(openFile).trigger("create");
     //window.open(openFile);
     window.open(openFile, '_self'); //BB10 specific changes.
+    
 }
 

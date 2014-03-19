@@ -1,5 +1,5 @@
-console.log("Loaded: en.js");
-messages = { 
+console.log("[en.js] Loaded: en.js");
+var messages = { 
 "You are in en-gb.js" : "You are in en-gb.js",
 "Login" : "Login",
 "Error" : "Error",

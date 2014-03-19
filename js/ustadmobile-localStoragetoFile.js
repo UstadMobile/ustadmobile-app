@@ -52,13 +52,22 @@ If you need a commercial license to remove these restrictions please contact us 
 		function localStorageToFile(bookpath, localStorageVariable, openFile){
 		console.log("bookpath: " + bookpath + " localStorageVariable: " + localStorageVariable, + " openFile: " + openFile);
             fileToOpen = openFile;
-            //var r = $.Deferred();
-            //alert("5");
-			//if (!localStorageValue){
-			//	var localStorageValue="";
-			//}
-			//var localStorageFilePath = "/ustadmobileContent/localStorage/" + localStorageVariable + ".ume";
-            var localStorageFilePath = bookpath + "/" + localStorageVariable; // If js, should end with .js
+			var localStorageFilePath;
+			if(navigator.userAgent.indexOf("TideSDK") !== -1){
+                if (window.navigator.userAgent.indexOf("Windows") != -1) {
+                    console.log("TideSDK: You are using WINDOWS.");
+                    localStorageFilePath = bookpath + "\\" + localStorageVariable; // If js, should end with .js
+                }else{
+                    console.log("TideSDK: You are NOT using WINDOWS.");
+            		localStorageFilePath = bookpath + "/" + localStorageVariable; // If js, should end with .js
+                }    
+				//var localStorageFilePath = bookpath + "\\" + localStorageVariable; // If js, should end with .js
+				//Check if this is different for Windows and Linux
+				//var localStorageFilePath = bookpath + "/" + localStorageVariable; // If js, should end with .js
+			}else{
+				var localStorageFilePath = bookpath + "/" + localStorageVariable; // If js, should end with .js
+			}
+			
             console.log(" file to be made: " + localStorageFilePath);
 			//Maybe add checks if localStorage exists..
 			localStorageValue = localStorage.getItem(localStorageVariable);		// Global variable. Make it.	
@@ -76,7 +85,28 @@ If you need a commercial license to remove these restrictions please contact us 
                                              
                                              }, notLS2FFileSystem);
                     
-                }else{ //if all other devices except blackberry 10
+                }else if(navigator.userAgent.indexOf("TideSDK") !== -1){
+					console.log("Detected Desktop - TideSDK. Continuing in localStoragetoFile.js..");
+					
+					//Make the file
+					var destinationFile = Ti.Filesystem.getFile(localStorageFilePath);
+					if(destinationFile.exists() == false && destinationFile.touch() == false) {
+						alert('We could not create the file: ' + localStorageFilePath + ' so we must abort.');
+						Y.Global.fire('download:error');
+						return;
+					}else{
+						debugLog("Successfully created file: " + localStorageFilePath );
+						
+						//Now WRITE TO FILE:
+						
+						//destinationFile.open(Ti.Filesystem.MODE_WRITE);
+						//destinationFile.write(localStorageValue);
+						//destinationFile.close();
+						
+						//AFTER WRITE SUCCESS (CHECK IT):
+						window.open(fileToOpen, '_self').trigger("create");
+					}
+				}else{ //if all other devices except blackberry 10
                     window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function(fs){
                                              fileSystem = fs;
                                              fileSystem.root.getFile(localStorageFilePath, {create: true, exclusive: false}, gotLS2FFileEntry, notLS2FFileEntry);

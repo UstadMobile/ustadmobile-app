@@ -1,5 +1,5 @@
-
-var messages = { 
+console.log("Loaded: en.js");
+messages = { 
 "You are in en-gb.js" : "You are in en-gb.js",
 "Login" : "Login",
 "Error" : "Error",
@@ -56,6 +56,7 @@ var messages = {
 "Get Courses" : "Get Courses",
 "Back" : "Back",
 "Forward" : "Forward",
+
 };
 
 var messagesold = new Array();

@@ -6,6 +6,13 @@
 //var devicelanguage = localStorage.getItem('checklanguage');
 
 document.addEventListener("deviceready", onSetLocalisationReady, false);
+if(navigator.userAgent.indexOf("TideSDK") !== -1){
+    debugLog("TideSDK: ustadmobile-setlocalisation.js: Triggering device ready..");
+	//Device ready and will call function directly on TideSDK.
+	onSetLocalisationReady();
+}else{
+    debugLog("Running on mobile device and not desktop..");
+}
 
 function onSetLocalisationReady(){
 	console.log("in onSetLocalisationReady()");
@@ -26,25 +33,25 @@ function onLanguageDeviceReady(){
     //console.log("CORDOVA READY..");
     var selectedlanguage = localStorage.getItem('language');    
     var devicelanguage = localStorage.getItem('checklanguage');
-    console.log("Local Storage set Language is: " + selectedlanguage);
-    console.log("Local Storage set Device Language is: " + devicelanguage);
-    console.log("In here out!");
+    console.log("[setlocalisation] Local Storage set Language is: " + selectedlanguage);
+    console.log("[setlocalisation] Local Storage set Device Language is: " + devicelanguage);
+    console.log("[setlocalisation] In here out!");
     if (typeof selectedlanguage === 'undefined' || selectedlanguage === 'undefined'){
         selectedlanguage = null;
-        console.log("selectedlanguage is nulled because it is not defined");
+        console.log("[setlocalisation] selectedlanguage is nulled because it is not defined");
     }else{
-        console.log("selectedlanguage is NOT undefined.");
+        console.log("[setlocalisation] selectedlanguage is NOT undefined.");
     }
     if (selectedlanguage == null && devicelanguage != null ){   // The app's first run (selectedlanguage is null) and detected a device language..
     //if (typeof selectedlanguage === 'undefined' && devicelanguage != null ){   // The app's first run (selectedlanguage is null) and detected a device language..
-        console.log("In here you!");
+        console.log("[setlocalisation] In here you!");
         var esp = 'espa' + '\u00f1' + 'ol';
         var ara = '\u0627\u0644\u0639\u0631\u0628\u064A\u0629';
         var hin = '\u0939\u093F\u0928\u094D\u0926\u0940';
-        console.log("hin: " + hin);
-        console.log("ara: " + ara);
+        console.log("[setlocalisation] hin: " + hin);
+        console.log("[setlocalisation] ara: " + ara);
         selectedlanguage = devicelanguage;
-        console.log("1The device lang is: |" + devicelanguage + "|");
+        console.log("[setlocalisation] 1The device lang is: |" + devicelanguage + "|");
                             //To be replaced with filecheck logic.
             //Language check. //español //العربية
         if (devicelanguage == "English"){
@@ -62,7 +69,7 @@ function onLanguageDeviceReady(){
         }
         else{
             selectedlanguage = "default";   //We set it at default as we will need to check again.
-            console.log("Setting the default language as device's language: " + selectedlanguage);
+            console.log("[setlocalisation] Setting the default language as device's language: " + selectedlanguage);
         }
         setLanguageAppStart(selectedlanguage);
     }else if (selectedlanguage == "default" && devicelanguage != null){    //If app didn't get language first time, check again. (this occurs sometimes)
@@ -70,10 +77,10 @@ function onLanguageDeviceReady(){
         var esp = 'espa' + '\u00f1' + 'ol';
         var ara = '\u0627\u0644\u0639\u0631\u0628\u064A\u0629';
         var hin = '\u0939\u093F\u0928\u094D\u0926\u0940';
-        console.log("ara: " + ara);
-        console.log("esp: " + esp);
-        console.log("hin: " + hin);
-        console.log("2The device lang is: |" + devicelanguage + "|");
+        console.log("[setlocalisation] ara: " + ara);
+        console.log("[setlocalisation] esp: " + esp);
+        console.log("[setlocalisation] hin: " + hin);
+        console.log("[setlocalisation] 2The device lang is: |" + devicelanguage + "|");
                             //To be replaced with filecheck logic.
         if (devicelanguage == "English"){
             selectedlanguage = "en";
@@ -89,22 +96,22 @@ function onLanguageDeviceReady(){
             console.log("Setting the language as device's language: " + selectedlanguage);        
         }else{
             selectedlanguage = "en";        //English is the default language and it is set here.
-            console.log("2Setting the language as default since language not configured in ustad mobile: " + selectedlanguage);
+            console.log("[setlocalisation] 2Setting the language as default since language not configured in ustad mobile: " + selectedlanguage);
         }
         setLanguageAppStart(selectedlanguage);
     }else if (selectedlanguage == null && devicelanguage == null){    //If ustadmobile.js fails to set the language / undestand the language of the device, default to English.
         selectedlanguage = "default";
-        console.log("App first run: Setting language as default/english.");
+        console.log("[setlocalisation] App first run: Setting language as default/english.");
         setLanguageAppStart(selectedlanguage);
     }else if (selectedlanguage == null){    //First page load. //Don't think this will ever be called..
         selectedlanguage = "default";
-        console.log("Setting the default language as English: " + selectedlanguage);
+        console.log("[setlocalisation] Setting the default language as English: " + selectedlanguage);
         setLanguageAppStart(selectedlanguage);
     }else{  // Second or more run of the App, ie: language has been already set by default or by the user.
-        console.log("Language is already set by user: " + selectedlanguage);
+        console.log("[setlocalisation] Language is already set by user: " + selectedlanguage);
         setLanguageAppStart(selectedlanguage);
     }
-    console.log("selectedlanguage: " + selectedlanguage); 
+    console.log("[setlocalisation] selectedlanguage: " + selectedlanguage); 
     localizePage(); // After language is set, call the translator.
 
 }
@@ -129,10 +136,10 @@ function setlanguage(){
 //Function logic that dynamically adds a javascript to the head of the current page.
 function loadjscssfile(filename, filetype){
  if (filename != null && filetype=="js"){ //if filename is a external JavaScript file
-  console.log("Loading language js: " + filename + " (dynamically)..");
+  console.log("[setlocalisation] Loading language js: " + filename + " (dynamically)..");
   $('head').append($('<script>').attr('type', 'text/javascript').attr('src', filename));
  }
- console.log(" Loading done.");
+ console.log("[setlocalisation] Loading done.");
 
 }
 

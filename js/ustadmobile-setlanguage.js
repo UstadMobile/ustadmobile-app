@@ -51,6 +51,13 @@ console.log("IN USTADMOBILE-SETLANGUAGE.JS \n ");
 
 //Cordova device ready event handler
 document.addEventListener("deviceready", onSetLanguageDeviceReady, false);
+//For tideSDK there is no way of figuring device's language apart from javascript navigator which is not accurate always. For now using default..
+if(platform.indexOf("tidesdk") !== -1){
+    debugLog("Detected Desktop - TideSDK ustadmobile-setlanguage.js");
+    onSetLanguageDeviceReady();
+}else{
+    debugLog("Detected mobile device in ustadmobile-setlanguage.js.");
+}
 
 
 //Function called whenever Cordova is ready within the app's navigation.
@@ -65,23 +72,33 @@ function onSetLanguageDeviceReady(){
 
     
     console.log(" in onSetLanguageDeviceReady()");
-    navigator.globalization.getPreferredLanguage(
-    
-    function langsuccess(language){
-       console.log(" Your device's language is: " +  language.value + "\n");
-        var langGlob = language.value;
-        if (langGlob == "English"){
-            langGlob = "en";
+
+    //For tideSDK there is no way of figuring device's language apart from javascript navigator which is not accurate always. For now using default..
+    if(platform.indexOf("tidesdk") !== -1){
+        debugLog("Detected Desktop - TideSDK");
+        var langGlob = "en";
+        localStorage.setItem('checklanguage', langGlob);
+    }else{
+        navigator.globalization.getPreferredLanguage(
+        
+        function langsuccess(language){
+           console.log(" Your device's language is: " +  language.value + "\n");
+            var langGlob = language.value;
+            if (langGlob == "English"){
+                langGlob = "en";
+            }
+            if (langGlob == "Arabic"){
+                langGlob = "ar";
+            }
+           localStorage.setItem('checklanguage', langGlob); 
+        },
+        function errorCB(){
+            console.log("Failed to get your device's language.");
         }
-        if (langGlob == "Arabic"){
-            langGlob = "ar";
-        }
-       localStorage.setItem('checklanguage', langGlob); 
-    },
-    function errorCB(){
-        console.log("Failed to get your device's language.");
+        );
     }
-    );
+
+
     console.log(" checklanguage set: " + localStorage.getItem('checklanguage'));
 }
 

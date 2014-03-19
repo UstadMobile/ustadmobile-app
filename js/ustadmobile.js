@@ -119,12 +119,35 @@ if(navigator.userAgent.indexOf("Android") !== -1){
     }else if(navigator.userAgent.indexOf("Chrome") !== -1){
         platform = "chrome";
         debugLog("You are using Chrome on ustadmobile.js()"); 
+    }else if(navigator.userAgent.indexOf("TideSDK") !== -1){
+        platform=null;
+        //platform = "tidesdk";
+        //debugLog("You are using Desktop TideSDK on ustadmobile.js()"); 
+        if (window.navigator.userAgent.indexOf("Windows NT 6.2") != -1) platform="tidesdk-WIN8";
+        if (window.navigator.userAgent.indexOf("Windows NT 6.1") != -1) platform="tidesdk-WIN7";
+        if (window.navigator.userAgent.indexOf("Windows NT 6.0") != -1) platform="tidesdk-WINVista";
+        if (window.navigator.userAgent.indexOf("Windows NT 5.1") != -1) platform="tidesdk-WinXP";
+        if (window.navigator.userAgent.indexOf("Windows NT 5.0") != -1) platform="tidesdk-WIN2000";
+        if (window.navigator.userAgent.indexOf("Mac")!=-1) platform="tidesdk-MAC";
+        if (window.navigator.userAgent.indexOf("X11")!=-1) platform="tidesdk-UNIX";
+        if (window.navigator.userAgent.indexOf("Linux")!=-1) platform="tidesdkLinux";
+        debugLog("You are using Desktop TideSDK platform: " + platform + " on ustadmobile.js()");
+        //if(typeof platform != 'undefined' && platform != null){
+            //debugLog("Triggering device ready.."); //Because Tide Does not have a device ready..
+            //onAppDeviceReady();
+        //}
     }else{          // More to add: IE10: MSIE 10, etc.
         //alert("Could not verify your device or platform. Your device isn't tested with our developers. Error. Contact an ustad mobile developer.");
     }
 
 //Cordova device ready event handler
 document.addEventListener("deviceready", onAppDeviceReady, false);
+if(navigator.userAgent.indexOf("TideSDK") !== -1){
+    debugLog("TideSDK: Triggering device ready..");
+    onAppDeviceReady();
+}else{
+    debugLog("Running on mobile device and not desktop..");
+}
 
 //Global variable set in scroll login. Can be disabled from the Content (!1) to disable scroll.
 var scrollEnabled = 1;
@@ -180,7 +203,18 @@ function callOnLanguageDeviceReady(){
     }else if(navigator.userAgent.indexOf("Chrome") !== -1){
         console.log("Detected Chrome/Chromium Browser");
         onLanguageContentReady();
-    }else{              // More to add: IE10: MSIE 10, etc.
+    }else if(navigator.userAgent.indexOf("TideSDK") !== -1){
+        console.log("[COURSE] Desktop - TideSDK detected in course content.");
+        if (window.navigator.userAgent.indexOf("Windows") != -1) {
+            console.log("[COURSE] TideSDK: You are using WINDOWS.");
+            onLanguageContentReady();
+        }else{
+            console.log("[COURSE] TideSDK: You are NOT using WINDOWS.");
+            onLanguageContentReady();
+        }    
+    }else{   
+        console.log("Could not verify the platform.");
+        // More to add: IE10: MSIE 10, etc.
         //alert("Could not verify your device or platform. Your device isn't tested with our developers. Error. Contact an ustad mobile developer.");
     }
     
@@ -202,14 +236,12 @@ function onLanguageContentReady(){
     console.log("In ONLANGUAGECONTENTREADY(), platform set in Content is not set. ");
      if (ustadlocalelang != null && filetype=="js"){ //if filename is a external JavaScript file    
         
-        //if (platform == "android"){
         if(navigator.userAgent.indexOf("Android") !== -1){
-        //var baseURL = localStorage.getItem("baseURL");
-        console.log("Detected platform as : Android ");
-        var baseURL = "/android_asset/www";
+            console.log("Detected platform as : Android ");
+            var baseURL = "/android_asset/www";
         }else if(navigator.userAgent.indexOf("Windows Phone OS 8.0") !== -1){
             console.log("Detected platform as : Windows Phone 8");
-        var baseURL = "/www";
+            var baseURL = "/www";
         }else if(navigator.userAgent.indexOf("iPhone OS") !== -1){
             console.log("Detected platform as : iOS");
             var baseURL = localStorage.getItem("baseURL");
@@ -223,6 +255,18 @@ function onLanguageContentReady(){
         }else if(navigator.userAgent.indexOf("Chrome") !== -1){
             console.log("Detected Chrome/Chromium Browser");
             var baseURL = "";
+        }else if(navigator.userAgent.indexOf("TideSDK") !== -1){
+            if (window.navigator.userAgent.indexOf("Windows") != -1) {
+                    console.log("TideSDK: You are using WINDOWS.");
+                    //var baseURL = "app://";
+					var baseURL = Ti.API.Application.getResourcesPath();
+                    //Add a "/" at the end or "//" for Windows to append the language js in the head element. 
+                }else{
+                    console.log("TideSDK: You are NOT using WINDOWS.");
+                    //var baseURL = "app://"
+                    var baseURL = Ti.API.Application.getResourcesPath();
+                }    
+
         }else{                      // More to add: IE10: MSIE 10, etc.
             console.log("Unable to verify your device or platform. Error.");
             //alert("Your device/platform isn't recgnized by this device. So there will/might be errors. Contact an Ustad Mobile Developer.");
@@ -232,15 +276,46 @@ function onLanguageContentReady(){
 	console.log("baseURL: " + baseURL);
 	if (baseURL == null || baseURL == ''){
 		baseURL='';
+		//baseURL = baseURL + "/"; 
+		filename = baseURL + "locale/" + ustadlocalelang + ".js";      
+		console.log("Loading language js: " + filename + " in course (dynamically)..");
+		 $('head').append($('<script>').attr('type', 'text/javascript').attr('src', filename));
 	}else{
-		baseURL = baseURL + "/"; 
+        if(navigator.userAgent.indexOf("TideSDK") !== -1){
+            if (window.navigator.userAgent.indexOf("Windows") != -1) {
+                console.log("TideSDK: You are using WINDOWS.");
+                baseURL = baseURL + "\\"; 
+				filename = baseURL + "locale\\" + ustadlocalelang + ".js";   
+				
+				filename = currentUrl.substring(0, currentUrl.lastIndexOf("/"));
+				filename = filename + "/locale/" + ustadlocalelang + ".js";
+				//OR
+				//filename = "locale/" + ustadlocalelang + ".js";
+				//CHECK THIS!!
+				//Does eXe include locale folder in courses ?
+				//assuming it does hence commented out.
+				
+				console.log("Loading language js: " + filename + " in course (dynamically)..");
+				 $('head').append($('<script>').attr('type', 'text/javascript').attr('src', filename));
+            }else{
+                console.log("TideSDK: You are NOT using WINDOWS.");
+                baseURL = baseURL + "/"; 
+				filename = baseURL + "locale/" + ustadlocalelang + ".js";      
+				console.log("Loading language js: " + filename + " in course (dynamically)..");
+				 $('head').append($('<script>').attr('type', 'text/javascript').attr('src', filename));
+            } 
+        }else{
+            baseURL = baseURL + "/"; 
+			filename = baseURL + "locale/" + ustadlocalelang + ".js";      
+			console.log("Loading language js: " + filename + " in course (dynamically)..");
+			 $('head').append($('<script>').attr('type', 'text/javascript').attr('src', filename));
+        }
+		
 	}
-      	filename = baseURL + "locale/" + ustadlocalelang + ".js";      
-      	console.log("Loading language js: " + filename + " in course (dynamically)..");
-     	 $('head').append($('<script>').attr('type', 'text/javascript').attr('src', filename));
+      	
 
      }
-    console.log(" Content language javascript: " + filename + ".js Loading done.");
+    console.log(" Content language javascript: " + filename + " Loading done.");
     localizePage();
     $.mobile.loading('hide');
 }
@@ -367,28 +442,31 @@ function onAppDeviceReady(){
     var baseURL = localStorage.getItem("baseURL");
     console.log(" Startup: ustadmobile.js->onAppDeviceReady()->baseURL: " + baseURL);
 
-    //var messageM = localStorage.getItem("testLS");
-    //console.log("WPTEST: ustadmobile.js->onAppDeviceReady-> Message: " + messageM);
-
-    
-    debugLog(" in onLangDeviceReady()");
-    navigator.globalization.getPreferredLanguage(
-    
-    function langsuccess(language){
-       debugLog(" Your device's language is: " +  language.value + "\n");
-        var langGlob = language.value;
-        if (langGlob == "English"){
-            langGlob = "en";
-        }
-        if (langGlob == "Arabic"){
-            langGlob = "ar";
-        }
-       localStorage.setItem('checklanguage', langGlob); 
-    },
-    function errorCB(){
-        debugLog("Failed to get your device's language.");
+    //For tideSDK there is no way of figuring device's language apart from javascript navigator which is not accurate always. For now using default..
+    if(platform.indexOf("tidesdk") !== -1){
+        debugLog("Detected Desktop - TideSDK");
+        var langGlob = "en";
+        localStorage.setItem('checklanguage', langGlob);
+    }else{
+        debugLog("Detected mobile device- Cordova.");
+        navigator.globalization.getPreferredLanguage(
+            function langsuccess(language){
+               debugLog(" Your device's language is: " +  language.value + "\n");
+                var langGlob = language.value;
+                if (langGlob == "English"){
+                    langGlob = "en";
+                }
+                if (langGlob == "Arabic"){
+                    langGlob = "ar";
+                }
+               localStorage.setItem('checklanguage', langGlob); 
+            },
+            function errorCB(){
+                debugLog("Failed to get your device's language.");
+            }
+        );
     }
-    );
+
     debugLog(" checklanguage set: " + localStorage.getItem('checklanguage'));
 }
 
@@ -422,7 +500,7 @@ pageSelector - class or id selector e.g. .ui-page-active
 */
 function localizePage() { 
 
-    console.log("In localizePage()");
+    console.log("[setlocalisation][ustadmobile] In localizePage()");
     $(".exeTranslated").each(function(index, value) {
         var textToTranslate = $(this).attr("data-exe-translation");
         //var attrTextToTranslate = $(this).attr("data-exe-translation-attr");
@@ -601,7 +679,21 @@ function exeMenuPageOpen(){
         var exeMenuLink2 = localStorage.getItem("baseURL") + "/" + exeMenuPage2;
 	    debugLog("Ustad Mobile Content: iOS: You will go into: exeMenuLink " + exeMenuLink2);
 	//alert("exeMenuLink: " + exeMenuLink2);
-    }else{
+    }else if(navigator.userAgent.indexOf("TideSDK") !== -1){
+	    console.log("Detected Desktop - TideSDK. Continuing in [CONTENT]");
+	    if (window.navigator.userAgent.indexOf("Windows") != -1) {
+            console.log("TideSDK: You are using WINDOWS.");
+            var exeMenuLink2 =  "app://" + exeMenuPage2;
+	        debugLog("Ustad Mobile Content: Deskop-Tide-SDK-NonWindows: You will go into: exeMenuLink " + exeMenuLink2);
+        }else{
+            console.log("TideSDK: You are NOT using WINDOWS.");
+            //var exeMenuLink2 = localStorage.getItem("baseURL") + "/" + exeMenuPage2;
+            //var baseURL = Ti.API.Application.getResourcesPath();
+            //var exeMenuLink2 = baseURL + "/" + exeMenuPage2;
+            var exeMenuLink2 =  "app://" + exeMenuPage2;
+	        debugLog("Ustad Mobile Content: Deskop-Tide-SDK-NonWindows: You will go into: exeMenuLink " + exeMenuLink2);
+        }    
+	}else{
         console.log("Unable to detect your device platform. Error.");	
 	//alert("Unable to get platform..");
     }
@@ -664,7 +756,16 @@ function openPage2(openFile){
         //openFile = "" + openFile;
         //Do nothing.
         console.log("Detected your device is Blackberry 10");
-    }else{
+    }else if(navigator.userAgent.indexOf("TideSDK") !== -1){
+	    console.log("Detected Desktop - TideSDK. Continuing in [MENU2]");
+	    if (window.navigator.userAgent.indexOf("Windows") != -1) {
+            console.log("TideSDK: You are using WINDOWS.");
+            openFile="app://" + openFile;
+        }else{
+            console.log("TideSDK: You are NOT using WINDOWS.");
+            openFile="app://" + openFile; //Test this..
+        }    
+	}else{
         console.log("Unable to detect your device platform. Error.");
     }
     console.log("Menu Links: Going to page: " + openFile);
@@ -672,7 +773,14 @@ function openPage2(openFile){
 	//window.open(openFile).trigger("create");
     //window.open(openFile);
     //window.open(openFile, '_self'); //BB10 specific changes so that it loads in current child webview
-    window.open(openFile, '_blank');
+	
+	if(navigator.userAgent.indexOf("TideSDK") !== -1){
+		console.log("Detected Desktop - TideSDK.");
+		window.open(openFile, '_self');
+	}else{
+		console.log("You are not using Desktop-TideSDK");
+		window.open(openFile, '_blank');
+	}
 }
 
 

@@ -47,9 +47,11 @@ If you need a commercial license to remove these restrictions please contact us 
     var buttonBOOLEAN = true;   //If true, then ability to click on the button and download / get course by id. If set to false, then something is waiting to get over.
     var server = "svr2.ustadmobile.com:8010";
     var serverEXeExport = "http://" + server + "/media/eXeExport/";
-    var serverGetCourse = "http://" + server + "/getcourse/?id=";
     //"http://78.47.197.237:8010/getcourse/?id="
-    var cowsdung; //BB10TEST: Testing purposes.
+    var serverGetCourse = "http://" + server + "/getcourse/?id=";
+
+    //BB10TEST: Testing purposes.
+    var cowsdung; 
 
     var globalXMLListFolderName = "all";
     var rootPath; //Doesn't change throughout the program.
@@ -213,14 +215,8 @@ If you need a commercial license to remove these restrictions please contact us 
             
         }else{
             //original
-            window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, getXMLListFile, function(){alert("Something went wrong in getting file System for packages."); debugLog("Something went wrong on getting file system in onlistPackages(msg)");});
-            
-        }
-        
-
-        
-
-    
+            window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, getXMLListFile, function(){alert("Something went wrong in getting file System for packages."); debugLog("Something went wrong on getting file system in onlistPackages(msg)");});   
+        } 
     }
 
     // This function calls the file getting method of FileEntry.
@@ -302,6 +298,20 @@ If you need a commercial license to remove these restrictions please contact us 
            //readXMLListAsText(file);
     }
 
+
+/* For easy access. Code that differenciates TideSDK from Cordova?
+    if(navigator.userAgent.indexOf("TideSDK") !== -1){
+        console.log("[Get Course] Desktop - TideSDK detected in course content.");
+        if (window.navigator.userAgent.indexOf("Windows") != -1) {
+            console.log("[Get Course] TideSDK: You are using WINDOWS.");
+
+        }else{
+            console.log("[Get Course] TideSDK: You are NOT using WINDOWS.");
+           
+        }    
+    }
+*/
+
     /* 
         This function will go ahead and fetch the xml file and then download all the contents of the package to form a ustad mobile package/book that the device can then access and go through.
     */
@@ -333,8 +343,102 @@ If you need a commercial license to remove these restrictions please contact us 
     //Cordova check if device is ready
     function onPackageTransfer(){
         document.addEventListener('deviceready', beginPackageTransfer, function(){ buttonBOOLEAN = true; console.log("buttonBOOLEAN is set to true because of failure. Can try again.."); alert("Something went wrong in checking Cordova ready."); debugLog("Something went wrong on deviceready at function: onPackageTransfer()");});
+        if(navigator.userAgent.indexOf("TideSDK") !== -1){
+        console.log("[Get Course: onPackageTransfer] Desktop - TideSDK detected in course content.");
+        if (window.navigator.userAgent.indexOf("Windows") != -1) {
+            console.log("[Get Course: onPackageTransfer] TideSDK: You are using WINDOWS.");
+            //beginPackageTransfer();
+            //gotRootDirPackage();
+            //TideSDK version of downloading a course.
+			beginTideSDKCourseDownload();
+
+            }else{
+                console.log("[Get Course: onPackageTransfer] TideSDK: You are NOT using WINDOWS.");
+                //beginPackageTransfer();
+                //gotRootDirPackage();
+                //TideSDK version of downloading a course.
+				beginTideSDKCourseDownload();
+
+            }    
+        }
     }
     
+    //TideSDK version of downloading a course.
+    function beginTideSDKCourseDownload(){
+        //packageString will be set by another function from xml package list.
+        debugLog("TideSDK [Get Course] packageString: " + packageString);
+        //Logic to get the file name from the url
+        var uriSplit = packageString.split("/");
+        var lastPos = uriSplit.length - 1;
+            fileName = uriSplit[lastPos];        
+        debugLog("TideSDK [Get Course] The fileName in gotRootDirPackage: " + fileName); 
+        //Logic to get the folder name / package name from the url's file name.
+        var fileNameCheckArray = fileName.split("_ustadpkg");
+        var packageFolderNamePos = fileNameCheckArray.length - 2;
+            packageFolderName = fileNameCheckArray[packageFolderNamePos];
+        if (!packageFolderName){
+            packageFolderName="";
+        }
+        packageFolderName = globalXMLListFolderName + "/" + packageFolderName;
+
+        //Trying to get this: var packageXMLDir = "ustadmobileContent/" + packageFolderName;
+		debugLog("TideSDK [Get Course] Creating Package XML Directory..");
+        var packageXMLDir;
+        if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1){
+            console.log("Detected your device as a blackberry 10 device. Proceeding with Downloading the course..");
+            packageXMLDir = blackberry.io.SDCard + "/ustadmobileContent/" + packageFolderName;
+        }else if(navigator.userAgent.indexOf("TideSDK") !== -1){
+            console.log("[Get Course] Desktop - TideSDK detected in course content.");
+            if (window.navigator.userAgent.indexOf("Windows") != -1) {
+                console.log("[Get Course] TideSDK: You are using WINDOWS.");
+                packageXMLDir = "/ustadmobileContent/" + packageFolderName;
+            }else{
+                console.log("[Get Course] TideSDK: You are NOT using WINDOWS.");
+                packageXMLDir = "ustadmobileContent/" + packageFolderName;
+            }    
+        }else{
+            packageXMLDir = "ustadmobileContent/" + packageFolderName;
+        }
+
+        //Checking if course directory exists or not.
+        debugLog("TideSDK [Get course] CHECKING IF DIRECTORY: " + packageXMLDir + " EXISTS. IF NOT, CREATING IT.");
+        //TideSDK file 
+        
+        var destinationDir = Ti.Filesystem.getFile(packageXMLDir);
+        if( (destinationDir.exists() == false) && (destinationDir.createDirectory() == false)) {
+            buttonBOOLEAN = true; console.log("TideSDK [Get course] buttonBOOLEAN is set to true because of failure. Can try again..");              
+	        alert("Sorry, the course: " + fileNameCheck + " exists but fetch error. Contact an ustadmobile developer.");
+	        debugLog("TideSDK [Get course] Invalid package name. Not an xml or doesnt end with ustadpkg_html5..");
+
+	        Y.Global.fire('download:error');
+	        return;
+        }else{
+	        debugLog("Successfully created dir or dir already exists: " + packageXMLDir );
+            debugLog("TideSDK [Get course] Creating package XML Directory success.");
+			debugLog("TideSDK [Get course] packageFolderName: " + packageFolderName);
+			var lastFileNamePos = fileNameCheckArray.length - 1;
+			var fileNameCheck = fileNameCheckArray[lastFileNamePos];
+			if (fileNameCheck == "_html5.xml" ) {//Check if it is a valid named xml.
+			    debugLog("TideSDK [Get course] Specified file: " + fileName + " is an ustadmobile package xml.");
+				startFileDownload(packageString, packageFolderName);
+                //startTideSDKFileDownload(packageString, packageFolderName);
+                
+			}
+			else{
+                buttonBOOLEAN = true; console.log("TideSDK [Get course] buttonBOOLEAN is set to true because of failure. Can try again..");                    
+			    alert("Sorry, that course exists but fetch error in, " + fileNameCheck + " Contact an ustadmobile developer.");
+			    debugLog("TideSDK [Get course] Invalid package name. Not an xml or doesnt end with ustadpkg_html5..");
+			}    
+        }        
+
+        
+
+            
+    
+    }
+
+
+
     //Cordova get File System
     function beginPackageTransfer(){
         window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, gotRootDirPackage, function(){ buttonBOOLEAN = true; console.log("buttonBOOLEAN is set to true because of failure. Can try again.."); alert("Something went wrong in getting File System of Package XML"); debugLog("Something went wrong in beginPackageTransfer()");});
@@ -343,24 +447,30 @@ If you need a commercial license to remove these restrictions please contact us 
     /* Gets the root path and initiates packageString xml file to be downloaded (set previously) to calculated folder.*/
     function gotRootDirPackage(fileSystem){
 		rootPath = fileSystem.root.fullPath; // Global root path gotten.
+
 		//packageString will be set by another function from xml package list.
+        //eg: packageString: "http://www.server.com/path/to/Planets_and_Physics_ustadpkg_html5.xml"
         debugLog("packageString: " + packageString);
+
         //Logic to get the file name from the url
+        //to get filename = "Planet_and_Physcis_ustadpkg_html4.xml"
         var uriSplit = packageString.split("/");
         var lastPos = uriSplit.length - 1;
             fileName = uriSplit[lastPos];        
         debugLog("The fileName in gotRootDirPackage: " + fileName); 
+        
         //Logic to get the folder name / package name from the url's file name.
+        //to get packageFolderName = "all/Planet_and_Physcis"
         var fileNameCheckArray = fileName.split("_ustadpkg");
         var packageFolderNamePos = fileNameCheckArray.length - 2;
             packageFolderName = fileNameCheckArray[packageFolderNamePos];
         if (!packageFolderName){
             packageFolderName="";
         }
-            packageFolderName = globalXMLListFolderName + "/" + packageFolderName;
+        packageFolderName = globalXMLListFolderName + "/" + packageFolderName; 
 
-		debugLog("Creating Package XML Directory..");
-        
+        //Trying to get this: var packageXMLDir = "ustadmobileContent/all/Planet_and_Physics"
+        debugLog("Creating Package XML Directory..");
         var packageXMLDir;
         if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1){
             console.log("Detected your device as a blackberry 10 device. Proceeding with Downloading the course..");
@@ -368,29 +478,30 @@ If you need a commercial license to remove these restrictions please contact us 
         }else{
             packageXMLDir = "ustadmobileContent/" + packageFolderName;
         }
-			//var packageXMLDir = "ustadmobileContent/" + packageFolderName;
         
-			debugLog("CHECKING IF DIRECTORY: " + packageXMLDir + " EXISTS. IF NOT, CREATING IT.");
-			fileSystem.root.getDirectory(packageXMLDir, {create:true, exclusive:false}, function(){
-					debugLog(" Creating package XML Directory success.");
-					
-					debugLog("packageFolderName: " + packageFolderName);
-					var lastFileNamePos = fileNameCheckArray.length - 1;
-					var fileNameCheck = fileNameCheckArray[lastFileNamePos];
-					if (fileNameCheck == "_html5.xml" ) {//Check if it is a valid named xml.
-					//if (fileNameCheck != null){
-					  debugLog("Specified file: " + fileName + " is an ustadmobile package xml.");
-					  //startFileDownload(packageString,"");
-						startFileDownload(packageString, packageFolderName);
-					}
-					else{
-                      buttonBOOLEAN = true; console.log("buttonBOOLEAN is set to true because of failure. Can try again..");                    
-					  alert("Sorry, please input a valid ustadmobile xml, " + fileNameCheck);
-					  debugLog("Invalid package name. Not an xml or doesnt end with ustadpkg_html5..");
-					}
-					
-				}, function(){buttonBOOLEAN = true; console.log("buttonBOOLEAN is set to true because of failure. Can try again.."); debugLog("Creating package XML Dir unsuccess.");$.mobile.loading('hide'); alert("Unable to download package to your device and file system.");});
-		
+        //To check if the directory: ustadmobileContent/all/Planet_and_Physics exists. If not, creates it.
+        //Remember, during start of the app, ustadmobileContent/all is already checked and created if not present.
+		debugLog("CHECKING IF DIRECTORY: " + packageXMLDir + " EXISTS. IF NOT, CREATING IT.");
+		fileSystem.root.getDirectory(packageXMLDir, {create:true, exclusive:false}, function(){
+				debugLog(" Creating package XML Directory success.");
+				debugLog("packageFolderName: " + packageFolderName);
+				var lastFileNamePos = fileNameCheckArray.length - 1;
+				var fileNameCheck = fileNameCheckArray[lastFileNamePos];
+				if (fileNameCheck == "_html5.xml" ) {//Check if it is a valid named xml.
+				//if (fileNameCheck != null){
+				  debugLog("Specified file: " + fileName + " is an ustadmobile package xml.");
+				  //startFileDownload(packageString,"");
+					startFileDownload(packageString, packageFolderName);        
+                    //eg: startFileDownload("http://www.server.com/path/to/Planet_and_Physics_ustadpkg_html5.xml", "all/Planet_and_Physcis");
+				}
+				else{
+                  buttonBOOLEAN = true; console.log("buttonBOOLEAN is set to true because of failure. Can try again..");                    
+				  alert("Sorry, please input a valid ustadmobile xml, " + fileNameCheck);
+				  debugLog("Invalid package name. Not an xml or doesnt end with ustadpkg_html5..");
+				}
+				
+			}, function(){buttonBOOLEAN = true; console.log("buttonBOOLEAN is set to true because of failure. Can try again.."); debugLog("Creating package XML Dir unsuccess.");$.mobile.loading('hide'); alert("Unable to download package to your device and file system.");});
+	
 		
 		
         
@@ -404,40 +515,110 @@ If you need a commercial license to remove these restrictions please contact us 
             callbackfunction(arg);   
         }
     }    
+	
+	/*
+	TideSDK function to download a url into a destination path. Doesn't return anything. Need a check. 
+	*/
+	function tideSDKDownload(url,destination){
+		//null the file before populating it. 
+		var fileHandle = Ti.Filesystem.getFile(destination);
+		var dupFlag = true;
+        //NEED TO CHANGE AND FIGURE A WAY TO CHECK IF FILE EXISTS, TOUCH IT AND REPLACE THE CONTENTS.
+	//	if (fileHandle.write(' ') == true){	//Don't use this. messes up with files. 
+			var httpClient = Ti.Network.createHTTPClient();
+			var file = Ti.Filesystem.getFile(destination);			
+			httpClient.open('GET', url);
+			var result = httpClient.receive(function(data) {
+				if(dupFlag == true){
+					var file = Ti.Filesystem.getFile(destination);
+					var fileStream = file.open(Ti.Filesystem.MODE_WRITE);
+					var res = fileStream.write(data);
+					fileStream.close();
+					dupFlag = false;
+				}else{
+					var file = Ti.Filesystem.getFile(destination);
+					var fileStream = file.open(Ti.Filesystem.MODE_APPEND);
+					var res = fileStream.write(data);
+					fileStream.close();
+				}
+				/*
+				var file = Ti.Filesystem.getFile(destination);
+				var fileStream = file.open(Ti.Filesystem.MODE_APPEND);
+				var res = fileStream.write(data);
+				fileStream.close();
+				*/
+				
+			});
+			if (result === true){
+				//SUCCESS
+				return true;
+			}else{
+				//FAILURE
+				return false;
+			}
+	//	}else{
+	//		alert("Could not save the file. Error code: tideSDKDownload");
+	//		return false;
+	//	}
+	}
 
     /*Actual download function that downloads a file given to it to a folder which is also give to it.*/
     function startFileDownload(fileToDownload, folderName, callback){
+        //fileToDownload: "http://www.server.com/path/to/Planet_and_Physcis_ustadpkg_html5.xml" 
+        //This is the url from the server to download the file. 
+        //folderName: "all/Planet_and_Physcis" (this is already created.
+
+
         console.log("TESTS1: folderName: " + folderName);
         console.log("TESTS1: packageFolderName: " + packageFolderName);
         console.log("fileToDownload is : " + fileToDownload);
-        console.log("packageString: " + packageString);
+        console.log("packageString: " + packageString); //this is also url of the file to download. 
+
+        //Getting the main folder from the URL. This is the course folder.
+        //eg: fileFolder = "Planet_and_Physics"
         var uriSplit = fileToDownload.split("/");
         var lastPos = uriSplit.length - 1;
-    
-        //changes 9Dec2013
         var fileFullPath = uriSplit[lastPos];
         var fileFolder = uriSplit[lastPos-1];
-        if ( typeof fileFolder === 'undefined'){
-            //Do nothing.
+        //if subfolder exists in URL..
+        if ( typeof fileFolder === 'undefined'){ 
+            //Do nothing
         }else{
             debugLog("Saving current file to Course Folder: " + fileFolder);
         }
-        //end of changes 9Dec2013
-
-        //fileName = uriSplit[lastPos];
+        
+        //The currentFileName is the main file to be downloaded: 
+        //eg: currentFileName = "Planet_and_Physics_ustadpkg_html5.xml"
         var currentFileName = uriSplit[lastPos];        
-        //jQuery mobile loading animation.
-        $.mobile.loading('show', {
+        $.mobile.loading('show', {          //jQuery mobile loading animation.
             text: x_('Downloading UM Course:') + currentFileName + x_(' in ') + folderName,
+            //"Downloading UM Course: Planet_and_Physcis_ustadpkg_html5.xml in all/Planet_and_Physics"
             textVisible: true,
             theme: 'b',
             html: ""});
-        debugLog(" Downloading the file: " + fileToDownload + " to folder: " + rootPath + "/ustadmobileContent/" + folderName);
+			
+		if(navigator.userAgent.indexOf("TideSDK") !== -1){
+			console.log("[Get Course] Desktop - TideSDK detected in course content.");
+			if (window.navigator.userAgent.indexOf("Windows") != -1) {
+				console.log("[Get Course] TideSDK: You are using WINDOWS.");
+				debugLog(" Downloading the file: " + fileToDownload + " to folder: " + "/ustadmobileContent/" + folderName);
+			}else{
+				console.log("[Get Course] TideSDK: You are NOT using WINDOWS.");
+				debugLog(" Downloading the file: " + fileToDownload + " to folder: " + "ustadmobileContent/" + folderName);
+			   
+			}    
+		}else{	
+			debugLog(" Downloading the file: " + fileToDownload + " to folder: " + rootPath + "/ustadmobileContent/" + folderName);
+		}
+
+        //Prep before Cordova file download.
+        //filePathDownload = rootPath + "/ustadmobileContent/" + currentFileName;
         var filePathDownload = ""; //nullify the path for every download.
         uri = encodeURI(fileToDownload); //needed by fileTransfer Cordova API.
 
-
+        //Check if folderName exists. If it doesn't, we are dealing with the course list xml 
         if (folderName == ""){
+            //This is the "List Courses on Server option/
             if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1){
                 blackberry.io.sandbox = false;
                 umgpPlatform = "bb10";
@@ -445,14 +626,13 @@ If you need a commercial license to remove these restrictions please contact us 
             }else{
                 filePathDownload = rootPath + "/ustadmobileContent/" + currentFileName;
             }
-            //fileToDownload = "http://www.ustadmobile.com/books/" + currentFileName;
-            //filePathDownload = rootPath + "/ustadmobileContent/" + currentFileName;
-        }else{ //If downloading the actual course.
-            //We need to check here if it is from the django server or public server
-            if(typeof fileFolder === 'undefined'){   //09122013
 
-                //if(packageString.indexOf("78.47.197.237") !== -1){        
-                if(packageString.indexOf(server) !== -1){
+        }else{  //If downloading the actual course (fetching the ustadpkg_html5.xml or individual files).
+            console.log("HERE: Fetching individual files..");
+            //We need to check here if it is from the django server or public server
+            //eg: fileFolder = "Planet_and_Physics"
+            if(typeof fileFolder === 'undefined'){ 
+                if(packageString.indexOf(server) !== -1){   
                     var djangoserverurlSplit = packageString.split("/");
                     var courseuuid = djangoserverurlSplit[5];
                     console.log("course unique id: " + courseuuid);
@@ -465,7 +645,16 @@ If you need a commercial license to remove these restrictions please contact us 
                 }
                 //fileToDownload = "http://www.ustadmobile.com/books/" + folderName + "/" + currentFileName;
                 
-                if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1){ // Blackberry 10 platforms only.
+                 if(navigator.userAgent.indexOf("TideSDK") !== -1){
+					console.log("[Get Course] Desktop - TideSDK detected in course content.");
+					if (window.navigator.userAgent.indexOf("Windows") != -1) {
+						console.log("[Get Course] TideSDK: You are using WINDOWS.");
+						filePathDownload = "/ustadmobileContent/" + folderName + "/" + currentFileName;
+					}else{
+						console.log("[Get Course] TideSDK: You are NOT using WINDOWS.");
+						filePathDownload = "ustadmobileContent/" + folderName + "/" + currentFileName;
+					}    
+				}else if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1){ // Blackberry 10 platforms only.
                     blackberry.io.sandbox = false;
                     umgpPlatform = "bb10";
                     filePathDownload = blackberry.io.SDCard + "/ustadmobileContent/" + folderName + "/" + currentFileName;
@@ -479,24 +668,59 @@ If you need a commercial license to remove these restrictions please contact us 
                 console.log("fileToDownload: " + fileToDownload + " filePathDownload: " + filePathDownload);
                 console.log("TESTS: folderName: " + folderName);
                 console.log("TESTS: packageFolderName: " + packageFolderName);
-            }else{  //09122013 //20012014
+            }else{  //If fileFolder (eg: Planet_and_Physcics exists)
+
+                //check if it is from List of Servers
                 if(fileFolder != "books" && currentFileName != "all_ustadpkg_html5.xml" && fileToDownload.indexOf(server) === -1){ //server = 78.47.197.237
 					//Windows Phone specific code to make that folder.
 					var getDir = fileFolder;
 					debugLog("Checking if Directory: " + fileFolder + " exists. If not, creating it.");
-                    if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1){
+                    
+					
+					if(navigator.userAgent.indexOf("TideSDK") !== -1){
+						console.log("[Get Course] Desktop - TideSDK detected in course content.");
+						if (window.navigator.userAgent.indexOf("Windows") != -1) {
+							console.log("[Get Course] TideSDK: You are using WINDOWS.");
+							getDir = "/ustadmobileContent/" + folderName + "/" + fileFolder;
+						}else{
+							console.log("[Get Course] TideSDK: You are NOT using WINDOWS.");
+							getDir = "ustadmobileContent/" + folderName + "/" + fileFolder;
+						}    
+						
+						var destinationDir = Ti.Filesystem.getFile(getDir);
+						if( (destinationDir.exists() == false) && (destinationDir.createDirectory() == false)) {
+							alert('We could not create the directory: ' + getDir + ' so we must abort.');
+							//Y.Global.fire('download:error');
+							//return;
+						}else{
+							debugLog("Successfully created dir or dir already exists: " + getDir );
+						}
+						
+						
+					}else if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1){
                         blackberry.io.sandbox = false;
                         umgpPlatform = "bb10";
                         getDir = blackberry.io.SDCard + "ustadmobileContent/" + folderName + "/" + fileFolder;
+						
+						//getDir = "ustadmobileContent/" + folderName + "/" + fileFolder;
+						console.log("getDir: " + getDir);
+
+						//has its own fileSystem now because we are calling this to download from Django server. This fixes an issue with that.
+						window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function(fileSystem2){fileSystem2.root.getDirectory(getDir, {create:true, exclusive: false}, function(){
+							debugLog("Creation of folder: " + fileFolder + " in Course folder is a success.");}, function(){debugLog("Creation of folder: " + fileFolder + " in Course folder failed!");});}, function(){console.log("Unable to get fileSystem in course sub folder creation");}
+						);
+						
                     }else{ //If platform is not blackberry10
                         getDir = "ustadmobileContent/" + folderName + "/" + fileFolder;
-                    }
-					//getDir = "ustadmobileContent/" + folderName + "/" + fileFolder;
-                    console.log("getDir: " + getDir);
+						//getDir = "ustadmobileContent/" + folderName + "/" + fileFolder;
+						console.log("getDir: " + getDir);
 
-                    //has its own fileSystem now because we are calling this to download from Django server. This fixes an issue with that.
-                    window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function(fileSystem2){fileSystem2.root.getDirectory(getDir, {create:true, exclusive: false}, function(){
-						debugLog("Creation of folder: " + fileFolder + " in Course folder is a success.");}, function(){debugLog("Creation of folder: " + fileFolder + " in Course folder failed!");});}, function(){console.log("Unable to get fileSystem in course sub folder creation");});
+						//has its own fileSystem now because we are calling this to download from Django server. This fixes an issue with that.
+						window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function(fileSystem2){fileSystem2.root.getDirectory(getDir, {create:true, exclusive: false}, function(){
+							debugLog("Creation of folder: " + fileFolder + " in Course folder is a success.");}, function(){debugLog("Creation of folder: " + fileFolder + " in Course folder failed!");});}, function(){console.log("Unable to get fileSystem in course sub folder creation");});
+						
+                    }
+					
 
                     //original
                     //fileSystem.root.getDirectory(getDir, {create:true, exclusive: false}, function(){
@@ -522,7 +746,18 @@ If you need a commercial license to remove these restrictions please contact us 
 
                     debugLog("Saving file: " + currentFileName + " to course folder: " + fileFolder);
                     
-                    if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1){ // Platform is blackberry 10
+                    if(navigator.userAgent.indexOf("TideSDK") !== -1){
+						console.log("[Get Course] Desktop - TideSDK detected in course content.");
+						if (window.navigator.userAgent.indexOf("Windows") != -1) {
+							console.log("[Get Course] TideSDK: You are using WINDOWS.");
+							filePathDownload =  "/ustadmobileContent/" + folderName + "/" + fileFolder + "/" + currentFileName;
+							
+						}else{
+							console.log("[Get Course] TideSDK: You are NOT using WINDOWS.");
+							filePathDownload = "ustadmobileContent/" + folderName + "/" + fileFolder + "/" + currentFileName;
+						}    
+						
+					}else if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1){ // Platform is blackberry 10
                         filePathDownload = blackberry.io.SDCard + "/ustadmobileContent/" + folderName + "/" + fileFolder + "/" + currentFileName;
                     }else{ // Platform is not blackberry 10
                         filePathDownload = rootPath + "/ustadmobileContent/" + folderName + "/" + fileFolder + "/" + currentFileName;
@@ -533,12 +768,26 @@ If you need a commercial license to remove these restrictions please contact us 
                     console.log("TESTS: folderName: " + folderName);
                     console.log("TESTS: packageFolderName: " + packageFolderName);
                 }else{      //Triggered on List Courses from Server button.
-                    console.log("Getting course list part..");
-                    filePathDownload = rootPath + "/ustadmobileContent/" + folderName + "/" + currentFileName;
-                    if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1){
+                    console.log("Getting course by ID part..");
+					
+					if(navigator.userAgent.indexOf("TideSDK") !== -1){
+						console.log("[Get Course] Desktop - TideSDK detected in course content.");
+						if (window.navigator.userAgent.indexOf("Windows") != -1) {
+							console.log("[Get Course] TideSDK: You are using WINDOWS.");
+							filePathDownload =  "/ustadmobileContent/" + folderName + "/" + currentFileName;
+							
+						}else{
+							console.log("[Get Course] TideSDK: You are NOT using WINDOWS.");
+							filePathDownload =  "ustadmobileContent/" + folderName + "/" + currentFileName;
+						}    
+					}else{	
+						filePathDownload = rootPath + "/ustadmobileContent/" + folderName + "/" + currentFileName;
+					}
+					
+                    
+                    if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1){ //if bb10:
                             blackberry.io.sandbox = false;
                             umgpPlatform = "bb10";
-                            //if bb10:
                             filePathDownload = blackberry.io.SDCard + "/ustadmobileContent/" + folderName + "/" + currentFileName;
                             debugLog("Listing Courses from Server: Detected Blackberry 10");
                             console.log("fileToDownload(in): " + fileToDownload + " filePathDownload: " + filePathDownload);
@@ -548,83 +797,164 @@ If you need a commercial license to remove these restrictions please contact us 
                     console.log("TESTS: folderName: " + folderName);
                     console.log("TESTS: packageFolderName: " + packageFolderName);
                 }
-            }   //09122013
-            uri = encodeURI(fileToDownload); //needed by fileTransfer Cordova API. //09122013
+            }   
+            uri = encodeURI(fileToDownload); 
         }
         debugLog("File Path to Download: " + filePathDownload);
         debugLog("Downloading uri: " + uri);
-        //blackberry.io.home = /accounts/1000/appdata/com.toughra.ustadmobile.testDev_ustadmobilea3b0f56a/data/"
-        var fileTransfer = new FileTransfer();   
+        
+
+        if(navigator.userAgent.indexOf("TideSDK") !== -1){
+            console.log("[Get Course] Desktop - TideSDK detected in course content.");
+            if (window.navigator.userAgent.indexOf("Windows") != -1) {
+                console.log("[Get Course startFileDownload] TideSDK: You are using WINDOWS.");
+            }else{
+                console.log("[Get Course startFileDownload] TideSDK: You are NOT using WINDOWS.");
+            }    
+        }else{
+            console.log("[Get course startFileDownload] You are not using Desktop. Activating Cordova file stuff..");
+            //Cordova File Transfer begins here.. 
+            var fileTransfer = new FileTransfer();   
+        }
+
+        //Cordova File Transfer begins here.. 
+        //var fileTransfer = new FileTransfer();   
         console.log("filePathDownload is: " + filePathDownload);
 
-        if(navigator.userAgent.indexOf("Safari") === -1 || navigator.userAgent.indexOf("BB10") === -1){ //If platform is NOT blackberry
-        fileTransfer.download(
-            uri,
-            filePathDownload,
-            function(entry){
-                              
-                debugLog("Download (notBB) complete. File location on device: " + entry.fullPath);
+        if(navigator.userAgent.indexOf("TideSDK") !== -1){
+            console.log("[Get Course] Desktop - TideSDK detected in course content.");
+            //Doesn't  matter if Windows TideSDK or Linux TideSDK. 
+			//TideSDK Download:
+			//startFileDownload(fileToDownload, folderName)
+			var downloadResult = tideSDKDownload(fileToDownload, filePathDownload);
+			
+			if (downloadResult === true){
+				//alert("Success!");
+				
+				debugLog("Download (notBB) complete. File location on device: " + filePathDownload);
+				if(folderName == globalXMLListFolderName){ //If the file downloaded is the main package list (all_ustadpkg_html5.xml)
+					$.mobile.loading('hide');
+					// For unit testing purposes..
+					packageXMLCallback = callback;
+					
+					//TODO: MAKE THIS TideSDK COMPATIBLE
+					onlistPackages("hi"); // Calls a method that lists the available packages from the downloaded xml package list .xml file.
 
-                if(folderName == globalXMLListFolderName){ //If the file downloaded is the main package list (all_ustadpkg_html5.xml)
-                    $.mobile.loading('hide');
-                    // For unit testing purposes..
-                    packageXMLCallback = callback;
-                    onlistPackages("hi"); // Calls a method that lists the available packages from the downloaded xml package list .xml file.
+				}else if(folderName.indexOf(globalXMLListFolderName + "/") !== -1){
+					$.mobile.loading('hide');
+					if (callback != null && typeof callback === "function" ){
+						//alert("Testing package..");
+						//For testing purposes..
+						//runcallback(callback, "passed");
+						fileXMLCallback = callback;
+						readPackageFile("hi"); // this function will be called that goes through the package xml file and download every file one by one.
+					}else{
+						var folderNameShortSplit = folderName.split("/");
+						var valueFolderName = folderNameShortSplit.length - 1;
+						var folderNameShort = folderNameShortSplit[valueFolderName];
+						var r=confirm("Download This course? " + folderNameShort);
+						if (r==true){
+							//alert("packageFolderName: " + packageFolderName);
+							// If user wants to download this file, then code will go here, and
+							debugLog("Download initiated..");
+							readPackageFile("hi"); // this function will be called that goes through the package xml file and download every file one by one.
+						}else{
+							debugLog("Download start cancelled by user. Nothing got downloaded.");
+							buttonBOOLEAN = true; console.log("buttonBOOLEAN is set to true because of failure. Can try again..");
+						}
+					}
+				}else{
+					downloadNextFile();
+				}
+			}else{
+				alert("Failure!");
+				buttonBOOLEAN = true; console.log("buttonBOOLEAN is set to true because of failure. Can try again..");
+				alert("Download error. Make sure that the file links in your package lists are working and can be reached by your device's connectivity. ");
+				$.mobile.loading('hide');
+				if (folderName == globalXMLListFolderName){
+					debugLog("TEST: ERROR 1");
+					runcallback(callback,"fail");
+				}else if (folderName.indexOf(globalXMLListFolderName + "/") !== -1){
+					debugLog("TEST: ERROR 2");
+					runcallback(callback, "failed");
+				}else{
+					debugLog("TEST: ERROR 3");
+					//runcallback(callback, "downloadfailed");
+				}
+				debugLog("!Couldn not download a file: " + currentFileName + " at folder: " + folderName);
+				downloadfail(); //Triggers downloadNextFile();
+			}
+			
+            
+            //}    
+        }else if(navigator.userAgent.indexOf("Safari") === -1 || navigator.userAgent.indexOf("BB10") === -1){		//If platform is NOT blackberry
+			debugLog("NOT IN DESKTOP. CONTINUING CORDOVA LOGIC..");
+			fileTransfer.download(
+				uri,
+				filePathDownload,
+				function(entry){
+								  
+					debugLog("Download (notBB) complete. File location on device: " + entry.fullPath);
+					if(folderName == globalXMLListFolderName){ //If the file downloaded is the main package list (all_ustadpkg_html5.xml)
+						$.mobile.loading('hide');
+						// For unit testing purposes..
+						packageXMLCallback = callback;
+						onlistPackages("hi"); // Calls a method that lists the available packages from the downloaded xml package list .xml file.
 
-                }else if(folderName.indexOf(globalXMLListFolderName + "/") !== -1){
-                    $.mobile.loading('hide');
-                    if (callback != null && typeof callback === "function" ){
-                        //alert("Testing package..");
-                        //For testing purposes..
-                        //runcallback(callback, "passed");
-                        fileXMLCallback = callback;
-					    readPackageFile("hi"); // this function will be called that goes through the package xml file and download every file one by one.
-                    }else{
-                        var folderNameShortSplit = folderName.split("/");
-                        var valueFolderName = folderNameShortSplit.length - 1;
-                        var folderNameShort = folderNameShortSplit[valueFolderName];
-                        var r=confirm("Download This course? " + folderNameShort);
-					    if (r==true){
-                            //alert("packageFolderName: " + packageFolderName);
-						    // If user wants to download this file, then code will go here, and
-						    debugLog("Download initiated..");
-						    readPackageFile("hi"); // this function will be called that goes through the package xml file and download every file one by one.
-					    }else{
-						    debugLog("Download start cancelled by user. Nothing got downloaded.");
-                            buttonBOOLEAN = true; console.log("buttonBOOLEAN is set to true because of failure. Can try again..");
-					    }
-                    }
-                }else{
-                   /*setTimeout(function(){
-                        downloadNextFile();
-                        },800);//Just testing a few things..
-                    */
-                    downloadNextFile();
-                }
-                              
-                //alert("Download complete! Path: " + entry.fullPath); // If you ever want to notify the user that the file has finished downloading.
-            },
-            function(error){
-                buttonBOOLEAN = true; console.log("buttonBOOLEAN is set to true because of failure. Can try again..");
-                debugLog("download error source " + error.source);
-                debugLog("download error target " + error.target);
-                debugLog("upload error code" + error.code);
-                alert("Download error. Make sure that the file links in your package lists are working and can be reached by your device's connectivity. " + umgpPlatform);
-                $.mobile.loading('hide');
-                if (folderName == globalXMLListFolderName){
-                    debugLog("TEST: ERROR 1");
-                    runcallback(callback,"fail");
-                }else if (folderName.indexOf(globalXMLListFolderName + "/") !== -1){
-                    debugLog("TEST: ERROR 2");
-                    runcallback(callback, "failed");
-                }else{
-                    debugLog("TEST: ERROR 3");
-                    //runcallback(callback, "downloadfailed");
-                }
-                debugLog("!Couldn not download a file: " + currentFileName + " at folder: " + folderName);
-            },
-            downloadfail
-        );
+					}else if(folderName.indexOf(globalXMLListFolderName + "/") !== -1){
+						$.mobile.loading('hide');
+						if (callback != null && typeof callback === "function" ){
+							//alert("Testing package..");
+							//For testing purposes..
+							//runcallback(callback, "passed");
+							fileXMLCallback = callback;
+							readPackageFile("hi"); // this function will be called that goes through the package xml file and download every file one by one.
+						}else{
+							var folderNameShortSplit = folderName.split("/");
+							var valueFolderName = folderNameShortSplit.length - 1;
+							var folderNameShort = folderNameShortSplit[valueFolderName];
+							var r=confirm("Download This course? " + folderNameShort);
+							if (r==true){
+								//alert("packageFolderName: " + packageFolderName);
+								// If user wants to download this file, then code will go here, and
+								debugLog("Download initiated..");
+								readPackageFile("hi"); // this function will be called that goes through the package xml file and download every file one by one.
+							}else{
+								debugLog("Download start cancelled by user. Nothing got downloaded.");
+								buttonBOOLEAN = true; console.log("buttonBOOLEAN is set to true because of failure. Can try again..");
+							}
+						}
+					}else{
+					   /*setTimeout(function(){
+							downloadNextFile();
+							},800);//Just testing a few things..
+						*/
+						downloadNextFile();
+					}
+								  
+					//alert("Download complete! Path: " + entry.fullPath); // If you ever want to notify the user that the file has finished downloading.
+				},
+				function(error){
+					buttonBOOLEAN = true; console.log("buttonBOOLEAN is set to true because of failure. Can try again..");
+					debugLog("download error source " + error.source);
+					debugLog("download error target " + error.target);
+					debugLog("upload error code" + error.code);
+					alert("Download error. Make sure that the file links in your package lists are working and can be reached by your device's connectivity. " + umgpPlatform);
+					$.mobile.loading('hide');
+					if (folderName == globalXMLListFolderName){
+						debugLog("TEST: ERROR 1");
+						runcallback(callback,"fail");
+					}else if (folderName.indexOf(globalXMLListFolderName + "/") !== -1){
+						debugLog("TEST: ERROR 2");
+						runcallback(callback, "failed");
+					}else{
+						debugLog("TEST: ERROR 3");
+						//runcallback(callback, "downloadfailed");
+					}
+					debugLog("!Couldn not download a file: " + currentFileName + " at folder: " + folderName);
+				},
+				downloadfail
+			);
         }else{ //platform is blackberry10..
             console.log("Platform for fileTransfer downoad is Blackberry10");
             //filePathDownload = blackberry.io.SDCard + "ustadmobileContent/BigBoobies.xml";
@@ -710,6 +1040,23 @@ If you need a commercial license to remove these restrictions please contact us 
         }
     }
    
+   /*
+   Function that converts string to XML object in Javascript.
+   */
+   function StringtoXML(text){
+                if (window.ActiveXObject){
+                  var doc=new ActiveXObject('Microsoft.XMLDOM');
+                  doc.async='false';
+                  doc.loadXML(text);
+                } else {
+                  var parser=new DOMParser();
+                  var doc=parser.parseFromString(text,'text/xml');
+                }
+                return doc;
+            }
+   
+   
+   
     /* Function that reads the package xml downloaded and reads through the XML*/       
     function readPackageFile(msg){
         //alert("message: " + msg);
@@ -729,7 +1076,112 @@ If you need a commercial license to remove these restrictions please contact us 
         // We call the FileSystem again such that we get the rootPath again. We can then trigger this function if required for development purposes.
         // In that case, we need to set the packageString again as a link or fileName in this function as: fileName = testPackage_ustadpkg_html5.xml;
         
-        if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1){ //if blackberry 10 device.
+        if(navigator.userAgent.indexOf("TideSDK") !== -1){
+			console.log("[Get Course] Desktop - TideSDK detected in course content.");
+			//getXMLFile(fileSystem);
+			debugLog("XML Processing started.");
+			debugLog("XML file was downloaded from URL: " + packageString );
+			
+			
+			if (window.navigator.userAgent.indexOf("Windows") != -1) {
+				console.log("[Get Course] TideSDK: You are using WINDOWS.");
+				var pathToPackageFile =  "/ustadmobileContent/" + fileName;
+				debugLog("The XML location on the device is: " + pathToPackageFile);
+				
+				getDir = "/ustadmobileContent/" + packageFolderName;
+				forxml = "/ustadmobileContent/all/" + packageFolderName + "/" + fileName;
+
+			}else{
+				console.log("[Get Course] TideSDK: You are NOT using WINDOWS."); 
+				var pathToPackageFile =  "ustadmobileContent/" + fileName;
+				debugLog("The XML location on the device is: " + pathToPackageFile);
+				
+				getDir = "ustadmobileContent/" + packageFolderName;
+				forxml = "ustadmobileContent/all/" + packageFolderName + "/" + fileName;
+			}    
+			debugLog("CHECKING IF DIRECTORY: " + getDir + " EXISTS. IF NOT, CREATING IT.");
+			
+			var destinationDir = Ti.Filesystem.getFile(getDir);
+			if( (destinationDir.exists() == false) && (destinationDir.createDirectory() == false)) {
+				alert('We could not create the directory: ' + getDir + ' so we must abort.');
+				//Y.Global.fire('download:error');
+				//return;
+			}else{
+				debugLog("Successfully created dir or dir already exists: " + getDir );
+				debugLog("Creating List Dir success.");
+				debugLog("forxml is: " + forxml);   
+				//alert("forxml is : " + forxml);
+				debugLog("GETTING THE XML!");
+				var read_forxml = Ti.Filesystem.getFile(forxml);
+				//var currentFile = "";
+				fileDownloadList = new Array();
+				if (read_forxml.exists() === true ){
+					//var text_forxml = read_forxml.read().text;	//old. Not used anymore by Ti/TideSDK
+					var fileStream_forxml = Ti.Filesystem.getFileStream(read_forxml);
+					fileStream_forxml.open(Ti.Filesystem.MODE_READ);
+					var text_forxml = fileStream_forxml.read();
+					console.log("text_forxml : " + text_forxml);	//works..
+			
+					//var xml_forxml = Ti.XML.parseString(text_forxml);
+					//Going to have to use javascript and not Tide for XML scanning because Ti.XML is not in TideSDK but in Titanium. 
+					
+					$.ajax({
+						type: "GET",
+						url: packageString,
+						dataType: "xml",
+						success: function(xml) {
+							//alert("SUCCESS!");
+							$(xml).find('ustadpackage').each(function(){
+								$(this).find('file').each(function(){
+									var file = $(this).text();
+									var currentFile = file;
+									debugLog(" -> " + currentFile);
+									fileDownloadList[fileDownloadList.length]  = file;
+								});
+							});
+							
+							debugLog("Downloading all files from: " + packageFolderName + " to folder: " + "ustadmobileConten/" + packageFolderName + "/");
+							downloadNextFile();
+						}
+					});	
+					
+					//alert("ALL DONE SO FAR ?");
+					
+				}else{
+					alert("Could not load/find the Course xml pre download..");
+				}
+				
+			}
+			/*
+			//Check if getDir dir exists, if not create it.
+				
+				{//Inside: 
+				debugLog("Creating List Dir success.");
+				debugLog("forxml is: " + forxml);   
+				debugLog("GETTING THE XML!");
+				//Get xml file: forxml DO NOT CREATE IT.
+					{
+					debugLog("Reading the XML file.");
+					var xmlTag = "file";
+					//readXMLAsText(file, xmlTag);
+						{
+						fileDownloadList = new Array();
+						if(xmlTag == "file"){
+							//get file tag nodes one by one and make the fileDownloadList Array..
+							{
+								var currentFile = file node element;
+								debugLog(" -> " + currentFile);
+								fileDownloadList[fileDownloadList.length]  =  file node element;
+							}
+						}
+						}
+					}
+				}
+				*/
+//->
+			
+			
+		}else if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1){ //if blackberry 10 device.
             console.log("Detecting your device as a Blackberry 10 devie. Continuing with Course content downloads..");
             window.webkitRequestFileSystem(window.PERSISTENT, 0, getXMLFile, function(){buttonBOOLEAN = true; console.log("buttonBOOLEAN is set to true because of failure. Can try again.."); alert("Something went wrong in getting the file system of the package file. Internal Error."); debugLog("Something went wrong in readPackageFile(msg) ");}); // errorfilesystem (messages->en.js)
             
@@ -744,8 +1196,6 @@ If you need a commercial license to remove these restrictions please contact us 
     function getXMLFile(fileSystem){
         debugLog("Got XML FileSystem.");
         rootPath = fileSystem.root.fullPath;
-        //var forxml = "ustadmobileContent/" + fileName;
-        //var forxml = "ustadmobileContent/all/" + packageFolderName + "/" + fileName; //BB10 changes.
         var forxml;
         debugLog("XML Processing started.");
         debugLog("XML file was downloaded from URL: " + packageString );
@@ -898,44 +1348,54 @@ If you need a commercial license to remove these restrictions please contact us 
             callbackfunction(arg);
         }   
     }
+/*
+    if(navigator.userAgent.indexOf("TideSDK") !== -1){
+        console.log("[Get Course] Desktop - TideSDK detected in course content.");
+        if (window.navigator.userAgent.indexOf("Windows") != -1) {
+            console.log("[Get Course] TideSDK: You are using WINDOWS.");
 
+        }else{
+            console.log("[Get Course] TideSDK: You are NOT using WINDOWS.");
+           
+        }    
+    }
+
+*/
     
     function checkCourseID(){
         
       console.log("BUTTON PRESSED: Checking if previous task is over..");
       if (buttonBOOLEAN == true){
 
-        $.mobile.loading('show', {
-            text: x_('Checking..'),
-            textVisible: true,
-            theme: 'b',
-            html: ""});
-    
-        console.log("BUTTON PRESSED: Okay to proceed, setting flag as busy..");
-        //ButtonBoolean FALSE : Cannot press button again.
-        buttonBOOLEAN = false;
-        
-        var courseid = $("#courseid").val();
-        courseid = courseid.trim();
-        console.log("Starting check for course id: " + courseid);
-        //courseidURL = "http://78.47.197.237:8010/getcourse/?id=" + courseid;
-        courseidURL = serverGetCourse + courseid;
+            $.mobile.loading('show', {
+                text: x_('Checking..'),
+                textVisible: true,
+                theme: 'b',
+                html: ""
+            });
 
-        $.ajax({
+            console.log("BUTTON PRESSED: Okay to proceed, setting flag as busy..");
+            //ButtonBoolean FALSE : Cannot press button again.
+            buttonBOOLEAN = false;
+
+            var courseid = $("#courseid").val();
+            courseid = courseid.trim();
+            console.log("Starting check for course id: " + courseid);
+            courseidURL = serverGetCourse + courseid;
+
+            $.ajax({
             type:"GET",
             url: courseidURL,
             dataType:"text",
             success: function(data, textStatus, jqxhr){
-				//alert("Checking course a success with code:" + jqxhr.status);
-                //var courseURL = "http://78.47.197.237:8010/media/eXeExport/" + jqxhr.getResponseHeader('xmlDownload');
-                var courseURL = serverEXeExport + jqxhr.getResponseHeader('xmlDownload');
-                console.log("The xml download url is: " + courseURL);
-                //call the download
-                someThing(courseURL);
-				
-				},
-			complete: function (jqxhr, txt_status) {
-				console.log("Ajax call completed to server. Status: " + jqxhr.status);
+                    //var courseURL = "http://78.47.197.237:8010/media/eXeExport/" + jqxhr.getResponseHeader('xmlDownload');
+                    var courseURL = serverEXeExport + jqxhr.getResponseHeader('xmlDownload');
+                    console.log("The xml download url is: " + courseURL);
+                    //call the download
+                    someThing(courseURL);
+                },
+            complete: function (jqxhr, txt_status) {
+                console.log("Ajax call completed to server. Status: " + jqxhr.status);
                     switch (jqxhr.status) {
                         case 0:
                             //alert;
@@ -953,9 +1413,9 @@ If you need a commercial license to remove these restrictions please contact us 
                             //alert("I don't know what I just got but it ain't good!");
                             alert("Could not find course / connect to server. Please check your internet connection and course ID.");
                     }
-				},
-			error: function (jqxhr,b,c){
-				//alert("Couldn't complete request. Status:" + jqxhr.status);
+                },
+            error: function (jqxhr,b,c){
+                //alert("Couldn't complete request. Status:" + jqxhr.status);
                 //alert("Couldn't connect to server:" + jqxhr.status); //disable this kind of error message.
                 //alert("Could not find course / connect to server. Please check your internet connection and course ID.");
                 console.log("ERROR: Couldn't complete connection to server. Status: " + jqxhr.status);
@@ -963,25 +1423,25 @@ If you need a commercial license to remove these restrictions please contact us 
                 //ButtonBoolean TRUE
                 buttonBOOLEAN = true;
                 $.mobile.loading('hide');
-				},
-			statusCode: {
-				200: function(){
-					console.log("Status code: 200 which is a success.");            
-					},
-				0: function(){
+                },
+            statusCode: {
+                200: function(){
+	                console.log("Status code: 200 which is a success.");            
+	                },
+                0: function(){
                     alert("Couldn't connect to server. Check connectivity or server status [0]");
-			        console.log("Status code 0, unable to connect to server or no internet/intranet access");
+                    console.log("Status code 0, unable to connect to server or no internet/intranet access");
                     //ButtonBoolean TRUE
                     buttonBOOLEAN = true;
-						},
+		                },
                 500: function(){
                     alert("Could not find a course with that ID.");
-			        console.log("Status code 0, unable to connect get a success response from server or no internet/intranet access. Course probably doesn't exists or server error.");
+                    console.log("Status code 0, unable to connect get a success response from server or no internet/intranet access. Course probably doesn't exists or server error.");
                     //ButtonBoolean TRUE
                     buttonBOOLEAN = true;
                     $.mobile.loading('hide');
-						}
-				}
+		                }
+                }
             });
       }else{
         console.log("BUTTON PRESSED: Still waiting for previous task to get over...");

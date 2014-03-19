@@ -5,4 +5,5 @@ cordova.js.ignore
 node_modules/*
 umpassword.html
 build-test
+ustadmobileContent
 
