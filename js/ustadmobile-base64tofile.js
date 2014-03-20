@@ -108,6 +108,7 @@ If you need a commercial license to remove these restrictions please contact us 
                 //alert("4b");
 				debugLog("No more base64 to scan for ustad mobile.");
 				debugLog("Finished with converting base64 to files.");
+				//alert("Download and packaging finished");
 				$.mobile.loading('hide');
 			}
 		}

@@ -10,6 +10,7 @@ This will install in for eg: C:\Program Files\ImageMagick-6.8.8-Q16
 Let it do so, but remember to leave "Add application directory to your system path" in the Setup Wizard ticked.
 3. Install wix v3.x (latest is v3.8) from here(21.7MB) http://wix.codeplex.com/releases/view/115492
 
+4. 
 Youre done!
 
 
@@ -17,3 +18,9 @@ To test: in MINGW32 run:
 
 setup/win32/setup-win32.sh run
 
+You can get MINGW32 from Git Bash: (14.7MB) http://www.git-scm.com/download/win
+
+Run the above sh from there. (It is a Linux command prompt for Windows)
+
+Bug #1: Base 64 values do not successfully convert into base64tofile.js
+[Fixed by converting via Batch files in setup folder] 

@@ -1059,6 +1059,12 @@ If you need a commercial license to remove these restrictions please contact us 
    
     /* Function that reads the package xml downloaded and reads through the XML*/       
     function readPackageFile(msg){
+		$.mobile.loading('show', {          //jQuery mobile loading animation.
+            text: x_('Downloading UM Course: Please wait..'),
+            //"Downloading UM Course: Planet_and_Physcis_ustadpkg_html5.xml in all/Planet_and_Physics"
+            textVisible: true,
+            theme: 'b',
+            html: ""});
         //alert("message: " + msg);
         //packageString is still set by the previous functions
         //To get the fileName and folderName
@@ -1313,6 +1319,7 @@ If you need a commercial license to remove these restrictions please contact us 
             //if(fileXMLCallback != null && typeof fileXMLCallback === "function"){
 		if(unitTestFlag == false){
                 	alert("Download finished");
+					debugLog("Now transfering ustadmobile javascripts and logic to the package folder: " + packageFolderName);
 		}
             //}
 
@@ -1324,7 +1331,7 @@ If you need a commercial license to remove these restrictions please contact us 
             if(fileXMLCallback != null && typeof fileXMLCallback === "function"){
                 console.log("You are testing. Good job!");       
             }else{
-                debugLog("Now transfering ustadmobile javascripts and logic to the package folder: " + packageFolderName);
+                
 		        writeNextBase64ToFile(packageFolderName);
                 buttonBOOLEAN = true; console.log("buttonBOOLEAN is set to true because of failure. Can try again..");
             }       
