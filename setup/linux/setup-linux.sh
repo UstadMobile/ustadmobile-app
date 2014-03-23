@@ -66,6 +66,16 @@ if [ "$1" == "run" ]; then
     python ~/.tidesdk/sdk/linux/1.3.1-beta/tidebuilder.py --run --type=bundle --dest="packages/linux/run" --os="linux" "ustadmobile/"
 fi
 
+if [ "$1" == "installerbundle" ]; then
+    mkdir "packages"
+    mkdir "packages/linux"
+    mkdir "packages/linux/run"
+    echo "installerbundle"
+    #-r -t bundle -d "packages/win32/run" -o "win32" "ti-project/"
+    #python "$path_to_sdk/tidebuilder.py" -p -n -t bundle -d "packages/osx/bundle" -o "osx" "ti-project/"
+    python ~/.tidesdk/sdk/linux/1.3.1-beta/tidebuilder.py -p -n -t bundle --dest="packages/linux/run" --os="linux" "ustadmobile/"
+fi
+
 if [ "$1" == "emulate" ]; then
     #cordova emulate
     echo "emulate"
