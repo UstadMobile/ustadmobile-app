@@ -1,0 +1,2 @@
+Requires: libpng12 >= 1.2.50, libXScrnSaver >= 1.2.2
+AutoReqProv: no
