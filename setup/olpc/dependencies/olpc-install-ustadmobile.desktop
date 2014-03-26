@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=Install Ustad Mobile
+Type=Application
+Icon=/home/olpc/Desktop/dist/icon/ustadmobile-install-icon-96-xhdpi.bmp
+Exec=/bin/sh ./install-UstadMobile.sh 
+Comment=Install Ustad Mobile for OLPC

@@ -107,6 +107,9 @@ if [ "$1" == "build" ]; then
    echo "Making dist file.."
    cp $UMRPMDIR/RPMS/i686/*.rpm dist/
    cp ../dependencies/*rpm dist/
+   mkdir dist/icon
+   cp ../dependencies/icon/ustadmobile-install-icon-96-xhdpi.bmp dist/icon/
+   cp ../dependencies/olpc-install-ustadmobile.desktop dist/
    cp ../install-UstadMobile.sh dist/
    echo "ALL DONE"
    
