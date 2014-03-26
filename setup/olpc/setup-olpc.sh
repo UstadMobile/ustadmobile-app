@@ -66,11 +66,11 @@ if [ "$1" == "run" ]; then
     python ~/.tidesdk/sdk/linux/1.3.1-beta/tidebuilder.py --run --type=bundle --dest="packages/linux/run" --os="linux" "ustadmobile/"
 fi
 
-if [ "$1" == "installerbundle" ]; then
+if [ "$1" == "build" ]; then
     mkdir "packages"
     mkdir "packages/linux"
     mkdir "packages/linux/bundle"
-    echo "installerbundle"
+    echo "Starting build process.."
  
     echo "Calling TideSDK to package the app.."
     # usage: -r -t bundle -d "packages/win32/run" -o "win32" "ti-project/"
@@ -79,7 +79,10 @@ if [ "$1" == "installerbundle" ]; then
 
    echo "Going to tar the app.."
    #Post package that will fail.
-   tar -zcvf um-olpc.tar packages/linux/bundle/UstadMobile/
+   cd packages/linux/bundle
+   tar -zcvf um-olpc.tar UstadMobile/
+   mv um-olpc.tar ../../../um-olpc.tar
+   cd ../../../
    echo "making a dist folder.."
    mkdir dist
    echo "Making spec file.."
@@ -88,24 +91,24 @@ if [ "$1" == "installerbundle" ]; then
    #Requires: libpng12 >= 1.2.50, libXScrnSaver >= 1.2.2
    #AutoReqProv: no
    echo "Adding dependencies in spec file.."
-   sed '7r ../specedit.txt' ustadmobile-olpc-$VERSION.spec > ustadmobile-olpc-$VERSION.spec
+   sed -i '7r ../specedit.txt' ustadmobile-olpc-$VERSION.spec
    echo "Getting rpmbuild ready.."
    mkdir umrpm
    cd umrpm
    UMRPMDIR=`pwd`
-   echo "%_topdir $UMRPMDIR" > ~/.rpmmacros
-   echo "Testing: rpmmacros: " 
-   cat ~/.rpmmacros
+   echo "UMRPMDIR: $UMRPMDIR "
+   cd ..
    echo "Creating rpm structure.."
-   #sudo rm -rf /opt/umrpm
-   sudo mkdir -p $UMRPMDIR/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
+   sudo rm -rf ${UMRPMDIR}
+   mkdir -p ${UMRPMDIR}/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
    echo "Making rpm.."
-   rpmbuild -bb ustadmobile-olpc-$VERSION.spec > ustadmobile-olpc-$VERSION.log 2>&1
+   #--define '_topdir /home/olpc/rpmb'
+   sudo rpmbuild -bb --define '_topdir '${UMRPMDIR} ustadmobile-olpc-$VERSION.spec > ustadmobile-olpc-$VERSION.log 2>&1
    echo "Making dist file.."
-   cp /opt/umrpm/RPMS/i686/*.rpm dist/
+   cp $UMRPMDIR/RPMS/i686/*.rpm dist/
    cp ../dependencies/*rpm dist/
+   cp ../install-UstadMobile.sh dist/
    echo "ALL DONE"
-
    
    
 fi
