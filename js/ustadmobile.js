@@ -178,22 +178,41 @@ $(document).on("pagebeforecreate", function(event, ui) { //pageinit gets trigger
  whole answer inside label element, fix up floats/width etc.
 */
 
+/*
+ Fix issue with JQueryMobile RadioButtons because of a change in how
+ accessibility is handled in eXe.  For JQueryMobile purposes - put
+ whole answer inside label element, fix up floats/width etc.
+*/
 $(document).on("pagebeforecreate", function(event, ui) {
-    $(".multi-choice-form LABEL").each(function() {
-        var answerFor = $(this).attr("for");
-        //ID of radio button is going to be iELEMENTID
-        //eg i0_100 idevice=0, field=100
-        var answerId = answerFor.substring(1);
-        
-        var ideviceAnswerContainer = $(this).closest(".iDevice_answer-field");
-        ideviceAnswerContainer.css("width", "auto").css("float", "none");
-        
-        $("#answer-"+ answerId).css("padding-left", "0px");
-        $(this).removeClass("sr-av");
-        
-        $(this).html("");
-        $("#answer-"+ answerId).detach().appendTo($(this));
-    });
+    var fixItFunction = function() {
+        var alreadyFixed=$(this).attr("data-exefixed");
+        if(alreadyFixed != "true") {
+            var answerFor = $(this).attr("for");
+            //ID of radio button is going to be iELEMENTID
+            //eg i0_100 idevice=0, field=100
+            var answerId = "";
+            if(answerFor.substring(0, 1) == 'i') {
+                //mcq radio button
+                answerId = answerFor.substring(1);
+            }else {
+                //multi select checkbox
+                answerId = $(this).children("A").first().attr("href");
+                answerId = answerId.split("-")[1];
+            }
+            
+            var ideviceAnswerContainer = $(this).closest(".iDevice_answer-field");
+            ideviceAnswerContainer.css("width", "auto").css("float", "none");
+            
+            $("#answer-"+ answerId).css("padding-left", "0px");
+            $(this).removeClass("sr-av");
+            
+            $(this).html("");
+            $("#answer-"+ answerId).detach().appendTo($(this));
+            $(this).attr("data-exefixed", "true");
+        }
+    };
+    
+    $(".MultichoiceIdevice LABEL, .MultiSelectIdevice LABEL").each(fixItFunction);
 });
 
 
