@@ -11,6 +11,13 @@ SRCDIR="../../"
 WORKINGDIR=$(pwd)
 TARGETDIR="./build"
 
+#check we have android in path
+ANDROIDCMD=$(which android)
+if [ "$ANDROIDCMD" == "" ]; then
+    echo "android command not in path - check PATH variable for adt"
+    exit 1
+fi
+
 #clean
 if [ -d $TARGETDIR ]; then
     echo "deleting (cleaning) old build dir"

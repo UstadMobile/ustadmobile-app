@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #
-# Build the Ustad Mobile app using TideSDK for linux
+# Build the Ustad Mobile app using TideSDK for win32
 #
 
 
@@ -19,6 +19,10 @@ fi
      
 if [ ! -d $TARGETDIR ]; then
     mkdir $TARGETDIR
+fi
+
+if [ ! -d ./temp/ ]; then
+    mkdir temp
 fi
 
 source $SRCDIR/ustad_version

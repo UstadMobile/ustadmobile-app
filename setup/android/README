@@ -1,5 +1,5 @@
 Ustad Mobile Android builder
-15/Dec/2013 - Last updated by Mike Dawson
+2/May/2014 - Last updated by Mike Dawson
 
 To build:
 
@@ -8,6 +8,9 @@ To build:
 To run on connected device (must have USB debugging enabled):
 
 ./setup-android.sh run
+
+NOTE: If the app is installed from the app store you MUST remove it;
+otherwise you will receive an error re. inconsistent certificates
 
 To run emulator:
 
