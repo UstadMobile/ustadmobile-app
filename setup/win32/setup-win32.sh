@@ -56,7 +56,7 @@ cd ../
 echo "OKAY.." 
 pwd
 echo ""
-makeb64js-all-win32.sh win32/build/ustadmobile/Resources/js/ustadmobile-base64-values.js
+./makeb64js-all-win32.sh win32/build/ustadmobile/Resources/js/ustadmobile-base64-values.js
 echo "Made base64 values"
 storeb64tojs-win32.sh win32/build/ustadmobile/Resources/js/ustadmobile-base64-values.js
 echo "Done - now cd into $TARGETDIR/ustadmobile and run"

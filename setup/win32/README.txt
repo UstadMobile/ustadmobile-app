@@ -10,6 +10,7 @@ This will install Python for DOS (can be run as C:/Python27/python.exe)
 2. Download imagemagick from here: (19MB) http://www.imagemagick.org/script/binary-releases.php#windows
 This will install in for eg: C:\Program Files\ImageMagick-6.8.8-Q16
 Let it do so, but remember to leave "Add application directory to your system path" in the Setup Wizard ticked.
+Tested with Win32 - Static at 16bits per pixel
 
 3. Install wix v3.x (latest is v3.8) from here(21.7MB) http://wix.codeplex.com/releases/view/115492
 
