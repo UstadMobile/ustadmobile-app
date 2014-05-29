@@ -524,10 +524,12 @@ function onMenuLoad(){
  Localization function - will return original English if not in JSON
 */
 function x_(str) {
-    if(messages[str]) {
-        return messages[str];
-    }else {
-        return str;
+    if(typeof messages !== "undefined") {
+        if(messages[str]) {
+            return messages[str];
+        }else {
+            return str;
+        }
     }
 }
 
