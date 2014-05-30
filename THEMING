@@ -11,13 +11,13 @@ Learning content from eXe (and it's themes) can must use swatch 'a'
 (default) and should go in jqm-content-theme.css
 
 App: used in building:
-jqm-app-theme.css [Should provide JQM swatch b]
-jqm-base.css
+jqm/jqm-app-theme.css [Should provide JQM swatch b]
+jqm/jqm-base.css
 res/umres/aboutlogo.png
-res/css/ustad-app.css
+css/ustad-app.css
 
-Content:
-jqm-content-theme.css
+Content default (theme to provide swatch 'a' if theme does not have it's own jqm-content-theme.css file):
+jqm/jqm-content-theme.css
 
 
 

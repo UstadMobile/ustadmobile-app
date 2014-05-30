@@ -3,7 +3,13 @@
 #
 # Build the Ustad Mobile app using Cordova for android
 #
+#
+# Arguments: run|emulate [/path/to/UstadTheme.zip]
+#
+# 
+#
 
+THEMEFILE="$2"
 
 TARGETDIR=""
 SRCDIR="../../"
@@ -66,7 +72,12 @@ fi
 echo "copying assets";
 cp -r *.html img js jqm res locale ustad_version $FILEDEST
 
+#TODO: check this with naming convention
 cp css/index.css css/jquery.mobile-1.3.2.min.css css/qunit-1.12.0.css $FILEDEST/css
+
+if [ "$THEMEFILE" != "" ]; then
+    $WORKINGDIR/../apply-theme.sh $THEMEFILE $FILEDEST
+fi
 
 cd $FILEDEST/res/icon
 ls | grep -v "android" | xargs rm -r
