@@ -1,0 +1,24 @@
+
+UstadMobile Theme contents
+
+IMPORTANT: Please see the license regarding what theme changes
+are and are not allowed.  Diminishing the UstadMobile brand
+or renaming is prohibited without a commercial license.
+
+JQueryMobile theming use:
+App contents use swatch 'b' (e.g. buttons/menus, back/next)
+Learning content from eXe (and it's themes) can must use swatch 'a'
+(default) and should go in jqm-content-theme.css
+
+App: used in building:
+jqm-app-theme.css [Should provide JQM swatch b]
+jqm-base.css
+res/umres/aboutlogo.png
+res/css/ustad-app.css
+
+Content:
+jqm-content-theme.css
+
+
+
+
