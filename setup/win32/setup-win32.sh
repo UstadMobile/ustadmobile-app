@@ -3,7 +3,9 @@
 #
 # Build the Ustad Mobile app using TideSDK for win32
 #
-
+# Usage: setup-win32.sh run [ThemeFile.zip]
+#
+#
 
 TARGETDIR=""
 SRCDIR="../../"
@@ -48,6 +50,13 @@ cp -r *.html img js jqm res locale ustad_version $FILEDEST
 pwd
 mkdir $FILEDEST/css
 cp css/index.css css/jquery.mobile-1.3.2.min.css css/qunit-1.12.0.css $FILEDEST/css
+
+THEMEFILE=$2
+
+if [ "$THEMEFILE" != "" ]; then
+    $WORKINGDIR/../apply-theme.sh $THEMEFILE $FILEDEST
+fi
+
 echo "Making base64 values"
 #make the base64 versions of javascript files that get copied into directories
 cd $WORKINGDIR
@@ -68,7 +77,6 @@ cd ../
 pwd
 if [ "$1" == "run" ]; then
 	echo "going to run"
-    #cordova run
     mkdir packages
     mkdir packages/win32
     mkdir packages/win32/run
@@ -76,10 +84,5 @@ if [ "$1" == "run" ]; then
     #-r -t bundle -d "packages/win32/run" -o "win32" "ti-project/"
     cmd.exe  /c ..\\build-tidesdk-win32-run.bat
     #python ~/TideSDK/TideSDK-1.3.1-beta-win-x86/sdk/win32/1.3.1-beta/tidebuilder.py --run --type=bundle --dest="packages/win32/run" --os="win32" "ustadmobile/"
-fi
-
-if [ "$1" == "emulate" ]; then
-    #cordova emulate
-    echo "emulate"
 fi
 
