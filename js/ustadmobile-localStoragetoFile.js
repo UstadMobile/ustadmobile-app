@@ -45,144 +45,145 @@ If you need a commercial license to remove these restrictions please contact us 
 */
 
 
-		if (!localStorageValue){
-			var localStorageValue="";
-		}
-        var fileToOpen;
-		function localStorageToFile(bookpath, localStorageVariable, openFile){
-		console.log("bookpath: " + bookpath + " localStorageVariable: " + localStorageVariable, + " openFile: " + openFile);
-            fileToOpen = openFile;
-			var localStorageFilePath;
-			if(navigator.userAgent.indexOf("TideSDK") !== -1){
-                if (window.navigator.userAgent.indexOf("Windows") != -1) {
-                    console.log("TideSDK: You are using WINDOWS.");
-                    localStorageFilePath = bookpath + "\\" + localStorageVariable; // If js, should end with .js
-                }else{
-                    console.log("TideSDK: You are NOT using WINDOWS.");
-            		localStorageFilePath = bookpath + "/" + localStorageVariable; // If js, should end with .js
-                }    
-				//var localStorageFilePath = bookpath + "\\" + localStorageVariable; // If js, should end with .js
-				//Check if this is different for Windows and Linux
-				//var localStorageFilePath = bookpath + "/" + localStorageVariable; // If js, should end with .js
-			}else{
-				var localStorageFilePath = bookpath + "/" + localStorageVariable; // If js, should end with .js
-			}
-			
-            console.log(" file to be made: " + localStorageFilePath);
-			//Maybe add checks if localStorage exists..
-			localStorageValue = localStorage.getItem(localStorageVariable);		// Global variable. Make it.	
-            console.log("localStroageValue is: " + localStorageValue);
-            
-			try {
-                
-                if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1){ // if blackberry 10 device
-                    console.log("Detected blackberry 10 device platform before converting LocalStorage to File..");
-                    blackberry.io.sandbox = false;
-                    
-                    window.webkitRequestFileSystem(window.PERSISTENT, 0, function(fs){
-                                             fileSystem = fs;
-                                             fileSystem.root.getFile(localStorageFilePath, {create: true, exclusive: false}, gotLS2FFileEntry, notLS2FFileEntry);
-                                             
-                                             }, notLS2FFileSystem);
-                    
-                }else if(navigator.userAgent.indexOf("TideSDK") !== -1){
-					console.log("Detected Desktop - TideSDK. Continuing in localStoragetoFile.js..");
-					
-					//Make the file
-					var destinationFile = Ti.Filesystem.getFile(localStorageFilePath);
-					if(destinationFile.exists() == false && destinationFile.touch() == false) {
-						alert('We could not create the file: ' + localStorageFilePath + ' so we must abort.');
-						Y.Global.fire('download:error');
-						return;
-					}else{
-						debugLog("Successfully created file: " + localStorageFilePath );
-						
-						//Now WRITE TO FILE:
-						
-						//destinationFile.open(Ti.Filesystem.MODE_WRITE);
-						//destinationFile.write(localStorageValue);
-						//destinationFile.close();
-						
-						//AFTER WRITE SUCCESS (CHECK IT):
-						window.open(fileToOpen, '_self').trigger("create");
-					}
-				}else{ //if all other devices except blackberry 10
-                    window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function(fs){
-                                             fileSystem = fs;
-                                             fileSystem.root.getFile(localStorageFilePath, {create: true, exclusive: false}, gotLS2FFileEntry, notLS2FFileEntry);
-                                             
-                                             }, notLS2FFileSystem);
-                }
-                /*
-				window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function(fs){
-					fileSystem = fs;
-					fileSystem.root.getFile(localStorageFilePath, {create: true, exclusive: false}, gotLS2FFileEntry, notLS2FFileEntry);
-					
-				}, notLS2FFileSystem);
-                 */
-                
-			} catch (e) {
-				debugLog("File System / File get exception.");
-			}
-            console.log("All done..?");
-            //return r;
-            //jsLoaded = "true";
-		}
-		
-		function gotLS2FFileEntry(fileEntry){
-			fileEntry.createWriter(gotLS2FFileWriter, notLS2FFileWriter);
-		}
-		
-		function gotLS2FFileWriter(writer){
-			debugLog("Writing the contents..");
-			writer.onwrite = function(evt) {
-				debugLog("Base64 file written to a new file. Going to next file..(if any)"); 
-                //jsLoaded = "true";
-                //runb2fcallback(base64ToFileCallback, "localStorage to File success");
-				//writeNextBase64();
-                if (fileToOpen != null){
-                    //$.mobile.loading('hide');
-                    if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1){
-                        console.log("Detected BB10, appending file:// to open external HTMLs.");
-                        fileToOpen = "file://" + fileToOpen;
-                        console.log("Going to file: " + fileToOpen);
-                        window.open(fileToOpen, '_self');
-                    }else{
-                    window.open(fileToOpen, '_self').trigger("create");
-                    }
-                }
-			};
+if (!localStorageValue) {
+    var localStorageValue = "";
+}
+var fileToOpen;
+function localStorageToFile(bookpath, localStorageVariable, openFile) {
+    console.log("bookpath: " + bookpath + " localStorageVariable: " + localStorageVariable, +" openFile: " + openFile);
+    fileToOpen = openFile;
+    var localStorageFilePath;
+    if (navigator.userAgent.indexOf("TideSDK") !== -1) {
+        if (window.navigator.userAgent.indexOf("Windows") != -1) {
+            console.log("TideSDK: You are using WINDOWS.");
+            localStorageFilePath = bookpath + "\\" + localStorageVariable; // If js, should end with .js
+        } else {
+            console.log("TideSDK: You are NOT using WINDOWS.");
+            localStorageFilePath = bookpath + "/" + localStorageVariable; // If js, should end with .js
+        }
+        //var localStorageFilePath = bookpath + "\\" + localStorageVariable; // If js, should end with .js
+        //Check if this is different for Windows and Linux
+        //var localStorageFilePath = bookpath + "/" + localStorageVariable; // If js, should end with .js
+    } else {
+        var localStorageFilePath = bookpath + "/" + localStorageVariable; // If js, should end with .js
+    }
 
-			//var currentLS2Fdata = window.atob(globalCurrentB64[0]);
-            if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1){ // Blackberry 10 platform performs as expected when using BLOBS
-                console.log("[lS->F]Detected blackberry 10 device. Going to use BLOBs for File Writing in the course..");
-                var blob = new Blob([localStorageValue], {type: 'text/plain'}); //creates the BLOB <such a cool name, BLOB. Hey BLOB, hows it going??
-                writer.write(blob);
-            }else{ // Other device platforms can use String to File.
-                writer.write(localStorageValue);
+    console.log(" file to be made: " + localStorageFilePath);
+    //Maybe add checks if localStorage exists..
+    localStorageValue = localStorage.getItem(localStorageVariable);		// Global variable. Make it.	
+    console.log("localStroageValue is: " + localStorageValue);
+
+    try {
+
+        if (navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1) { // if blackberry 10 device
+            console.log("Detected blackberry 10 device platform before converting LocalStorage to File..");
+            blackberry.io.sandbox = false;
+
+            window.webkitRequestFileSystem(window.PERSISTENT, 0, function(fs) {
+                fileSystem = fs;
+                fileSystem.root.getFile(localStorageFilePath, {create: true, exclusive: false}, gotLS2FFileEntry, notLS2FFileEntry);
+
+            }, notLS2FFileSystem);
+
+        } else if (navigator.userAgent.indexOf("TideSDK") !== -1) {
+            console.log("Detected Desktop - TideSDK. Continuing in localStoragetoFile.js..");
+
+            //Make the file
+            var destinationFile = Ti.Filesystem.getFile(localStorageFilePath);
+            if (destinationFile.exists() == false && destinationFile.touch() == false) {
+                alert('We could not create the file: ' + localStorageFilePath + ' so we must abort.');
+                Y.Global.fire('download:error');
+                return;
+            } else {
+                debugLog("Successfully created file: " + localStorageFilePath);
+
+                //Now WRITE TO FILE:
+
+                //destinationFile.open(Ti.Filesystem.MODE_WRITE);
+                //destinationFile.write(localStorageValue);
+                //destinationFile.close();
+
+                //AFTER WRITE SUCCESS (CHECK IT):
+                window.open(fileToOpen, '_self').trigger("create");
             }
+        } else { //if all other devices except blackberry 10
+            window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function(fs) {
+                fileSystem = fs;
+                fileSystem.root.getFile(localStorageFilePath, {create: true, 
+                    exclusive: false}, gotLS2FFileEntry, notLS2FFileEntry);
 
-            
-			//writer.write(localStorageValue);
-            //writer.write("var ustadlocalelang = \"en\"; console.log(\"Daft Punk\");");
-            
-			
-		}
-		
-		function notLS2FFileSystem(){
-			debugLog("Could not get File System in localStrageToFile()");
-			alert("Could not start up app with your device's file system.");
+            }, notLS2FFileSystem);
+        }
+        /*
+         window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function(fs){
+         fileSystem = fs;
+         fileSystem.root.getFile(localStorageFilePath, {create: true, exclusive: false}, gotLS2FFileEntry, notLS2FFileEntry);
+         
+         }, notLS2FFileSystem);
+         */
 
-		}
-		
-		function notLS2FFileWriter(){
-			debugLog("Could not get File in gotLS2FFileEntry()");
-			alert("Could not start up app with your device's file.");
-			//writeNextBase64();
-		}
-		
-		function notLS2FFileEntry(){
-			debugLog("Could not get File Entry in localStrageToFile()");
-			alert("Could not start up app with your device's file system entry.");
-			//writeNextBase64();
-		}
+    } catch (e) {
+        debugLog("File System / File get exception.");
+    }
+    console.log("All done..?");
+    //return r;
+    //jsLoaded = "true";
+}
+
+function gotLS2FFileEntry(fileEntry) {
+    fileEntry.createWriter(gotLS2FFileWriter, notLS2FFileWriter);
+}
+
+function gotLS2FFileWriter(writer) {
+    debugLog("Writing the contents..");
+    writer.onwrite = function(evt) {
+        debugLog("Base64 file written to a new file. Going to next file..(if any)");
+        //jsLoaded = "true";
+        //runb2fcallback(base64ToFileCallback, "localStorage to File success");
+        //writeNextBase64();
+        if (fileToOpen != null) {
+            //$.mobile.loading('hide');
+            if (navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1) {
+                console.log("Detected BB10, appending file:// to open external HTMLs.");
+                fileToOpen = "file://" + fileToOpen;
+                console.log("Going to file: " + fileToOpen);
+                window.open(fileToOpen, '_self');
+            } else {
+                var ref = window.open(fileToOpen, '_self');
+            }
+        }
+    };
+
+    //var currentLS2Fdata = window.atob(globalCurrentB64[0]);
+    if (navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1) { // Blackberry 10 platform performs as expected when using BLOBS
+        console.log("[lS->F]Detected blackberry 10 device. Going to use BLOBs for File Writing in the course..");
+        var blob = new Blob([localStorageValue], {type: 'text/plain'}); //creates the BLOB <such a cool name, BLOB. Hey BLOB, hows it going??
+        writer.write(blob);
+    } else { // Other device platforms can use String to File.
+        writer.write(localStorageValue);
+    }
+
+
+    //writer.write(localStorageValue);
+    //writer.write("var ustadlocalelang = \"en\"; console.log(\"Daft Punk\");");
+
+
+}
+
+function notLS2FFileSystem() {
+    debugLog("Could not get File System in localStrageToFile()");
+    alert("Could not start up app with your device's file system.");
+
+}
+
+function notLS2FFileWriter() {
+    debugLog("Could not get File in gotLS2FFileEntry()");
+    alert("Could not start up app with your device's file.");
+    //writeNextBase64();
+}
+
+function notLS2FFileEntry() {
+    debugLog("Could not get File Entry in localStrageToFile()");
+    alert("Could not start up app with your device's file system entry.");
+    //writeNextBase64();
+}

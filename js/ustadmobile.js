@@ -531,6 +531,8 @@ function x_(str) {
             return str;
         }
     }
+    
+    return str;
 }
 
 /*

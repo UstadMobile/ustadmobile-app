@@ -693,21 +693,3 @@ function openBLPage(openFile, mode) {
     localStorageToFile(bookpath, "ustadmobile-settings.js", openFile);  //Also is the function that opens the book.
 
 }
-
-function wdotopen(openFile) {
-    $.mobile.loading('hide');
-    //window.open(openFile);
-    //openFile = "" + openFile;
-    console.log("About to open course main file: " + openFile);
-    window.open(openFile, '_self');     //BB10 specific changes.
-    //window.open(openFile, '_blank'); //Android
-    //window.open(openFile, '_parent');     //BB10 specific changes.
-    //window.open(openFile, '_blank');     //BB10 specific changes.
-    //blackberry.io.file.open(openFile);
-    //window.open("file:///accounts/1000/removable/sdcard/ustadmobileContent/measurementDemoV2AOL/exetoc.html");
-}
-
-
-
-
-
