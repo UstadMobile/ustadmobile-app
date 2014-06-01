@@ -50,7 +50,8 @@ if (!localStorageValue) {
 }
 var fileToOpen;
 function localStorageToFile(bookpath, localStorageVariable, openFile) {
-    console.log("bookpath: " + bookpath + " localStorageVariable: " + localStorageVariable, +" openFile: " + openFile);
+    console.log("bookpath: " + bookpath + " localStorageVariable: " 
+            + localStorageVariable, +" openFile: " + openFile);
     fileToOpen = openFile;
     var localStorageFilePath;
     if (navigator.userAgent.indexOf("TideSDK") !== -1) {
@@ -107,12 +108,29 @@ function localStorageToFile(bookpath, localStorageVariable, openFile) {
                 window.open(fileToOpen, '_self').trigger("create");
             }
         } else { //if all other devices except blackberry 10
-            window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function(fs) {
-                fileSystem = fs;
-                fileSystem.root.getFile(localStorageFilePath, {create: true, 
-                    exclusive: false}, gotLS2FFileEntry, notLS2FFileEntry);
+            
+            window.resolveLocalFileSystemURL(bookpath,
+                    function(fileEntry) {
+                        var entryFullPath = new String(fileEntry.fullPath);
+                        var lastSlashIndex = entryFullPath.lastIndexOf("/");
+                        var destLocalStorageDirPath = entryFullPath.substring(0, 
+                            lastSlashIndex);
+                        /*
+                        window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function(fs) {
+                            fileSystem = fs;
+                            fileSystem.root.getFile(destLocalStorageFile, {create: true, 
+                                exclusive: false}, gotLS2FFileEntry, notLS2FFileEntry);
 
-            }, notLS2FFileSystem);
+                        }, notLS2FFileSystem);
+                        */
+                       fileEntry.getFile("ustadmobile-settings.js", {create: true},
+                               gotLS2FFileEntry, notLS2FFileEntry);
+                               
+                    }   
+                    ,notLS2FFileEntry);
+            /*
+           
+            */
         }
         /*
          window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function(fs){
@@ -130,9 +148,11 @@ function localStorageToFile(bookpath, localStorageVariable, openFile) {
     //jsLoaded = "true";
 }
 
+
 function gotLS2FFileEntry(fileEntry) {
     fileEntry.createWriter(gotLS2FFileWriter, notLS2FFileWriter);
 }
+
 
 function gotLS2FFileWriter(writer) {
     debugLog("Writing the contents..");

@@ -175,7 +175,8 @@ UstadMobileBookList.prototype = {
             blackberry.io.sandbox = false;
             var bbumfolder = blackberry.io.SDCard + "/ustadmobileContent";
             console.log("Added: " + bbumfolder + " to UM Course List Folders To Scan.");
-            umBookListObj.foldersToScan = ["/ext_card/ustadmobile", "/ext_card/ustadmobileContent", 
+            umBookListObj.foldersToScan = [
+                "/ext_card/ustadmobile", "/ext_card/ustadmobileContent", 
                 "/sdcard/ustadmobile", "/sdcard/ustadmobileContent", 
                 "/ustadmobileContent/umPackages/", "/ustadmobileContent/", 
                 bbumfolder];
@@ -190,7 +191,13 @@ UstadMobileBookList.prototype = {
                 umBookListObj.foldersToScan = ["ustadmobileContent", "ustadmobileContent/umPackages"];
             }
         } else {
-            umBookListObj.foldersToScan = ["/ext_card/ustadmobile", "/ext_card/ustadmobileContent", "/sdcard/ustadmobile", "/sdcard/ustadmobileContent", "/ustadmobileContent/umPackages/", "/ustadmobileContent/"];
+            umBookListObj.foldersToScan = [
+                "file:///sdcard/ustadmobileContent",
+                "file:///ext_card/ustadmobile", 
+                "file:///ext_card/ustadmobileContent", 
+                "file:///sdcard/ustadmobile", 
+                "file:///ustadmobileContent/umPackages/", 
+                "file:///ustadmobileContent/"];
         }
 
         var usern = localStorage.getItem('username');
@@ -435,7 +442,9 @@ UstadMobileBookList.prototype = {
 
            } else {  //If other platforms apart from blackberry 10
                umBookListObj.fileSystemPathWaiting = pathFrom;
-               var retVal = window.requestFileSystem(LocalFileSystem.PERSISTENT, 0,
+               
+               /*
+               var retVal = window.requestFileSystem(window.PERSISTENT, 0,
                        function(fs) {
                            //success
                            console.log("window.requestFileSystem opened OK for: "
@@ -447,6 +456,18 @@ UstadMobileBookList.prototype = {
                             umBookListObj.failbl);
                        },
                        umBookListObj.failbl);
+               */
+              
+               
+            window.resolveLocalFileSystemURL(pathFrom,
+                 function(entry){
+                     console.log("found" + entry);
+                     UstadMobileBookList.getInstance().dirReader(entry);
+                 },
+                 function(evt) {
+                     UstadMobileBookList.getInstance().failbl(evt);
+                 }
+               );
            }
        } catch (e) {
            //debugLog("populate exception: catch!: " + dump(e));
@@ -473,7 +494,7 @@ UstadMobileBookList.prototype = {
      */
     findEXEFileMarkerSuccess: function (fileEntry) {
         var umBookListObj = UstadMobileBookList.getInstance();
-        var fileFullPath = fileEntry.fullPath;
+        var fileFullPath = fileEntry.toURL();
         debugLog("Found " + fileFullPath + " is an EXE directory - adding...");
         var folderName = fileEntry.getParent();
         fileEntry.getParent(function(parentEntry) {
@@ -514,17 +535,25 @@ UstadMobileBookList.prototype = {
        console.log("\tscanNextDirectoryIndex: " 
                + umBookListObj.currentEntriesIndex);
        if (umBookListObj.currentEntriesIndex < umBookListObj.currentEntriesToScan.length) {
-           var pathToCheck = umBookListObj.currentEntriesToScan[umBookListObj.currentEntriesIndex].fullPath 
+           var pathToCheck = umBookListObj.currentEntriesToScan[umBookListObj.currentEntriesIndex].toURL() 
                    + "/" + umBookListObj.exeFileMarker;
            umBookListObj.currentEntriesIndex++;
            //remove file:// prefix (needed)
-           pathToCheck = pathToCheck.replace("file://", "");
+           //pathToCheck = pathToCheck.replace("file://", "");
            debugLog("pathtoCheck: " + pathToCheck);
            //scan and see if this is really an EXE Directory
+           
+           /* MD: Disabled due to file 
            umBookListObj.fileSystem.root.getFile(pathToCheck, 
                {create: false, exclusive: false}, 
                umBookListObj.findEXEFileMarkerSuccess, 
                umBookListObj.findEXEFileMarkerFail);
+           */ 
+          
+           window.resolveLocalFileSystemURL(pathToCheck,
+               umBookListObj.findEXEFileMarkerSuccess, 
+               umBookListObj.findEXEFileMarkerFail);
+           
        } else {
            ///done looking at this directory - go to the next one
            debugLog("Scan next directory index is done");
@@ -630,8 +659,6 @@ UstadMobileBookList.prototype = {
            //3. We need to open the file.
            bookpath = umBookListObj.currentBookPath.substring(0, 
                 umBookListObj.currentBookPath.lastIndexOf("/"));
-           var bookpathSplit = bookpath.split("//");
-           bookpath = bookpathSplit[bookpathSplit.length - 1];
            console.log("The bookpath is: " + bookpath);
        }
 
