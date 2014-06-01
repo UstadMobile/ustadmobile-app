@@ -48,8 +48,9 @@ If you need a commercial license to remove these restrictions please contact us 
 
 var platformCommon;
 var exeLastPage = "../";
-var exeMenuPage = "ustadmobile_menuPage.html";
-var exeMenuPage2 = "ustadmobile_menuPage2.html";
+var exeMenuPage = "ustadmobile_menupage_app.html";
+var exeMenuPage2 = "ustadmobile_menupage_content.html";
+
 //localStorage.setItem('exeMenuPage',exeMenuP);
 //var getDir="/ustadmobileContent";
 var globalXMLListFolderName = "all";
@@ -61,6 +62,7 @@ function debugLog(msg) {
 }
 console.log("HERE IN COMMON!");
 
+/*
 document.addEventListener('deviceready', function(){
                           if(navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1){
                           console.log("Cordova ready for Blackberry 10 platform (detected in common js");
@@ -74,6 +76,7 @@ document.addEventListener('deviceready', function(){
                             }
                           }
                           ,commonfail);
+*/
 
 if(navigator.userAgent.indexOf("TideSDK") !== -1){
     debugLog("TideSDK: ustadmobile-common.js: Triggering device ready..");

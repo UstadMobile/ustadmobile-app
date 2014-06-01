@@ -699,12 +699,12 @@ function exeNextPageOpen(){
 //Function to handle Menu Page within eXe content's footer.
 function exeMenuPageOpen(){
     //Windows Phone checks.
-	if($.mobile.path.getLocation("x-wmapp0://www/ustadmobile_menuPage2.html") != "x-wmapp0://www/ustadmobile_menuPage2.html"){
-		debugLog('there is path problem');
-	}else{
-		debugLog('everything is OK with paths');
-	}
-	debugLog("Ustad Mobile Content: You will go into: exeMenuPage " + exeMenuPage2);
+    if($.mobile.path.getLocation("x-wmapp0://www/ustadmobile_menupage_content.html") != "x-wmapp0://www/ustadmobile_menupage_content.html"){
+            debugLog('there is path problem');
+    }else{
+            debugLog('everything is OK with paths');
+    }
+    debugLog("Ustad Mobile Content: You will go into: exeMenuPage " + exeMenuPage2);
     //alert("userAgent:" + navigator.userAgent);
     //if( platform == "android" ){
     if(navigator.userAgent.indexOf("Android") !== -1){
@@ -823,10 +823,10 @@ function openPage2(openFile){
 	
 	if(navigator.userAgent.indexOf("TideSDK") !== -1){
 		console.log("Detected Desktop - TideSDK.");
-		window.open(openFile, '_self');
+		$.mobile.changePage(openFile);
 	}else{
 		console.log("You are not using Desktop-TideSDK");
-		window.open(openFile, '_blank');
+		$.mobile.changePage(openFile);
 	}
 }
 
@@ -863,7 +863,7 @@ function umMenuLogout(){
     );
     localStorage.removeItem('username');
     localStorage.removeItem('password');
-	openPage2("ustadmobile_login.html");
+    openPage2("index.html");
 }  
 
 //Function to log out and get back to the login page from the content. This will show a slightly different login page because we want to maintain a constant gui.
