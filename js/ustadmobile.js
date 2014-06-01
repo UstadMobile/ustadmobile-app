@@ -48,6 +48,30 @@ This javascript creates the header and footer of ustad mobile content in package
 
 */
 
+var UstadMobile;
+
+var ustadMobileInstance = null;
+
+UstadMobile = function() {
+    
+};
+
+UstadMobile.getInstance = function() {
+    if(ustadMobileInstance == null) {
+        ustadMobileInstance = new UstadMobile();
+    }
+    
+    return ustadMobileInstance;
+}
+
+UstadMobile.prototype = {
+    showAppMenu: function() {
+        $.mobile.changePage("ustadmobile_menupage_app.html");
+    }
+};
+
+
+
 //Flag for unit testing
 var unitTestFlag = false;
 

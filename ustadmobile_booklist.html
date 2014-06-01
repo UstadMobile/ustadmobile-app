@@ -67,28 +67,10 @@ If you need a commercial license to remove these restrictions please contact us 
     </head>
     <body>
         <div data-role="page" id="exemainpage" data-theme="b" class="ustadbooklistpage">
-            <script>
-                console.log("Adding pageshow event handler for booklist");
-
+            <script type="text/javascript">
                 $(".ustadbooklistpage").on("pageshow", function(event, ui) {
-                    //alert("ho");
                     console.log("BOOKLIST: In pageshow");
-                    onBookListLoad();
-
-                    /* Test that can see if we can access filesystem
-                    document.addEventListener("deviceready", function() {
-                        console.log("BookListFS Check");
-                            window.requestFileSystem(LocalFileSystem.PERSISTENT, 0,
-                            function(fs) {
-                                console.log("BookListFS  File System Ready success")
-                            },
-                            function(e) {
-                                console.log("BookListFS  File System error happened");
-                            });
-
-                        console.log("BookListFS  Done!");
-                    }, false);
-                    */
+                    UstadMobileBookList.getInstance().onBookListLoad();
                 });
             </script>
             
@@ -114,11 +96,16 @@ If you need a commercial license to remove these restrictions please contact us 
             
             <div data-role="footer" data-position="fixed" style="text-align: center;" data-tap-toggle="false" data-theme="b">
 
-                <a onclick="booklistMenuPageOpen()"   style="text-align: center;" data-transition="slideup" data-inline="true" data-icon="grid" ><span id="menubuttontext" class="exeTranslated" data-exe-translation="Menu">MenuF</span></a>
+            <a onclick="UstadMobile.getInstance().showAppMenu()"   
+               style="text-align: center;" data-transition="slideup" 
+               data-inline="true" data-icon="grid" >
+                <span id="menubuttontext" class="exeTranslated" 
+                      data-exe-translation="Menu">MenuF</span>
+            </a>
                 
             </div>
             <br></br>
-            <input onclick='onBookListLoad()' type="button" id="rescancourselist"  name="rescancourselist" class="exeTranslated2" data-exe-translation-attr = "value" value="Rescan"/>
+            <input onclick='UstadMobileBookList.getInstance().onBookListLoad()' type="button" id="rescancourselist"  name="rescancourselist" class="exeTranslated2" data-exe-translation-attr = "value" value="Rescan"/>
             <p><i>(Tap to rescan your course list)</i></p>
 
         </div>
