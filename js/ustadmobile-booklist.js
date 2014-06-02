@@ -152,15 +152,13 @@ UstadMobileBookList.prototype = {
       */
     onBookListLoad: function() {
         console.log("Checking if device is ready...");
-        document.addEventListener("deviceready", 
-            UstadMobileBookList.getInstance().onBLDeviceReady, false);
-        //For desktop - tidesdk: triggering device ready
-        if (navigator.userAgent.indexOf("TideSDK") !== -1) {
-            debugLog("TideSDK: ustadmobile-booklist.js: Triggering device ready..");
-            //Device ready and will call function directly on TideSDK.
+        if(window.cordova) {
+            debugLog("Running on mobile device needing listener and not desktop..");
+            document.addEventListener("deviceready", 
+                UstadMobileBookList.getInstance().onBLDeviceReady, false);
+        }else {
+            debugLog("Desktop Edition: ustadmobile-booklist.js: Triggering device ready..");
             UstadMobileBookList.getInstance().onBLDeviceReady();
-        } else {
-            debugLog("Running on mobile device and not desktop..");
         }
     },
     
@@ -190,7 +188,9 @@ UstadMobileBookList.prototype = {
                 console.log("TideSDK: You are NOT using WINDOWS.");
                 umBookListObj.foldersToScan = ["ustadmobileContent", "ustadmobileContent/umPackages"];
             }
-        } else {
+        } else if (UstadMobile.getInstance().isNodeWebkit()) {
+            umBookListObj.foldersToScan = ["/home/mike/ustadmobileContent"]
+        }else {
             umBookListObj.foldersToScan = [
                 "file:///sdcard/ustadmobileContent",
                 "file:///ext_card/ustadmobile", 
@@ -440,26 +440,24 @@ UstadMobileBookList.prototype = {
                debugLog("Population incomplete for Desktop TideSDK.");
                umBookListObj.populateNextDir();
 
-           } else {  //If other platforms apart from blackberry 10
-               umBookListObj.fileSystemPathWaiting = pathFrom;
+           }else if(UstadMobile.getInstance().isNodeWebkit()) {
+               console.log("Detected NodeWebkit");
+               var fs = require("fs");
+               console.log("loaded fs");
+               var bookListObjInt = umBookListObj;
+               fs.readdir(pathFrom, function(err, dirEntries) {
+                   if(dirEntries && dirEntries.length > 0) {
+                       bookListObjInt.fileSystemPathWaiting = pathFrom;
+                       UstadMobileBookList.getInstance().successDirectoryReader(
+                               dirEntries);
+                   }else {
+                       UstadMobileBookList.getInstance().failDirectoryReader(err);
+                   }
+               });
                
-               /*
-               var retVal = window.requestFileSystem(window.PERSISTENT, 0,
-                       function(fs) {
-                           //success
-                           console.log("window.requestFileSystem opened OK for: "
-                                   + umBookListObj.fileSystemPathWaiting);
-
-                           umBookListObj.fileSystem = fs;
-                           fs.root.getDirectory(pathFrom, {create: false,
-                               exclusive: false}, umBookListObj.dirReader, 
-                            umBookListObj.failbl);
-                       },
-                       umBookListObj.failbl);
-               */
-              
                
-            window.resolveLocalFileSystemURL(pathFrom,
+           }else {  //If other platforms apart from blackberry 10
+               window.resolveLocalFileSystemURL(pathFrom,
                  function(entry){
                      console.log("found" + entry);
                      UstadMobileBookList.getInstance().dirReader(entry);
@@ -471,7 +469,7 @@ UstadMobileBookList.prototype = {
            }
        } catch (e) {
            //debugLog("populate exception: catch!: " + dump(e));
-           debugLog("Populate exception.");
+           debugLog("Populate exception." + dump(e));
            umBookListObj.populateNextDir();
        }
    },
@@ -494,27 +492,43 @@ UstadMobileBookList.prototype = {
      */
     findEXEFileMarkerSuccess: function (fileEntry) {
         var umBookListObj = UstadMobileBookList.getInstance();
-        var fileFullPath = fileEntry.toURL();
-        debugLog("Found " + fileFullPath + " is an EXE directory - adding...");
-        var folderName = fileEntry.getParent();
-        fileEntry.getParent(function(parentEntry) {
-            debugLog("Got a parent Book directory name");
-            debugLog("The full path = " + parentEntry.fullPath);
-            folderName = parentEntry.name;
-            umBookListObj.booksFound[umBookListObj.booksFound.length] = folderName;
+        if(UstadMobile.getInstance().isNodeWebkit()) {
+            debugLog("NodeWebKit finds content in " + fileEntry);
+            var lastSlashPos = fileEntry.lastIndexOf('/');
+            var secondLastSlashPos = fileEntry.lastIndexOf('/', lastSlashPos -1);
+            var folderName = fileEntry.substring(secondLastSlashPos+1, 
+                lastSlashPos);
+            var fileFullPath = "file://" + fileEntry;
             $("#UMBookList").append(
-                    "<a onclick='UstadMobileBookList.getInstance().openBLPage(\"" 
-                    + fileFullPath 
-                    + "\" \, \"normal\" )' href=\"#\" data-role=\"button\" "
-                    + "data-icon=\"star\" data-ajax=\"false\">" + folderName 
-                    + "</a>").trigger("create");
-        }, function(error) {
-            debugLog("failed to get parent directory folderName: " + folderName 
-                    + " with an error: " + error);
+                        "<a onclick='UstadMobileBookList.getInstance().openBLPage(\"" 
+                        + fileFullPath 
+                        + "\" \, \"normal\" )' href=\"#\" data-role=\"button\" "
+                        + "data-icon=\"star\" data-ajax=\"false\">" + folderName 
+                        + "</a>").trigger("create");
+        }else {
+            var fileFullPath = fileEntry.toURL();
+            debugLog("Found " + fileFullPath + " is an EXE directory - adding...");
+            var folderName = fileEntry.getParent();
+            fileEntry.getParent(function(parentEntry) {
+                debugLog("Got a parent Book directory name");
+                debugLog("The full path = " + parentEntry.fullPath);
+                folderName = parentEntry.name;
+                umBookListObj.booksFound[umBookListObj.booksFound.length] = folderName;
+                $("#UMBookList").append(
+                        "<a onclick='UstadMobileBookList.getInstance().openBLPage(\"" 
+                        + fileFullPath 
+                        + "\" \, \"normal\" )' href=\"#\" data-role=\"button\" "
+                        + "data-icon=\"star\" data-ajax=\"false\">" + folderName 
+                        + "</a>").trigger("create");
+            }, function(error) {
+                debugLog("failed to get parent directory folderName: " + folderName 
+                        + " with an error: " + error);
+            }
+            );
+            debugLog("Before we scan the directory, the number of Books Found is: "
+                    + umBookListObj.booksFound.length);
+            
         }
-        );
-        debugLog("Before we scan the directory, the number of Books Found is: "
-                + umBookListObj.booksFound.length);
         umBookListObj.scanNextDirectoryIndex();
     },
     
@@ -522,7 +536,7 @@ UstadMobileBookList.prototype = {
     exeFileMarker was not found - just go for scanning the next directory
     */
     findEXEFileMarkerFail: function(fileEntry) {
-       debugLog("failed to find file marker for " + fileEntry.name);
+       debugLog("failed to find file marker for " + fileEntry);
        UstadMobileBookList.getInstance().scanNextDirectoryIndex();
     },
     
@@ -535,25 +549,35 @@ UstadMobileBookList.prototype = {
        console.log("\tscanNextDirectoryIndex: " 
                + umBookListObj.currentEntriesIndex);
        if (umBookListObj.currentEntriesIndex < umBookListObj.currentEntriesToScan.length) {
-           var pathToCheck = umBookListObj.currentEntriesToScan[umBookListObj.currentEntriesIndex].toURL() 
-                   + "/" + umBookListObj.exeFileMarker;
-           umBookListObj.currentEntriesIndex++;
-           //remove file:// prefix (needed)
-           //pathToCheck = pathToCheck.replace("file://", "");
-           debugLog("pathtoCheck: " + pathToCheck);
-           //scan and see if this is really an EXE Directory
            
-           /* MD: Disabled due to file 
-           umBookListObj.fileSystem.root.getFile(pathToCheck, 
-               {create: false, exclusive: false}, 
-               umBookListObj.findEXEFileMarkerSuccess, 
-               umBookListObj.findEXEFileMarkerFail);
-           */ 
-          
-           window.resolveLocalFileSystemURL(pathToCheck,
-               umBookListObj.findEXEFileMarkerSuccess, 
-               umBookListObj.findEXEFileMarkerFail);
-           
+           if(UstadMobile.getInstance().isNodeWebkit()) {
+               var fs = require("fs");
+               
+               var pathToCheck = umBookListObj.fileSystemPathWaiting + "/"
+                    + umBookListObj.currentEntriesToScan[umBookListObj.currentEntriesIndex]
+                    + "/" + umBookListObj.exeFileMarker;
+        
+               umBookListObj.currentEntriesIndex++;
+                fs.exists(pathToCheck, function(existsResult) {
+                    if(existsResult) {
+                        UstadMobileBookList.getInstance().findEXEFileMarkerSuccess(pathToCheck);
+                    }else {
+                        UstadMobileBookList.getInstance().findEXEFileMarkerFail();
+                    }
+                });
+           }else {           
+                var pathToCheck = umBookListObj.currentEntriesToScan[umBookListObj.currentEntriesIndex].toURL() 
+                        + "/" + umBookListObj.exeFileMarker;
+                umBookListObj.currentEntriesIndex++;
+                //remove file:// prefix (needed)
+                //pathToCheck = pathToCheck.replace("file://", "");
+                debugLog("pathtoCheck: " + pathToCheck);
+                //scan and see if this is really an EXE Directory
+
+                window.resolveLocalFileSystemURL(pathToCheck,
+                    umBookListObj.findEXEFileMarkerSuccess, 
+                    umBookListObj.findEXEFileMarkerFail);
+           }
        } else {
            ///done looking at this directory - go to the next one
            debugLog("Scan next directory index is done");
@@ -564,6 +588,9 @@ UstadMobileBookList.prototype = {
    /*
     We got a direcotry reader - make a list of all sub directories
     to scan for exeFileMarker and put them currentEntriesToScan
+    
+    Note: in Cordova we entries is an array of objects representing the files
+    In NodeJS its just an array of Strings
     */
    successDirectoryReader: function(entries) {
        var i;
@@ -576,8 +603,31 @@ UstadMobileBookList.prototype = {
        umBookListObj.currentEntriesIndex = 0;
 
        for (i = 0; i < entries.length; i++) {
-           if (entries[i].isDirectory) {
-               umBookListObj.currentEntriesToScan[umBookListObj.currentEntriesToScan.length] = entries[i];
+           if(UstadMobile.getInstance().isNodeWebkit()) {
+               var fullPath = umBookListObj.fileSystemPathWaiting + "/" 
+                       + entries[i];
+               var fs = require("fs");
+               var fStat = null;
+               try {
+                   var fdObj = fs.openSync(fullPath, 'r');
+                   fStat = fs.fstatSync(fdObj);
+               }catch(err) {
+                   console.log("Error attempting to stat file : " + err);
+               }
+               
+               if(fStat !== null && fStat.isDirectory()) {
+                   umBookListObj.currentEntriesToScan.push(entries[i]);
+               }
+               
+               try {
+                   fStat.close();
+               }catch(err2) {
+                   console.log("Error attempting to close fs " + err2);
+               }
+           }else {
+               if (entries[i].isDirectory) {
+                    umBookListObj.currentEntriesToScan.push(entries[i]);
+               }
            }
        }
 
@@ -649,7 +699,9 @@ UstadMobileBookList.prototype = {
 
            console.log("TideSDK: The bookpath is: " + bookpath);
            openFile = umBookListObj.currentBookPath;
-       } else {
+       }else if(UstadMobile.getInstance().isNodeWebkit()) {
+           window.open(openFile, "_self");
+       }else {
            console.log("Mobile Device detected. Continuing..");
            umBookListObj.currentBookPath = openFile;
            console.log("Book URL that UM is going to is: " 

@@ -67,6 +67,18 @@ UstadMobile.getInstance = function() {
 UstadMobile.prototype = {
     showAppMenu: function() {
         $.mobile.changePage("ustadmobile_menupage_app.html");
+    },
+    
+    /**
+     * Detect if we run nodewebkit
+     * @returns {Boolean} true/false if we are running in node webkit
+     */
+    isNodeWebkit: function() {
+        if(typeof require !== "undefined") {
+            return true;
+        }else {
+            return false;
+        }
     }
 };
 
@@ -112,6 +124,8 @@ debugLog("Ustad Mobile: Current Location: " + currentUrl); //For testing purpose
 var platform="";
 var userAgent=navigator.userAgent; //User agent
 console.log("User agent is: " + userAgent);
+
+//var isNodeWebkit = (typeof process == "object");
 
 if(navigator.userAgent.indexOf("Android") !== -1){
         platform = "android";
