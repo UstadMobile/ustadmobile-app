@@ -89,25 +89,27 @@
     
     <body onload='UstadMobileLogin.getInstance().onLoginLoad();'>
         <div data-role="page" id="LoginPage" data-theme="b">
-            <div data-role="header" data-position="fixed" data-theme="b">
-                <p id="decotop" >.</p>
+            <div data-role="header" data-position="fixed" data-theme="b" data-tap-toggle="false">
                 <h1><span id="logintext" class="exeTranslated" data-exe-translation="Login">LoginF</span></h1>
             </div>
 
             <div data-role="content" id="Login" style="float:left">
-                <div style='margin-bottom: 20px; margin-top: 10px;'>
-                    <img src="res/umres/aboutlogo.png" alt="Ustad Mobile: Mobilizing Education for Everyone"/>
+                <div id="logincontainer">
+                    <div style='margin-bottom: 20px; margin-top: 10px;'>
+                        <img src="res/umres/aboutlogo.png" alt="Ustad Mobile: Mobilizing Education for Everyone"/>
+                    </div>
+                    <!--
+                    <label for="basic"><span id="useridinputtext" class="exeTranslated" data-exe-translation="Username/User ID:">Username/User ID:F</span></label>
+                    -->
+                    <input type="text" name="username" id="username" value="" placeholder="Username"/>
+                    <!--<label for="basic"><span id="passwordinputtext" class="exeTranslated" data-exe-translation="Password/Pin:">Password/Pin:F</span></label>
+                    -->
+                    <input type="password" name="password" id="password" value="" placeholder="Password"/>
+                    <div style="margin-top:30px;">
+                        <input onclick='UstadMobileLogin.getInstance().umloginFromForm()' type="button" id="loginButton" name="loginButton" class="exeTranslated2" data-exe-translation-attr = "value" value="Login">
+                    </div>
+                    <input onclick='UstadMobileLogin.getInstance().umSkip()' data-mini="false" type="button" id="skipButton" name="skipButton" class="exeTranslated2" data-exe-translation-attr = "value" value="Skip"/>
                 </div>
-            <p>Login to Ustad Mobile Cloud</p>
-                <label for="basic"><span id="useridinputtext" class="exeTranslated" data-exe-translation="Username/User ID:">Username/User ID:F</span></label>
-                <input type="text" name="username" id="username" value="" />
-                <label for="basic"><span id="passwordinputtext" class="exeTranslated" data-exe-translation="Password/Pin:">Password/Pin:F</span></label>
-                <input type="password" name="password" id="password" value="" />
-                <div style="margin-top:30px;">
-                    <input onclick='UstadMobileLogin.getInstance().umloginFromForm()' type="button" id="loginButton" name="loginButton" class="exeTranslated2" data-exe-translation-attr = "value" value="Login">
-                </div>
-                <input onclick='UstadMobileLogin.getInstance().umSkip()' data-mini="false" type="button" id="skipButton" name="skipButton" class="exeTranslated2" data-exe-translation-attr = "value" value="Skip"/>
-                <p><i>(Skip this step and return to your courses)</i></p>
             </div>
 
             <div data-role="footer2" data-position="fixed" data-theme="b">

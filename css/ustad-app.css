@@ -14,3 +14,14 @@
     margin-bottom:0px;
 }
 
+#logincontainer {
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 300px;
+}
+
+#Login {
+    width: 100%;
+    text-align: center;
+}
+

@@ -49,6 +49,15 @@ if (!localStorageValue) {
     var localStorageValue = "";
 }
 var fileToOpen;
+
+/*
+ * 
+ * @param {String} bookpath Path to the book directory (absolute with file:/// )
+ * @param {type} localStorageVariable Name of file to be created for settings variable
+ * @param {type} openFile The file to open (e.g. page of contents)
+ * 
+ * @returns {undefined}
+ */
 function localStorageToFile(bookpath, localStorageVariable, openFile) {
     console.log("bookpath: " + bookpath + " localStorageVariable: " 
             + localStorageVariable, +" openFile: " + openFile);
@@ -113,17 +122,7 @@ function localStorageToFile(bookpath, localStorageVariable, openFile) {
                     function(fileEntry) {
                         var entryFullPath = new String(fileEntry.fullPath);
                         var lastSlashIndex = entryFullPath.lastIndexOf("/");
-                        var destLocalStorageDirPath = entryFullPath.substring(0, 
-                            lastSlashIndex);
-                        /*
-                        window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function(fs) {
-                            fileSystem = fs;
-                            fileSystem.root.getFile(destLocalStorageFile, {create: true, 
-                                exclusive: false}, gotLS2FFileEntry, notLS2FFileEntry);
-
-                        }, notLS2FFileSystem);
-                        */
-                       fileEntry.getFile("ustadmobile-settings.js", {create: true},
+                        fileEntry.getFile("ustadmobile-settings.js", {create: true},
                                gotLS2FFileEntry, notLS2FFileEntry);
                                
                     }   
