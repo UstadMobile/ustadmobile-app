@@ -6,9 +6,6 @@
 #
 # Arguments: run|emulate [/path/to/UstadTheme.zip]
 #
-# 
-#
-
 THEMEFILE="$2"
 
 TARGETDIR=""
@@ -24,111 +21,13 @@ if [ "$ANDROIDCMD" == "" ]; then
     exit 1
 fi
 
-#clean
-if [ -d $TARGETDIR ]; then
-    echo "deleting (cleaning) old build dir"
-    rm -rf $TARGETDIR 
-fi
-     
-if [ ! -d $TARGETDIR ]; then
-    mkdir $TARGETDIR
-fi
-
-source $SRCDIR/ustad_version
-
-cd $TARGETDIR
-cordova create ustadmobile com.toughra.ustadmobile UstadMobile
-cd ustadmobile
-cordova platform add android
-PLUGINLIST="org.apache.cordova.device org.apache.cordova.network-information org.apache.cordova.battery-status org.apache.cordova.device-motion org.apache.cordova.device-orientation org.apache.cordova.file org.apache.cordova.file-transfer@0.4.0 org.apache.cordova.globalization org.apache.cordova.console org.apache.cordova.inappbrowser "
-
-#For splash screen, need to add splashscreen plugin: org.apache.cordova.splashscreen
-
-#For some reason on windows this is liable to fail and timeout even on decent connections
-for plugin in $PLUGINLIST; do
-	RETSTATUS=1
-	until [ "$RETSTATUS" == "0" ]; do
-        echo "Attempting to add plugin $plugin"
-		cordova plugin add $plugin
-		RETSTATUS=$?
-	done
-done
-
-#now set the version in config.xml
-sed -i s/version=\"0.0.1\"/version=\"$VERSION\"/g www/config.xml
-
-echo "Made a cordova project in $TARGETDIR/ustadmobile"
-
-cd $WORKINGDIR
-cd $SRCDIR
-
-FILEDEST=$WORKINGDIR/$TARGETDIR/ustadmobile/www
-
-# we don't want this file - will confuse cordova
-if [ -e spec.html ]; then
-    rm spec.html
-fi
-
-echo "copying assets";
-cp -r *.html img js jqm res locale ustad_version $FILEDEST
-
-#TODO: check this with naming convention
-cp css/index.css css/jquery.mobile-1.3.2.min.css css/qunit-1.12.0.css $FILEDEST/css
-
-if [ "$THEMEFILE" != "" ]; then
-    $WORKINGDIR/../apply-theme.sh $THEMEFILE $FILEDEST
-fi
-
-cd $FILEDEST/res/icon
-ls | grep -v "android" | xargs rm -r
-cd ../screen
-ls | grep -v "android" | xargs rm -r
-
-#make the base64 versions of javascript files that get copied into directories
-cd $WORKINGDIR
-
-../makeb64js-all.sh $TARGETDIR/ustadmobile/www/js/ustadmobile-base64-values.js ../../js/
-
-echo "Done - now cd into $TARGETDIR/ustadmobile and run"
-
-
-#copy icon where it should go - strangely this does not happen by default
-RESLIST="hdpi ldpi mdpi xhdpi"
-
-cd $SRCDIR
-for res in $RESLIST; do
-    echo cp -v res/icon/android/icon-??-$res.png $FILEDEST/../platforms/android/res/drawable-$res/icon.png
-    cp -v res/icon/android/icon-??-$res.png $FILEDEST/../platforms/android/res/drawable-$res/icon.png
-    #cp -v res/screen/android/umsplash-??-$res.png $FILEDEST/../platforms/android/res/drawable-$res/umsplash.png
-done
-cp res/icon/android/icon-96-xhdpi.png $FILEDEST/../platforms/android/res/drawable/icon.png
-#cp res/screen/android/umsplash-96-xhdpi.png $FILEDEST/../platforms/android/res/drawable/umsplash.png
-
-
-
-#Logic to set Hardware Acceleration to false in Android Manifest file: AndroidManifest.xml
-
-sed -i.backup -e 's/hardwareAccelerated=\"true\"/hardwareAccelerated=\"false\"/' $WORKINGDIR/build/ustadmobile/platforms/android/AndroidManifest.xml
-
-#Future changes: (Varuna Singh - 25-12-2013)
-sed -i.backup2 -e 's/ACCESS_FINE_LOCATION\"/ACCESS_FINE_LOCATION\" android:required=\"false\"/' $WORKINGDIR/build/ustadmobile/platforms/android/AndroidManifest.xml
-sed -i.backup3 -e 's/ACCESS_FINE_LOCATION\"/ACCESS_COARSE_LOCATION\" android:required=\"false\"/' $WORKINGDIR/build/ustadmobile/platforms/android/AndroidManifest.xml
-
-#For splashscreen, need to make these additions to config.xml (inside the <widget> tag):
-#    <preference name="splashscreen" value="umsplash" />
-#    <preference name="splashScreenDelay" value="3000" />
-#sed -i.backup -e '\|</widget>| i\\    <preference name=\"splashscreen\" value=\"umsplash\" />' $WORKINGDIR/ustadmobile/www/config.xml 
-#sed -i.backup -e '\|</widget>| i\\    <preference name=\"splashScreenDelay\" value=\"3000\" />' $WORKINGDIR/ustadmobile/www/config.xml 
-
+. ./cordova-setup-android.sh
 
 cd $WORKINGDIR
 cd $TARGETDIR/ustadmobile
 cordova build
 
 sed -i.backup -e 's/hardwareAccelerated=\"true\"/hardwareAccelerated=\"false\"/' $WORKINGDIR/build/ustadmobile/platforms/android/AndroidManifest.xml
-
-#sed -i.backup -e '\|</widget>| i\\    <preference name=\"splashscreen\" value=\"umsplash\" />' $WORKINGDIR/ustadmobile/www/config.xml 
-#sed -i.backup -e '\|</widget>| i\\    <preference name=\"splashScreenDelay\" value=\"3000\" />' $WORKINGDIR/ustadmobile/www/config.xml 
 
 if [ "$1" == "run" ]; then
     cordova run

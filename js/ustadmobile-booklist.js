@@ -64,7 +64,7 @@
                 an array called *currentEntriesToScan*, then call 
                 scanNextDirectoryIndex:
 
-                -> findEXEFileMarkerSuccess : Put in booksFound array
+                -> findEXEFileMarkerSuccess : Put in coursesFound array
                 -> findEXEFileMarkerFail : call scanNextDirectoryIndex to look at next dir
 
             -> failDirectoryReader
@@ -127,7 +127,9 @@ function UstadMobileBookList() {
     //Reference to filesystem object
     this.fileSystem = null;
 
-    this.booksFound = [];
+
+    /** Courses found */
+    this.coursesFound = [];
 
     this.allBookFoundCallback = null;
 
@@ -146,27 +148,36 @@ UstadMobileBookList.getInstance = function() {
 
 UstadMobileBookList.prototype = {
     
-    /** Wait for PhoneGap to load
+    /** 
+      * Will run a scan when device is ready to do so... if running in Cordova
+      * will wait for cordovaonready
       *
       *@method onBookListLoad
       */
-    onBookListLoad: function() {
+    queueScan: function(queueCallback) {
         console.log("Checking if device is ready...");
         if(window.cordova) {
             debugLog("Running on mobile device needing listener and not desktop..");
             document.addEventListener("deviceready", 
-                UstadMobileBookList.getInstance().onBLDeviceReady, false);
+                function() {
+                    UstadMobileBookList.getInstance().scanCourses(queueCallback);
+                }, false);
         }else {
             debugLog("Desktop Edition: ustadmobile-booklist.js: Triggering device ready..");
-            UstadMobileBookList.getInstance().onBLDeviceReady();
+            UstadMobileBookList.getInstance().scanCourses(queueCallback);
         }
     },
     
-    // PhoneGap is ready - scan the first directory
-    //
-    onBLDeviceReady: function() {
+    /**
+     * @method scanCourses
+     * @param {function} callback - callback to run when all scanning is done
+     */
+    scanCourses: function(callback) {
         var umBookListObj = UstadMobileBookList.getInstance();
-        console.log("onBLDeviceReady() : I'm inside!");
+        if(typeof callback !== "undefined" && callback != null) {
+            umBookListObj.allBookFoundCallback = callback;
+        }
+        
         if (navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1) {
             umBookListObj.umCLPlatform = "bb10";
             console.log("Detected Blackberry 10 device in Course List Scan.");
@@ -499,6 +510,11 @@ UstadMobileBookList.prototype = {
             var folderName = fileEntry.substring(secondLastSlashPos+1, 
                 lastSlashPos);
             var fileFullPath = "file://" + fileEntry;
+            var courseEntryObj = new UstadMobileCourseEntry(folderName, "", 
+                fileFullPath, null);
+            umBookListObj.coursesFound.push(courseEntryObj);
+            
+            
             $("#UMBookList").append(
                         "<a onclick='UstadMobileBookList.getInstance().openBLPage(\"" 
                         + fileFullPath 
@@ -513,7 +529,10 @@ UstadMobileBookList.prototype = {
                 debugLog("Got a parent Book directory name");
                 debugLog("The full path = " + parentEntry.fullPath);
                 folderName = parentEntry.name;
-                umBookListObj.booksFound[umBookListObj.booksFound.length] = folderName;
+                var courseEntryObj = new UstadMobileCourseEntry(folderName, "",
+                    fileFullPath, null);
+                umBookListObj.coursesFound.push(folderName);
+                
                 $("#UMBookList").append(
                         "<a onclick='UstadMobileBookList.getInstance().openBLPage(\"" 
                         + fileFullPath 
@@ -526,7 +545,7 @@ UstadMobileBookList.prototype = {
             }
             );
             debugLog("Before we scan the directory, the number of Books Found is: "
-                    + umBookListObj.booksFound.length);
+                    + umBookListObj.coursesFound.length);
             
         }
         umBookListObj.scanNextDirectoryIndex();
@@ -730,4 +749,16 @@ UstadMobileBookList.prototype = {
 
    
 };
+
+
+function UstadMobileCourseEntry(courseTitle, courseDesc, coursePath, coverImg) {
+    this.courseTitle = courseTitle;
+    
+    this.courseDesc = courseDesc;
+    
+    this.coursePath = coursePath;
+    
+    this.coverImg = coverImg;
+}
+
 

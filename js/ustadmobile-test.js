@@ -49,105 +49,79 @@ If you need a commercial license to remove these restrictions please contact us 
 //Testing..
 var CONTENT_MODELS;
 
-var qunitOutput = localStorage.getItem('qunitOutput');
+//var qunitOutput = localStorage.getItem('qunitOutput');
+
+
+var qunitOutput = "";
 var milliseconds = (new Date).getTime();
 var ustad_version = '';
+/*
 $.get('ustad_version', function(data){
 	dataline = data.split("\n");
 	ustad_version = dataline[0];
 	console.log("Ustad version is: " + ustad_version);
 });
 console.log ("With Qunit logs in 01");
+*/
 
-if (typeof qunitOutput === 'undefined' || qunitOutput == null || qunitOutput == "|"){
-    //qunitOutput = "|";
-    qunitOutput = "";
-    console.log("Initiating Output for Qunit tests..");
-}else{
-    console.log("Tests already pending to be sent to server..");
-    console.log("Tests pending: " + qunitOutput);
-    //do nothing
-    //maybe check things
-}
 
-function sendOutput(localStorageVariable){
+(function () {
+    QUnit.module("UstadMobile");
     
-    //gets the django unit test password to authenticate the logs being sent.
-    $.get('umpassword.html', function(data) {
-      	//var fileContents = data;
-	var datalines = data.split("\n");
-        var fileContents = datalines[0];
-	    //sendAuthOutput(fileContents);
-	    sendAuthOutput(fileContents, localStorageVariable);
-    });
+    testUstadMobileCourseLoad();
+    
+    
+}());
 
-    /*
-    var file = '';
+/**
+ * 
+ * @returns 
+ */
+function testUstadMobileCourseLoad() {
+    var bookListObj = UstadMobileBookList.getInstance();
+    asyncTest("Can load booklist", 1, function(){
+       bookListObj.queueScan(function() {
+           var numCourses = UstadMobileBookList.getInstance().coursesFound.length;
+           ok(numCourses > 0,
+                "Found " + numCourses + " courses in scan");
+           start();
+       });
+    });
+}
+
+function sendTestOutputSimple(params) {
+    var url = "http://192.168.43.77:8009/";
     $.ajax({
-        type: 'GET',
-        url: '/mypage.html',
-        success: function (file_html) {
-            // pass the data to the var
-            var file = file_html;
+            url: url,  
+            type: 'POST',        
+            data: params,
+            datatype: 'text',
+            success: function(data, textStatus, jqxhr){
+                    debugLog("Logging to server: " + url + " a success with code:" + jqxhr.status);
+                    //runcallback(callback, jqxhr.status);
+                    },
+            complete: function (jqxhr, txt_status) {
+                    debugLog("Ajax call completed to server. Status: " + jqxhr.status);
+                    },
+            error: function (jqxhr,b,c){
+                    alert("Couldn't connect to server. Status Code:" + jqxhr.status);
+                    debugLog("Couldn't connect to server. Status Code:" + jqxhr.status);
+                    },
+            statusCode: {
+                    200: function(){
+                            //alert("Login success on the server!");
+                            debugLog("Connection to server a success with statusCode 200.");
+                            },
+                    0: function(){
+                            debugLog("Status code 0, unable to connect to server or no internet/intranet access");
+                                    }
+                                    }
 
-            // success
-            alert('success : ' + file);
-        }
     });
-    */
-}
-
-function sendAuthOutput(fileContents, localStorageValue){
-	
-    var qunitpassword = $.trim(fileContents);
-    var toSend = localStorage.getItem(localStorageValue);
-    if (toSend == null || typeof toSend === 'undefined' || toSend == "|"){
-        console.log("Corrupt unit test results or empty.");
-    }else{
-        console.log("Going to send the following test results to the server: " + toSend);
-	//var param = 'userid=' + username + '&password=' + password; //format
-	var qunitusername = "test";
-        var param = 'appunittestoutput=' + toSend + '&username=' + qunitusername + '&password=' + qunitpassword;
-	
-        //var url = 'http://your.server/address/goes/here.html';
-        //var url = "http://127.0.0.1:8010/sendtestlog/";
-	var url = "http://svr2.ustadmobile.com:8010/sendtestlog/";
-        
-		$.ajax({
-			url: url,  
-			type: 'POST',        
-			data: param,
-			datatype: 'text',
-			success: function(data, textStatus, jqxhr){
-				debugLog("Logging to server: " + url + " a success with code:" + jqxhr.status);
-				//runcallback(callback, jqxhr.status);
-				},
-			complete: function (jqxhr, txt_status) {
-				debugLog("Ajax call completed to server. Status: " + jqxhr.status);
-				},
-			error: function (jqxhr,b,c){
-				alert("Couldn't connect to server. Status Code:" + jqxhr.status);
-				debugLog("Couldn't connect to server. Status Code:" + jqxhr.status);
-				},
-			statusCode: {
-				200: function(){
-					//alert("Login success on the server!");
-					debugLog("Connection to server a success with statusCode 200.");
-                    var nothing = "";
-					localStorage.setItem(localStorageValue,nothing);
-					console.log("Qunit test Output reset to null.");
-					},
-				0: function(){
-					debugLog("Status code 0, unable to connect to server or no internet/intranet access");
-						}
-						}
-				
-		});
-    }
 }
 
 
-//Order by which tests run.
+//QUnit Event Handlers
 
 //1.
 QUnit.begin(function( details ) {
@@ -161,53 +135,38 @@ QUnit.moduleStart(function( details ) {
 
 //3.
 QUnit.testStart(function( details ) {
-    console.log( "QUnit: Now Running Test: ", details.module, details.name );
+    var msg = "QUnit: Now Running Test: " +  details.module + " " + details.name;
+    qunitOutput += msg + "\n";
+    console.log(msg);
 });
 
 //4.
 QUnit.log(function( details ) {
-    console.log( "QUnit: Assertion complete. Details: ", details.result, details.message );
+    var msg = "QUnit: Now Running Test: " +  details.module + " " + details.name;
+    qunitOutput += msg + "\n";
+    console.log(msg);
 });
 
 //5.
 QUnit.testDone(function( details ) {
-    if(typeof CONTENT_MODELS !== 'undefined' && CONTENT_MODELS == "test"){
-               	console.log("Test mode and current page done.");
-		var result = "fail";
-    		//var platform = "";
-    		//var ustad_version = "ustad version";  
-    		//var milliseconds = (new Date).getTime();
-    		console.log( "QUnit: Finished Running Test: ", details.module, details.name, "Failed/total: ", details.failed, details.total, details.duration );
-    		//call the function that packages and sends the test results as a HttpRequestHeader
-    		if (details.failed == 0 ){
-        		result = "pass";
-    		}else{
-        		result = "fail";
-    		}
-    		qunitOutput = qunitOutput + "new|" + details.name + "|" + result + "|" + details.duration + "mis|" +  milliseconds + "|" + platform + "|" + ustad_version + "|";
-    		console.log("What the output looks so far: " + qunitOutput);
-    		localStorage.setItem('qunitOutput', qunitOutput);
-    		console.log("qunitOutput localStorage: " + localStorage.getItem('qunitOutput'));
-	}else{
-		console.log("Not testing, not going to log anything..");
-	}
-
+    var msg =  "QUnit: Finished Running Test: " + details.module + " : "
+        + details.name + "Failed/total: " +  details.failed + "/" 
+        + details.total + " Duration:" + details.duration;
+    console.log(msg);
+    qunitOutput += msg + "\n";
 });
 
 
 
 //Final.
 QUnit.done(function( details ) {
-    if(typeof CONTENT_MODELS !== 'undefined' && CONTENT_MODELS == "test"){
-	console.log("Test mode is on. Going to send the logs as: ");
-    	console.log( "QUnit: Test Suit Ending. Results: Total: ", details.total, " Failed: ", details.failed, " Passed: ", details.passed, " Runtime: ", details.runtime );
-    	//call httprequest function
-    	sendOutput('qunitOutput');
-    	//sendOutput('courseOutput');
-    }else{
-	console.log("Not testing, not going to send anything..");
-    }
-
+    var msg =  "QUnit: Test Suit Ending. Results: Total: " + details.total
+        + " Failed: " + details.failed +  " Passed: " +  details.passed
+        + " Runtime: " + details.runtime;
+    qunitOutput += msg;
+    var paramsToSend = { "numPass" : details.passed, "numFail" : details.failed,
+        "logtext" : qunitOutput};
+    sendTestOutputSimple(paramsToSend);
 });
  
 
@@ -215,29 +174,7 @@ QUnit.moduleDone(function( details ) {
     console.log( "QUnit: Finished Running Module: ", details.name, "Failed/total: ", details.failed, details.total );
 });
 
- 
 
- 
-
- 
-
-
-
-var startTime = new Date().getTime();
-
-function checkBooksOK() {
-
-
-    test( "Book List Test", function() {
-        ok( booksFound.length > 0, "Found " + booksFound.length + " Books " );
-    });
-}
-
-function checkSomethingElse() {
-    test( "1 really is 1", function() {
-        ok( 1 == 1, "1 is 1");
-    });
-}
 
 function checkLoginOK(statusCode){
     //localStorage.removeItem('testmode');
@@ -294,153 +231,5 @@ function testLocalisationLanguage(arg){
         ok(arg == "localisation language test success", "Language set verified");
         });
 }
-
-
-function startTestOnLoadCounter(device){
-
-    //CONTENT_MODE = "test";
-    unitTestFlag = true;
-    if (device == 'app'){
-        CONTENT_MODELS = "test";
-        console.log("You are testing inside the app");
-
-        //setTimeout("checkSomethingElse()", 500);
-        checkSomethingElse();
-
-        currentEntriesIndex = 0;
-        currentFolderIndex = 0;
-        allBookFoundCallback = checkBooksOK;
-        populateNextDir();
-
-        var testuser;
-        var testpass;
-        console.log("Attempting to check credentials file..");
-
-        $( document ).ready(function() {
-            console.log( "jQuery ready!" );
-       
-            $.get('umpassword.html', function(data){
-             debugLog("Credential File exists!: " + data);
-                 var datalines = data.split("\n");
-                 testuser = datalines[1];
-                 testpass = datalines[2];
-                 debugLog("Test user is: " + testuser);
-                //alert(testuser);
-                //alert(testpass);
-                if (typeof testuser !== 'undefined' && testuser != null && typeof testpass !== 'undefined' && testpass != null){
-                    console.log("Username and Password already set.");
-                    console.log("Test user | pass " + testuser + "|" + testpass);
-                    umlogin(testuser,testpass, 'http://svr2.ustadmobile.com:8001/xAPI/statements?limit=1', checkLoginOK);
-                }else{
-                    //var usern = "";
-                     var usern = prompt("Enter test username");
-                     //var passw = "";
-                     var passw = prompt("Enter test password");
-                     //Code to get username (usern) and password (passw) goes here.
-                    umlogin(usern,passw, 'http://svr2.ustadmobile.com:8001/xAPI/statements?limit=1', checkLoginOK);
-                }
-                 
-            });
-         });
-/*
-            
-        if (typeof testuser !== 'undefined' && testuser != null && typeof testpass !== 'undefined' && testpass != null){
-                 //var usern = "";
-                 var usern = prompt("Enter test username");
-                 //var passw = "";
-                 var passw = prompt("Enter test password");
-                 //Code to get username (usern) and password (passw) goes here.
-            }else{
-                console.log("Username and Password already set.");
-                console.log("Test user | pass " + testuser + "|" + testpass);
-                umlogin(testuser,testpass, 'http://svr2.ustadmobile.com:8001/xAPI/statements?limit=1', checkLoginOK);
-            }
-*/
-
-
-
-
-        //umlogin(usern,passw, 'http://intranet.paiwastoon.net/umcloud/app/login.xhtml', checkLoginOK);
-        //umlogin(testuser,testpass, 'http://svr2.ustadmobile.com:8001/xAPI/statements?limit=1', checkLoginOK);
-
-        testSetlanguage("es", "in", "en", testLocalisationLanguage);
-
-        testPackageListXML('http://www.ustadmobile.com/books/all_ustadpkg_html5.xml', 'all', checkPackageListXMLProcessingOK);
-
-        testPackageListXML('http://www.ustadmobile.com/books/measurementDemoV2AOL_ustadpkg_html5.xml', 'all/measurementDemoV2AOL', checkPackageXMLProcessingOK);
-
-     
-    }else if(device == 'notapp'){ //notapp
-        CONTENT_MODELS = "test";
-        console.log("You are testing outside the app.");
-        checkSomethingElse();
-	    testSetlanguage("es", "in", "en", testLocalisationLanguage);
-    }else{
-        console.log("You are testing outside the app.");
-    }
-
-}
-
-/*
-function startTestOnLoadCounter_OLD(device){
-    unitTestFlag = true;
-    if (device == 'app'){
-	console.log("You are testing inside the app");
-
-	    //setTimeout("checkSomethingElse()", 500);
-        checkSomethingElse()
-	
-	    currentEntriesIndex = 0;
-    	currentFolderIndex = 0;
-    	allBookFoundCallback = checkBooksOK;
-    	populateNextDir();
-
-	var testuser;
-    	var testpass;
-    	console.log("Attempting to check credentials file..");
-    	$.get('umpassword.html', function(data){
-        	debugLog("Credential File exists!: " + data);
-        	var datalines = data.split("\n");
-        	testuser = datalines[1];
-        	testpass = datalines[2];
-        	debugLog("Test user is: " + testuser);
-    	});
-
-    	if (typeof testuser !== 'undefined' && testuser != null && typeof testpass !== 'undefined' && testpass != null){
-
-
-        	//var usern = "";
-        	var usern = prompt("Enter test username");
-        	//var passw = "";
-        	var passw = prompt("Enter test password");
-        	//Code to get username (usern) and password (passw) goes here.
-    	}else{
-                console.log("Username and Password already set.");
-    	}
-
-
-
-    	umlogin(usern,passw, 'http://intranet.paiwastoon.net/umcloud/app/login.xhtml', checkLoginOK);
-
-    	testSetlanguage("es", "in", "en", testLocalisationLanguage);
-
-    	testPackageListXML('http://www.ustadmobile.com/books/all_ustadpkg_html5.xml', 'all', checkPackageListXMLProcessingOK);
-
-    	testPackageListXML('http://www.ustadmobile.com/books/measurementDemoV2AOL_ustadpkg_html5.xml', 'all/measurementDemoV2AOL', checkPackageXMLProcessingOK);
-
-	
-
-    }else{
-	console.log("You are testing outside the app.");
-
-	    //setTimeout("checkSomethingElse()", 500);
-        checkSomethingElse();
-	
-	    testSetlanguage("es", "in", "en", testLocalisationLanguage);
-
-    }
-
-}
-*/
 
 

@@ -612,15 +612,6 @@ function localizePage() {
 }
 
 
-/*
-//Function reserved to get the app location. This has been moved to: onBLDeviceReady() in ustadmobile-booklist.js .
-function getAppLocation(){ //function to get the root of the device.
-
-}
-*/
-
-
-
 //This is the runcallback function
 //passed to the
 function runcallback(callbackfunction, arg) {
@@ -737,54 +728,58 @@ function exeNextPageOpen(){
 }
 
 //Function to handle Menu Page within eXe content's footer.
-function exeMenuPageOpen(){
+function exeMenuPageOpen() {
     //Windows Phone checks.
-    if($.mobile.path.getLocation("x-wmapp0://www/ustadmobile_menupage_content.html") != "x-wmapp0://www/ustadmobile_menupage_content.html"){
-            debugLog('there is path problem');
-    }else{
-            debugLog('everything is OK with paths');
+    if ($.mobile.path.getLocation("x-wmapp0://www/ustadmobile_menupage_content.html") != "x-wmapp0://www/ustadmobile_menupage_content.html") {
+        debugLog('there is path problem');
+    } else {
+        debugLog('everything is OK with paths');
     }
     debugLog("Ustad Mobile Content: You will go into: exeMenuPage " + exeMenuPage2);
-    //alert("userAgent:" + navigator.userAgent);
-    //if( platform == "android" ){
-    if(navigator.userAgent.indexOf("Android") !== -1){
-        var exeMenuLink2 = localStorage.getItem("baseURL") + "/" + exeMenuPage2;
-	    debugLog("Ustad Mobile Content: ANDROID: You will go into: exeMenuLink " + exeMenuLink2);	
-    }else if(navigator.userAgent.indexOf("Windows Phone OS 8.0") !== -1){	//Currently only Windows Phone checks.
-	    var exeMenuLink2 = "/www/" + exeMenuPage2;
+    
+    var exeMenuLink2 = null;
+    if (navigator.userAgent.indexOf("Android") !== -1) {
+        exeMenuLink2 = localStorage.getItem("baseURL") + "/" + exeMenuPage2;
+        debugLog("Ustad Mobile Content: ANDROID: You will go into: exeMenuLink " + exeMenuLink2);
+    } else if(UstadMobile.getInstance().isNodeWebkit()){
+        exeMenuLink2 = localStorage.getItem("baseURL") + "/" + exeMenuPage2;
+        debugLog("Ustad Mobile Content: NodeWebKit: You will go into: exeMenuLink " + exeMenuLink2);
+    }else if (navigator.userAgent.indexOf("Windows Phone OS 8.0") !== -1) {	//Currently only Windows Phone checks.
+        exeMenuLink2 = "/www/" + exeMenuPage2;
         debugLog("Ustad Mobile Content: WINDOWS PHONE 8: You will go into: exeMenuLink " + exeMenuLink2);
-    }else if(navigator.userAgent.indexOf("BB10") !== -1){
+    } else if (navigator.userAgent.indexOf("BB10") !== -1) {
         //Do nothing
         console.log("Detected your device platform as: Blackberry 10!");
-        var exeMenuLink2 = localStorage.getItem("baseURL") + "/" + exeMenuPage2;
-	    debugLog("Ustad Mobile Content: Blackberry 10: You will go into: exeMenuLink " + exeMenuLink2);
+        exeMenuLink2 = localStorage.getItem("baseURL") + "/" + exeMenuPage2;
+        debugLog("Ustad Mobile Content: Blackberry 10: You will go into: exeMenuLink " + exeMenuLink2);
         //alert("BB10TEST: Ustad Mobile Content: Blackberry 10: You will go into: exeMenuLink " + exeMenuLink2);
-    }else if(navigator.userAgent.indexOf("iPhone OS") !== -1 ){
+    } else if (navigator.userAgent.indexOf("iPhone OS") !== -1) {
         //Do nothing
         console.log("Detected your device platform as: iOS!");
-	//alert("Detected iOS.");
-        var exeMenuLink2 = localStorage.getItem("baseURL") + "/" + exeMenuPage2;
-	    debugLog("Ustad Mobile Content: iOS: You will go into: exeMenuLink " + exeMenuLink2);
-	//alert("exeMenuLink: " + exeMenuLink2);
-    }else if(navigator.userAgent.indexOf("TideSDK") !== -1){
-	    console.log("Detected Desktop - TideSDK. Continuing in [CONTENT]");
-	    if (window.navigator.userAgent.indexOf("Windows") != -1) {
+        //alert("Detected iOS.");
+        exeMenuLink2 = localStorage.getItem("baseURL") + "/" + exeMenuPage2;
+        debugLog("Ustad Mobile Content: iOS: You will go into: exeMenuLink " + exeMenuLink2);
+        //alert("exeMenuLink: " + exeMenuLink2);
+    } else if (navigator.userAgent.indexOf("TideSDK") !== -1) {
+        console.log("Detected Desktop - TideSDK. Continuing in [CONTENT]");
+        if (window.navigator.userAgent.indexOf("Windows") != -1) {
             console.log("TideSDK: You are using WINDOWS.");
-            var exeMenuLink2 =  "app://" + exeMenuPage2;
-	        debugLog("Ustad Mobile Content: Deskop-Tide-SDK-NonWindows: You will go into: exeMenuLink " + exeMenuLink2);
-        }else{
+            exeMenuLink2 = "app://" + exeMenuPage2;
+            debugLog("Ustad Mobile Content: Deskop-Tide-SDK-NonWindows: You will go into: exeMenuLink " + exeMenuLink2);
+        } else {
             console.log("TideSDK: You are NOT using WINDOWS.");
             //var exeMenuLink2 = localStorage.getItem("baseURL") + "/" + exeMenuPage2;
             //var baseURL = Ti.API.Application.getResourcesPath();
             //var exeMenuLink2 = baseURL + "/" + exeMenuPage2;
-            var exeMenuLink2 =  "app://" + exeMenuPage2;
-	        debugLog("Ustad Mobile Content: Deskop-Tide-SDK-NonWindows: You will go into: exeMenuLink " + exeMenuLink2);
-        }    
-	}else{
-        console.log("Unable to detect your device platform. Error.");	
-	//alert("Unable to get platform..");
+            exeMenuLink2 = "app://" + exeMenuPage2;
+            debugLog("Ustad Mobile Content: Deskop-Tide-SDK-NonWindows: You will go into: exeMenuLink " + exeMenuLink2);
+        }
+    } else {
+        console.log("Unable to detect your device platform. Error.");
+        //alert("Unable to get platform..");
     }
-    $.mobile.changePage( exeMenuLink2, { transition: "slideup" } );
+    $.mobile.changePage(exeMenuLink2, {transition: "slideup"});
+    
 }
 
 //Function to handle Menu Page within Book List's footer.
@@ -879,7 +874,12 @@ function openBookListPage(){
         theme: 'b',
         html: ""}
     );
-	openPage2("ustadmobile_booklist.html");
+    
+    if(UstadMobile.getInstance().isNodeWebkit()) {
+        window.open("ustadmobile_booklist.html", "_self");
+    }else {
+        openPage2("ustadmobile_booklist.html");
+    }
 }
 
 //duplicated function for testing purposes..

@@ -70,7 +70,9 @@ If you need a commercial license to remove these restrictions please contact us 
             <script type="text/javascript">
                 $(".ustadbooklistpage").on("pageshow", function(event, ui) {
                     console.log("BOOKLIST: In pageshow");
-                    UstadMobileBookList.getInstance().onBookListLoad();
+                    UstadMobileBookList.getInstance().queueScan(function() {
+                        alert("Scan Complete");
+                    });
                 });
             </script>
             
