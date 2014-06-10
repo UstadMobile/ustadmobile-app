@@ -79,10 +79,55 @@ UstadMobile.prototype = {
         }else {
             return false;
         }
+    },
+    
+    /**
+     * 
+     * @param {type} scriptURL
+     * @param {type} callback
+     * @returns {undefined}
+     */
+    loadUMScript: function(scriptURL, callback) {
+        var loadURL = scriptURL;
+        var fileref=document.createElement('script');
+        fileref.setAttribute("type","text/javascript");
+        fileref.setAttribute("src", loadURL);
+        fileref.onload = callback;
+        document.getElementsByTagName("head")[0].appendChild(fileref);
+    },
+    
+    /**
+     * Load scripts needed for UstadMobile to function
+     * 
+     * @method loadScripts
+     */
+    loadScripts: function() {
+        this.loadUMScript("js/ustadmobile-getpackages.js");
+    },
+    
+    /**
+     * Get the current default server to use
+     * 
+     * @method getDefaultServer
+     * @returns {UstadMobileServerSettings}
+     */
+    getDefaultServer: function() {
+        var umServer = new UstadMobileServerSettings("UstadMobile",
+            "http://svr2.ustadmobile.com:8001/xAPI/statements",
+            "http://svr2.ustadmobile.com:8010/getcourse/?id=");
+        return umServer;
     }
 };
 
+var UstadMobileServerSettings;
 
+UstadMobileServerSettings = function(serverName, xapiBaseURL, getCourseIDURL) {
+    this.serverName = serverName;
+    this.xapiBaseURL = xapiBaseURL;
+    this.getCourseIDURL = getCourseIDURL;
+}
+
+UstadMobile.getInstance().loadScripts();
 
 //Flag for unit testing
 var unitTestFlag = false;

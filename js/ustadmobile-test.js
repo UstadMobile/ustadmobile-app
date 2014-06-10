@@ -69,6 +69,7 @@ console.log ("With Qunit logs in 01");
     QUnit.module("UstadMobile");
     
     testUstadMobileCourseLoad();
+    testLoadScript();
     
     
 }());
@@ -89,33 +90,42 @@ function testUstadMobileCourseLoad() {
     });
 }
 
+function testLoadScript() {
+    asyncTest("Can dynamically load script", 1, function() {
+        UstadMobile.getInstance().loadUMScript("js/ustadmobile-test-loadme.js", function() {
+            ok(typeof umLoadedFlag !== "undefined" && umLoadedFlag == "loaded",
+                "Loaded script dynamically");
+            start();
+        });
+    });
+}
+
 function sendTestOutputSimple(params) {
-    var url = "http://192.168.43.77:8009/";
+    
     $.ajax({
-            url: url,  
-            type: 'POST',        
-            data: params,
-            datatype: 'text',
-            success: function(data, textStatus, jqxhr){
-                    debugLog("Logging to server: " + url + " a success with code:" + jqxhr.status);
-                    //runcallback(callback, jqxhr.status);
-                    },
-            complete: function (jqxhr, txt_status) {
+        url: testResultServer,  
+        type: 'POST',        
+        data: params,
+        datatype: 'text',
+        success: function(data, textStatus, jqxhr){
+                    debugLog("Logging to server: " + testResultServer + " a success with code:" + jqxhr.status);
+                },
+        complete: function (jqxhr, txt_status) {
                     debugLog("Ajax call completed to server. Status: " + jqxhr.status);
-                    },
-            error: function (jqxhr,b,c){
+                },
+        error: function (jqxhr,b,c){
                     alert("Couldn't connect to server. Status Code:" + jqxhr.status);
                     debugLog("Couldn't connect to server. Status Code:" + jqxhr.status);
+                },
+        statusCode: {
+            200: function(){
+                    //alert("Login success on the server!");
+                    debugLog("Connection to server a success with statusCode 200.");
                     },
-            statusCode: {
-                    200: function(){
-                            //alert("Login success on the server!");
-                            debugLog("Connection to server a success with statusCode 200.");
-                            },
-                    0: function(){
-                            debugLog("Status code 0, unable to connect to server or no internet/intranet access");
-                                    }
-                                    }
+            0: function(){
+                    debugLog("Status code 0, unable to connect to server or no internet/intranet access");
+                }
+        }
 
     });
 }

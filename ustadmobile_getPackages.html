@@ -43,7 +43,14 @@
             <i><p>Get course by ID<p></i>
             <label for="basic"><span id="courseidinputtext" class="exeTranslated" data-exe-translation="Course ID:">Course ID:</span></label>
             <input type="text" name="courseid" id="courseid" value="" />
-            <input onclick='checkCourseID()' type="button" id="courseiddownload"  name="courseiddownload" class="exeTranslated2" data-exe-translation-attr = "value" value="Get course!"/>
+            <input onclick="UstadMobileDownloader.getInstance().detectDownloadDestURI()"
+                   type="button" value="detect dest"/>
+            <input 
+                onclick='UstadMobileDownloader.getInstance().startCourseDownloadById()' 
+                type="button" id="courseiddownload"  name="courseiddownload" 
+                class="exeTranslated2" data-exe-translation-attr = "value" 
+                value="Get course!"/>
+            
             <p></p>
             <p>Download public Ustad Mobile courses</p>
             <div data-role="listview" id="packageList2">
