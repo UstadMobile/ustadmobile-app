@@ -153,8 +153,9 @@ UstadMobileDownloader.prototype = {
                 var downloadJob = new UstadMobileDownloadJob();
                 var umDownloader = UstadMobileDownloader.getInstance()
                 umDownloader.downloadTransferJobs.push(downloadJob);
+                var serverExportBaseURL = serverEXeExport;
                 downloadJob.downloadFromXMLURL(courseURL, 
-                    umDownloader.downloadDestDirURI);
+                    umDownloader.downloadDestDirURI, serverExportBaseURL);
             },
             complete: function(jqxhr, txt_status) {
                 console.log("Ajax call completed to server. Status: " + jqxhr.status);
@@ -242,6 +243,13 @@ UstadMobileDownloadJob.prototype = {
      * @type function 
      */
     failureCallback: null,
+    
+    /**
+     * filetransfer currently ongoing
+     * 
+     * @type {FileTransfer}
+     */
+    currentFileTransfer: null,
     
     /**
      * Downloads a content package specified by the package file at the given URL
@@ -333,11 +341,54 @@ UstadMobileDownloadJob.prototype = {
             this.fileDownloadList.push(thisFileName);
         }
         
-        this.downloadNextFile(this);
+        this.downloadNextFile();
     },
     
-    downloadNextFile: function(dlJobObj) {
+    /**
+     * Return the next filename for download, null if there is no file left
+     * to download
+     * 
+     * @returns {String}
+     */
+    getNextFileToDownload: function() {
+        if(this.fileDownloadListIndex < this.fileDownloadList.length) {
+            return this.fileDownloadList[this.fileDownloadListIndex];
+        }else {
+            return null;
+        }
+    },
+    
+    /**
+     * Download the next file in this job
+     * 
+     * @method downloadNextFile
+     * 
+     * @returns {undefined}
+     */
+    downloadNextFile: function() {
+        var nextFileName = this.getNextFileToDownload();
+        if(nextFileName === null) {
+            //all done - could run the success callback
+            console.log("DownloadJob: COMPLETE");
+            return;
+        }
+        var currentURL = this.downloadBaseURL + "/" 
+                + nextFileName;
+        var destFilePath = this.downloadDestDir + "/" 
+                + nextFileName;
+        var ft = new FileTransfer();
         
+        var dlJobObjRef = this;//to use with internal functions
+        ft.download(encodeURI(currentURL),
+            destFilePath,
+            function(entry) {
+                console.log("Downloaded: " + entry.toURL());
+                dlJobObjRef.fileDownloadListIndex++;
+                dlJobObjRef.downloadNextFile();
+            },
+            function(err) {
+                console.log("Error downloading " + currentURL);
+            }); 
     }
     
 };
