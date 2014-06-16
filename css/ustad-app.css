@@ -25,3 +25,12 @@
     text-align: center;
 }
 
+/* Title shown above download progress bar */
+.ustad_download_title {
+    font-weight: bold;
+}
+
+.ustad_progress_outline {
+    width: 100%;
+    border: 1px solid black;
+}

@@ -13,8 +13,7 @@
 var http = require("http");
 var args = process.argv;
 
-var serverAddr = args[2];
-var serverPort = args[3];
+var serverPort = args[2];
 
 var qs = require('querystring');
 
@@ -49,7 +48,7 @@ http.createServer(function (req, res) {
             var textToSave = "Passed: " + numPass + "\n Failed " + numFail + "\n"
                 + logtext;
             
-            fs.writeFile("testresults.txt", textToSave, onFileWritten);
+            fs.writeFile("node-qunit-testresults.txt", textToSave, onFileWritten);
             
             var result = "";
             if(parseInt(numFail) === 0) {
@@ -63,7 +62,6 @@ http.createServer(function (req, res) {
     }
   
   res.end('Hello World\n');
-}).listen(serverPort, serverAddr);
+}).listen(serverPort);
 
-console.log('Server running at http://' + serverAddr + ":"
-    + serverPort);
+console.log('Server running at http://*:' + serverPort);

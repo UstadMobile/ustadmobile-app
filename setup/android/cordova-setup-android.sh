@@ -53,7 +53,7 @@ echo "copying assets";
 cp -r *.html img js jqm res locale ustad_version $FILEDEST
 
 #TODO: check this with naming convention
-cp css/index.css css/jquery.mobile-1.3.2.min.css css/qunit-1.12.0.css $FILEDEST/css
+cp css/*.css $FILEDEST/css
 
 if [ "$THEMEFILE" != "" ]; then
     $WORKINGDIR/../apply-theme.sh $THEMEFILE $FILEDEST

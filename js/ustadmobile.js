@@ -59,12 +59,43 @@ UstadMobile = function() {
 UstadMobile.getInstance = function() {
     if(ustadMobileInstance == null) {
         ustadMobileInstance = new UstadMobile();
+        ustadMobileInstance.checkPaths();
     }
     
     return ustadMobileInstance;
 }
 
+/**
+ * Constant: the base directory name where content is put - in the global or
+ * app specific persistent storage area
+ * 
+ * @type String
+ */
+UstadMobile.CONTENT_DIRECTORY = "ustadmobileContent";
+
+/**
+ * Constant: The subdirectory, under CONTENT_DIRECTORY where in progress
+ * downloads are carried out until complete
+ * 
+ * @type String
+ */
+UstadMobile.DOWNLOAD_SUBDIR = "inprogress";
+
 UstadMobile.prototype = {
+    
+    /**
+     * If base paths (content directory etc) are ready
+     * 
+     * @type Boolean
+     */
+    pathsReady: false,
+    
+    /**
+     * Array of functions to run once paths are created
+     * @type {Array}
+     */
+    pendingPathEventListeners: [],
+    
     showAppMenu: function() {
         $.mobile.changePage("ustadmobile_menupage_app.html");
     },
@@ -116,7 +147,90 @@ UstadMobile.prototype = {
             "http://svr2.ustadmobile.com:8001/xAPI/statements",
             "http://svr2.ustadmobile.com:8010/getcourse/?id=");
         return umServer;
+    },
+    
+    /**
+     * Checks to make sure that the required directories are made....
+     * 
+     * @returns {undefined}
+     */
+    checkPaths: function() {
+        if(window.cordova) {
+            debugger;
+            document.addEventListener("deviceready",function() {
+                window.resolveLocalFileSystemURL("cdvfile://localhost/sdcard/",
+                    function(baseDirEntry) {                        
+                        UstadMobile.getInstance().checkAndMakeUstadSubDir(
+                            UstadMobile.CONTENT_DIRECTORY,
+                            baseDirEntry, function(contentDirEntry) {
+                                var contentDirBase = contentDirEntry;
+                                UstadMobile.getInstance().checkAndMakeUstadSubDir(
+                                    UstadMobile.DOWNLOAD_SUBDIR, contentDirBase,
+                                    function(downloadDirEntry) {
+                                        UstadMobile.getInstance().
+                                                firePathCreationEvent(true);
+                                    },function(err) {
+                                        UstadMobile.getInstance().
+                                                firePathCreationEvent(false, err);
+                                    })
+                            },
+                            function(err) {
+                                UstadMobile.getInstance().
+                                        firePathCreationEvent(false, err);
+                            });
+                    },function(err) {
+                        UstadMobile.getInstance().firePathCreationEvent(false,
+                            err);
+                });
+            });
+        }
+    },
+    
+    /**
+     * Make sure a subdirectory exists
+     * 
+     * @param {String} subdirName subdirectory name to be created
+     * @param {DirectoryEntry} parentDirEntry Parent persistent storage dir to create under
+     * @param {function} successCallback called when successfully done
+     * @param {function} called when directory creation fails
+     */
+    checkAndMakeUstadSubDir: function(subdirName, parentDirEntry, successCallback, failCallback) {
+        parentDirEntry.getDirectory(subdirName, 
+            {create: true, exclusive: false},
+            function(subDirEntry) {
+                successCallback(subDirEntry);
+            }, function(err){
+                failCallback(err);
+            });
+    },
+    
+    firePathCreationEvent: function(isSuccessful, errInfo) {
+        if(isSuccessful) {
+            this.pathsReady = true;
+        
+            while(this.pendingPathEventListeners.length > 0) {
+                var fn = this.pendingPathEventListeners.pop();
+                fn();
+            }
+        }else {
+            console.log("MAJOR ERROR CREATING PATHS:");
+            console.log(errInfo);
+        }
+    },
+    
+    /**
+     * 
+     */
+    runAfterPathsCreated: function(callback) {
+        if(this.pathsReady) {
+            callback();
+        }else {
+            this.pendingPathEventListeners.push(callback);
+        }
     }
+    
+    
+    
 };
 
 var UstadMobileServerSettings;

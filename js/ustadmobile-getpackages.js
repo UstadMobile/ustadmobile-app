@@ -44,14 +44,16 @@
  -->
  */
 
-/*
- * Download by ID: Callback Hell Scheme:
- */
-
 var UstadMobileDownloader;
 
 var ustadMobileDownloadInstance = null;
 
+/**
+ * UstadMobileDownloader takes care of downloading courses to the device
+ * 
+ * @class UstadMobileDownloader
+ * @constructor
+ */
 UstadMobileDownloader = function() {
     
 };
@@ -68,33 +70,32 @@ UstadMobileDownloader.prototype = {
     
     //eg: http://www.ustadmobile/books/TestPackage3_ustadpkg_html5.xml
     packageXMLURL: "",
-    
-    //File index as we go through the downloads.
-    currentFileDownloadIndex : 0,
-    
-    // eg: TestPackage3
-    packageFolderName: "",
-    
+        
     /**
-     * The base directory that is going to be used for downloads to be done
+     * The base directory that is going to be used for downloads to be saved to
+     * 
+     * @property downloadDestDirURI
      * @type String
      */
     downloadDestDirURI : null,
     
     /**
      * Currently in progress transfer jobs
+     * @property downloadTransferJobs
      * @type Array
      */
     downloadTransferJobs: [],
     
     /**
+     * Figure out for this device where downloads should be saved to
      * 
+     * @method detectDownloadDestURI
      * @returns {undefined}
      */
     detectDownloadDestURI: function() {
         if(window.cordova) {
             document.addEventListener("deviceready",function() {
-                window.resolveLocalFileSystemURL("cdvfile://localhost/sdcard/ustadmobileContent",
+                window.resolveLocalFileSystemURL("cdvfile://localhost/sdcard/ustadmobileContent/inprogress",
                 function(entry) {
                     console.log("Found dest uri " +entry);
                     //to download: use entry.toURL()/filename
@@ -108,24 +109,12 @@ UstadMobileDownloader.prototype = {
             });
         }
     },
-    
-    xferDestTest: function(fileDest) {
-        var ft = new FileTransfer();
-        ft.download(
-            encodeURI("http://www.ustadmobile.com/hello.txt"),
-            fileDest,
-            function(entry) {
-                console.log("xferDestTest download OK");
-            },
-            function(err) {
-                console.log("bugger:" + err);
-            }
-        );
-    },
         
     /**
-     * function called by the UI to start a download by ID
-     * @returns 
+     * function called by the UI to start a download by ID - will 
+     * lookup #courseid textfield value
+     * 
+     * @method startCourseDownloadById
      */
     startCourseDownloadById: function() {
         var courseId = $("#courseid").val();
@@ -133,10 +122,11 @@ UstadMobileDownloader.prototype = {
     },
     
     /**
-     *  Start a download by courseId
-     * @param {type} courseId
-     * @param {type} callback
-     * @returns {undefined}
+     * Start a download by courseId  - will run an ajax call to server, get the 
+     * XML filelist and then create an UstadMobileDownloadJob to download it
+     * 
+     * @param {String} courseId courseid to download
+     * @param {type} callback callback to run when done (unused)
      */
     downloadByID: function(courseId, callback) {
         var requestURL = UstadMobile.getInstance().getDefaultServer().getCourseIDURL
@@ -171,18 +161,6 @@ UstadMobileDownloader.prototype = {
         
     },
     
-    downloadCourseFromXMLPath: function(xmlPath, callback) {
-        this.packageXMLURL = xmlPath;
-        debugLog("The Package xml is: " + this.packageXMLURL);
-        this.currentFileDownloadIndex = 0;
-        this.packageFolderName = "";
-        //allFileDownloadCallback = null;
-        
-        
-        
-        onPackageTransfer(); // This function, as above will download the package xml where all the file to be downloaded list reside.
-
-    }
 };
 
 var UstadMobileDownloadJob;
@@ -194,8 +172,14 @@ UstadMobileDownloadJob = function() {
 UstadMobileDownloadJob.prototype = {
     
     /**
+     * The id of this download job - used for referring to elements etc.
+     * @property
+     * @type String
+     */
+    downloadJobId: "",
+    
+    /**
      * Parent directory where the new download will be saved 
-     * 
      * @type String
      */
     downloadDestParentDir : "",
@@ -210,6 +194,18 @@ UstadMobileDownloadJob.prototype = {
      * @type String
      */
     downloadBaseURL : "",
+    
+    /**
+     * The title of the course being downloaded
+     * @type String
+     */
+    jobTitle: "",
+    
+    /**
+     * Description of the course being downloaded
+     * @type String
+     */
+    jobDesc: "",
     
     /**
      * XMLDocument representing the XML file
@@ -262,7 +258,6 @@ UstadMobileDownloadJob.prototype = {
      * @param {String} serverExportedDir URL on the server where exported courses live
      * e.g. http://SERVERNAME:PORT/media/eXeExport/
      * 
-     * @returns {undefined}
      * @method downloadFromXMLURL
      */
     downloadFromXMLURL: function(xmlContentsURL, destParentDir, serverExportedDir) {
@@ -273,22 +268,33 @@ UstadMobileDownloadJob.prototype = {
         var thisDlJob = this;
         var serverExportBaseURL = serverExportedDir;
         
+        
+        
         $.ajax({
             type: "GET",
             url: xmlContentsURL,
+            cache: false,
             dataType: "xml",
             success: function(data, textStatus, jqxhr) {
                 thisDlJob.xmlFileListDoc = data.documentElement;
                 var xmlString = new XMLSerializer().serializeToString(data);
                 var lastSlashPos = contentURL.lastIndexOf('/');
                 var dirSlashPos = contentURL.lastIndexOf('/', lastSlashPos-1);
-                /*
-                 * old way to do things based on subdir name
-                 var subDirName = contentURL.substring(dirSlashPos+1, 
-                    lastSlashPos);*/
+                
                 var xmlFileName = contentURL.substring(lastSlashPos+1);
                 var subDirName = xmlFileName.substring(0,xmlFileName.indexOf(
                         "_ustadpkg_html5.xml"));
+                
+                var titleNodeList = thisDlJob.xmlFileListDoc.getElementsByTagName(
+                        "title");
+                if(titleNodeList.length >= 1) {
+                    thisDlJob.jobTitle = $(titleNodeList[0]).text();
+                }else {
+                    thisDlJob.jobTitle = subDirName;
+                }
+                
+                thisDlJob.updateProgressBar();
+                
                 var contentUUID = contentURL.substring(dirSlashPos+1, 
                     lastSlashPos);
                 thisDlJob.downloadBaseURL = serverExportBaseURL + "/" 
@@ -348,7 +354,7 @@ UstadMobileDownloadJob.prototype = {
      * Return the next filename for download, null if there is no file left
      * to download
      * 
-     * @returns {String}
+     * @returns {String} next file to be downloaded, or null if no files remaining
      */
     getNextFileToDownload: function() {
         if(this.fileDownloadListIndex < this.fileDownloadList.length) {
@@ -384,11 +390,66 @@ UstadMobileDownloadJob.prototype = {
             function(entry) {
                 console.log("Downloaded: " + entry.toURL());
                 dlJobObjRef.fileDownloadListIndex++;
+                dlJobObjRef.updateProgressBar();
                 dlJobObjRef.downloadNextFile();
             },
             function(err) {
                 console.log("Error downloading " + currentURL);
             }); 
+    },
+    
+    /**
+     * 
+     * @method makeProgressBarHTML
+     * @return {String} HTML needed to show a progress bar
+     */
+    makeProgressBarHTML: function() {
+        var barHeight = 30;
+        
+        var progressBarHTML = "";
+        
+        progressBarHTML += "<div class='ustad_download_container' "
+            + " id='ustad_download_container_'" + this.downloadJobId + "'>";
+    
+        progressBarHTML += "<div class='ustad_download_title'>";
+        progressBarHTML += this.jobTitle;
+        progressBarHTML += "</div>";
+        
+        progressBarHTML += "<div class='ustad_progress_outline'>"
+        progressBarHTML += "<div id=\"ustad_pkg_progressbar_" 
+                + this.downloadJobId + "\" "
+                + "style=\"background-color: blue; width: 10px; "
+                + " height: " + barHeight + "px \">"
+        progressBarHTML += "&nbsp;";
+        progressBarHTML += "</div>";//end of progress bar itself
+        progressBarHTML += "</div>";//end of progress bar outline
+        progressBarHTML += "</div>";//end of the download container itself
+        
+        return progressBarHTML;
+    },
+    
+    /**
+     * Update the progress bar if there is such a thing on the page...
+     * 
+     * @method updateProgressBar
+     */
+    updateProgressBar: function() {
+        if($("#ustad_getpackage_progress_container").length > 0){
+            var progressBarIn = $("#ustad_pkg_progressbar_" 
+                    + this.downloadJobId).length;
+            if(progressBarIn === 0) {
+                //needs created
+                var progressBarHTML = this.makeProgressBarHTML();
+                $("#ustad_getpackage_progress_container").append(progressBarHTML);
+            }
+            
+            if(this.fileDownloadList.length > 0) {
+                var widthPercent = Math.round((this.fileDownloadListIndex / 
+                        this.fileDownloadList.length) * 100);
+                $("#ustad_pkg_progressbar_" + this.downloadJobId).css("width",
+                    "" + widthPercent +"%");
+            }
+        };
     }
     
 };

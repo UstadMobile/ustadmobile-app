@@ -16,6 +16,22 @@ To run emulator:
 
 ./setup-android.sh emulate
 
+
+To run unit tests:
+
+1. For fully automated testing an emulator must be installed.  For performance
+ it is recommended to follow steps below: 
+
+https://software.intel.com/en-us/blogs/2012/03/12/how-to-start-intel-hardware-assisted-virtualization-hypervisor-on-linux-to-speed-up-intel-android-x86-gingerbread-emulator
+
+2. Set the AVDNAME variable in unit-test-setup-android.sh
+
+3. run ./unit-test-setup-android.sh emulate to run in emulator or 
+ ./unit-test-setup-android.sh run to run on device connected in debug mode
+
+
+
+
 To release (sign and zipalign):
 
 Copy release-settings-android.sh.example to release-settings-android.sh
@@ -25,10 +41,3 @@ Then run ./release-android.sh
 Notes:
 
 Icons come from res/icons/android
-
-To test app (unit tests automatically in emulator)
-
-Then run: ./unit-test-setup-android.sh emulate
-You could run the tests on device directly: ./unit-test-setup-android.sh run
-
-The test results will be sent to UstadMobile Cloud (umclouddj)
