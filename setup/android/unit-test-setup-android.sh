@@ -66,18 +66,20 @@ if [ "$1" == "run" ]; then
 fi
 
 if [ "$1" == "emulate" ]; then
-    KVMRESULT=$(kvm-ok | tail -n 1 | grep "can be used")
+    KVMRESULT=$(/usr/sbin/kvm-ok | tail -n 1 | grep "can be used")
     ENABLEKVMARG=""
     if [ "$KVMRESULT" != "" ]; then
         echo "KVM Support enabled"
         ENABLEKVMARG=" -enable-kvm "
     fi
     
-    /opt/adt/sdk/tools/emulator-x86 -avd $AVDNAME -qemu -m 2047 $ENABLEKVMARG &
+    /opt/adt/sdk/tools/emulator-x86 -avd $AVDNAME -qemu -m 2047 $ENABLEKVMARG & 
     EMULATEPID=$!
     echo "Waiting $EMULATEBOOTWAIT seconds for emulator to bootup"
+    sleep 2
     adb wait-for-device
     echo "Unlock screen"
+    sleep 2
     adb shell input keyevent 82
     echo "continue ... now ask cordova to get going"
     cordova emulate
