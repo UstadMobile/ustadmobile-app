@@ -19,7 +19,7 @@ TARGETDIR="./build"
 NODEPORT=8620
 
 #one liner to find ip address
-IPADDR=$(ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1' | head -n 1)
+IPADDR=$(/sbin/ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1' | head -n 1)
 
 #The timeout to wait for the unit test result to appear before assuming failure
 TESTTIMEOUT=60
@@ -69,7 +69,7 @@ if [ "$1" == "emulate" ]; then
     KVMRESULT=$(kvm-ok | tail -n 1 | grep "can be used")
     ENABLEKVMARG=""
     if [ "$KVMRESULT" != "" ]; then
-        echo "KVM Support detected"
+        echo "KVM Support enabled"
         ENABLEKVMARG=" -enable-kvm "
     fi
     
