@@ -66,7 +66,14 @@ if [ "$1" == "run" ]; then
 fi
 
 if [ "$1" == "emulate" ]; then
-    /opt/adt/sdk/tools/emulator-x86 -avd $AVDNAME -qemu -m 2047 -enable-kvm &
+    KVMRESULT=$(kvm-ok | tail -n 1 | grep "can be used")
+    ENABLEKVMARG=""
+    if [ "$KVMRESULT" != "" ]; then
+        echo "KVM Support detected"
+        ENABLEKVMARG=" -enable-kvm "
+    fi
+    
+    /opt/adt/sdk/tools/emulator-x86 -avd $AVDNAME -qemu -m 2047 $ENABLEKVMARG &
     EMULATEPID=$!
     echo "Waiting $EMULATEBOOTWAIT seconds for emulator to bootup"
     adb wait-for-device
