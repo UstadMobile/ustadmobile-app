@@ -66,39 +66,43 @@ If you need a commercial license to remove these restrictions please contact us 
 
     </head>
   <body>
-    <div data-role="page" data-theme="b">
-	    <br></br>
+    <div data-role="page" data-theme="b" id="ustadsettingspage">
         <div data-role="header" data-position="fixed" data-theme="b">
+            <a href="#mypanel" data-role='button' data-inline='true' class="ustad_panel_href"><i class='lIcon fa fa-bars'></i></a>
             <h3><span id="setlanguagetitletext" class="exeTranslated" data-exe-translation="Set Language">Set LanguageF</span></h3>
         </div>
         
-        
-            <label for="select-um-language" class="select"><span id="languagetitletext" class="exeTranslated" data-exe-translation="Language:">Language:F</span></label>
-            <select name="select-um-language" id="select-um-language">
-               <option value="en">English</option>
-               <!--<option value="en-gb">English-GB</option>-->
-               <option value="ar">العربية</option>
-               <option value="hi">हिन्दी</option>
-               <!--<option value="fr">Farsi</option>
-                <option value="jp">日本語</option>-->
-                <option value="es">Español</option>
-            </select>
-            <script>
-                $("#select-um-language").change(function(){
-                    selectedlanguage = $(this).val();
-                    console.log("Lang set is: " + selectedlanguage);
-                    }
-                );
-            </script>
-        
+        <div role="content" class="ui-content" data-theme="b">
+            <form>
+                <label for="select-um-language" class="select"><span id="languagetitletext" class="exeTranslated" data-exe-translation="Language:">Language:F</span></label>
+                <select name="select-um-language" id="select-um-language">
+                   <option value="en">English</option>
+                   <!--<option value="en-gb">English-GB</option>-->
+                   <option value="ar">العربية</option>
+                   <option value="hi">हिन्दी</option>
+                   <!--<option value="fr">Farsi</option>
+                    <option value="jp">日本語</option>-->
+                    <option value="es">Español</option>
+                </select>
+                <script>
+                    $("#select-um-language").change(function(){
+                        selectedlanguage = $(this).val();
+                        console.log("Lang set is: " + selectedlanguage);
+                        }
+                    );
+                </script>
 
-        <div style="margin-top:20px;">
-            <input onclick='setlanguage()' type="button" id="setLanguage"  name="setLanguage" class="exeTranslated2" data-exe-translation-attr = "value" value="Set Choosen Language"/>
-            <!--<input onclick='testSetlanguage()' type="button" id="testSetLanguage"  name="testSetLanguage" value="Test Set Language"/>-->
-		    <div data-role="footer" data-position="fixed" style="text-align: center;" data-tap-toggle="false" data-theme="b"> 
-			    <a style="text-align: center;" data-rel="back" data-direction="reverse" data-icon="ui-btn-left"><span id="gobacksnltext" class="exeTranslated" data-exe-translation="Go back">Go backF</span></a>
-	    </div>
+
+                <div style="margin-top:20px;">
+                    <input onclick='setlanguage()' type="button" id="setLanguage"  name="setLanguage" class="exeTranslated2" data-exe-translation-attr = "value" value="Set Choosen Language"/>
+
+                </div>
+            </form>
+        </div>
         
+        <div data-role="footer" data-position="fixed" style="text-align: center;" data-tap-toggle="false" data-theme="b"> 
+        </div>   
+
       </div>
   </body>
 </html>

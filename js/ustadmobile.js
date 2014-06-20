@@ -96,6 +96,12 @@ UstadMobile.prototype = {
      */
     pendingPathEventListeners: [],
     
+    /**
+     * Panel HTML to be used
+     * @type {String}
+     */
+    panelHTML : null,
+    
     showAppMenu: function() {
         $.mobile.changePage("ustadmobile_menupage_app.html");
     },
@@ -227,9 +233,75 @@ UstadMobile.prototype = {
         }else {
             this.pendingPathEventListeners.push(callback);
         }
+    },
+    
+    /**
+     * 
+     * @returns {undefined}
+     */
+    loadPanel: function() {
+        $.ajax({
+            url: "ustadmobile_panel_app.html",
+            dataType: "text"
+        }).done(function(data) {
+            UstadMobile.getInstance().panelHTML = data;
+            $(document).on('pagebeforecreate', 
+                UstadMobile.getInstance().initPanel);
+            UstadMobile.getInstance().initPanel();
+            
+        }).fail(function() {
+            console.log("Panel load failed");
+        });
+    },
+    
+    /**
+     * Setup the menu panel for JQueryMobile - this will use a common innerHTML
+     * element and then set the panel for the page.  It uses the id attribute
+     * of the page to set the link for the menu to make sure we don't create
+     * two elements with the same id.
+     * 
+     * @param evt {Event} event object
+     * @param ui JQueryMobile UI
+     * @method initPanel
+     */
+    initPanel: function (evt, ui) {
+        var pgEl = $(evt.target);
+        if(UstadMobile.getInstance().panelHTML === null) {
+            UstadMobile.getInstance().loadPanel();
+            return;
+        }
+
+        var thisPgId = pgEl.attr("id");
+        var newPanelId = "ustad_panel_" + thisPgId;
+
+        if(pgEl.children(".ustadpaneldiv").length == 0) {
+            var htmlToAdd = "<div id='" + newPanelId + "'>";
+            htmlToAdd += UstadMobile.getInstance().panelHTML;
+            htmlToAdd += "</div>";
+
+            pgEl.prepend(htmlToAdd);
+
+        }
+
+        $("#" + newPanelId).panel({
+            theme: 'b',
+            display: 'push'
+        });
+        $("#" + newPanelId).addClass("ustadpaneldiv");
+
+        pgEl.find(".ustad_panel_href").attr("href", "#" + newPanelId);
+
+    },
+    
+    
+    /**
+     * Close the menu panel
+     * 
+     * @method closePaenl
+     */
+    closePanel: function() {
+        $(".ui-page-active .ustadpaneldiv").panel("close");
     }
-    
-    
     
 };
 
@@ -242,6 +314,8 @@ UstadMobileServerSettings = function(serverName, xapiBaseURL, getCourseIDURL) {
 }
 
 UstadMobile.getInstance().loadScripts();
+UstadMobile.getInstance().loadPanel();
+
 
 //Flag for unit testing
 var unitTestFlag = false;
@@ -563,36 +637,6 @@ function onLanguageContentReady(){
 }
 
 /*
-$(document).on("pageload", function(event, ui) { //pageLoad only gets triggered when we do a mobile.changePage() from within the code. Not when the app starts.
-    console.log("In pageload");
-});
-*/
-
-$(document).on("pageinit", function(event, ui) { //pageinit gets triggered when app start.
-    console.log("In pageinit");
-    //onLanguageDeviceReady(); //Set / Check the language first. //Commented out because it works in pagebeforecreate instead and hence works with all html strings.
-    //localizePage();
-
-	/*
-	if(typeof CONTENT_MODELS !== 'undefined' && CONTENT_MODELS == "test"){
-        console.log("Test mode and current page done.");
-        //exeNextPageOpen();
-        var nextPageHREF = $(".ui-page-active #exeNextPage").attr("href");
-        nextPageHREF = $.trim(nextPageHREF);
-        if (nextPageHREF != null){
-                console.log("Next Page exists..");
-                exeNextPageOpen();
-        }
-
-    }
-	*/
-
-
-});
-
-
-
-/*
 Even though the documentation says that this should
 happen apparently it does not
 */
@@ -621,6 +665,8 @@ $(document).on("pageshow", function(event, ui) {
 /*
     On Pagechange, the logic for touch, swipe and scroll events are executed.
 */
+
+
 $(document).on("pagechange", function(event){
     setupClozeWidth();
     $('.ui-page-active').swipe( {   //On the active page..
@@ -674,6 +720,7 @@ $(document).on("pagechange", function(event){
     	}
 
 });
+
 
 
 
@@ -951,6 +998,13 @@ function booklistMenuPageOpen(){
 
 //Function to open various links in the Menu.
 function openMenuLink(linkToOpen, transitionMode){
+    
+    //check and see if this page is already open
+    if(isPageOpen(linkToOpen) == true) {
+        UstadMobile.getInstance().closePanel();
+        return;
+    }
+    
 	debugLog("Ustad Mobile: In openMenuLink(linkToOpen), About to open: " + linkToOpen);
     //if(platform == "android"){
     if(navigator.userAgent.indexOf("Android") !== -1){
@@ -969,8 +1023,10 @@ function openMenuLink(linkToOpen, transitionMode){
     }else{
         console.log("Your platform cannot be detected. Error.");
     }
-	debugLog("Ustad Mobile: In openMenuLink(linkToOpen), About to open (post wp check): " + linkToOpen);
-	$.mobile.changePage(linkToOpen, { changeHash: false, transition: transitionMode});
+    debugLog("Ustad Mobile: In openMenuLink(linkToOpen), About to open (post wp check): " + linkToOpen);
+    
+    $.mobile.changePage(linkToOpen, { changeHash: true, transition: transitionMode});
+    //$.mobile.pageContainer.change(linkToOpen, {changeHash: true, transition: transitionMode});
 }
 
 //Your last page code goes here (or it goes in: resumeLastBookPage() which ever you call it from ustabmobile_booklist.html.
@@ -978,9 +1034,30 @@ function exeLastPageOpen(){
     console.log("Going to the last page as per eXe..");
 }
 
+/**
+ * Check and see if the page given is actually already open.
+ * 
+ * @returns {boolean} true if page already open, false otherwise.
+ */
+function isPageOpen(fileName) {
+    var currentPage = new String(document.location.href);
+    var currentPageFile = currentPage.substr(currentPage.lastIndexOf("/")+1);
+    if(currentPageFile == fileName) {
+        return true;
+    }else {
+        return false;
+    }
+}
+
 //openPage2 named with a 2 so that doesnt' confuse with other page's openPage() functions, if any.
 //openPage2 is the one that calls window.open (not changePage() of jQuery).
 function openPage2(openFile){
+    
+    var currentOpenFile = $.mobile.activePage.data('url');
+    if(currentOpenFile == openFile) {
+        return;//this is already open, stop!
+    }
+    
     console.log("Opening page, platform is: " + platform);
     //if(platform == "android"){
     if(navigator.userAgent.indexOf("Android") !== -1){
@@ -998,15 +1075,15 @@ function openPage2(openFile){
         //Do nothing.
         console.log("Detected your device is Blackberry 10");
     }else if(navigator.userAgent.indexOf("TideSDK") !== -1){
-	    console.log("Detected Desktop - TideSDK. Continuing in [MENU2]");
-	    if (window.navigator.userAgent.indexOf("Windows") != -1) {
+        console.log("Detected Desktop - TideSDK. Continuing in [MENU2]");
+        if (window.navigator.userAgent.indexOf("Windows") != -1) {
             console.log("TideSDK: You are using WINDOWS.");
             openFile="app://" + openFile;
         }else{
             console.log("TideSDK: You are NOT using WINDOWS.");
             openFile="app://" + openFile; //Test this..
         }    
-	}else{
+    }else{
         console.log("Unable to detect your device platform. Error.");
     }
     console.log("Menu Links: Going to page: " + openFile);
@@ -1015,29 +1092,27 @@ function openPage2(openFile){
     //window.open(openFile);
     //window.open(openFile, '_self'); //BB10 specific changes so that it loads in current child webview
 	
-	if(navigator.userAgent.indexOf("TideSDK") !== -1){
-		console.log("Detected Desktop - TideSDK.");
-		$.mobile.changePage(openFile);
-	}else{
-		console.log("You are not using Desktop-TideSDK");
-		$.mobile.changePage(openFile);
-	}
+    if(navigator.userAgent.indexOf("TideSDK") !== -1){
+        console.log("Detected Desktop - TideSDK.");
+        $.mobile.changePage(openFile);
+    }else{
+        
+        $.mobile.changePage(openFile);
+        //$.mobile.pageContainer.change(openFile);
+    }
 }
 
 
 //function that opens Books. this uses openPage2() because it needs to reload the page.
-function openBookListPage(){
-	$.mobile.loading('show', {
-        text: x_('Ustad Mobile: Loading..'),
-        textVisible: true,
-        theme: 'b',
-        html: ""}
-    );
-    
+function openBookListPage(){    
     if(UstadMobile.getInstance().isNodeWebkit()) {
         window.open("ustadmobile_booklist.html", "_self");
     }else {
-        openPage2("ustadmobile_booklist.html");
+        if(!isPageOpen("ustadmobile_booklist.html")) {
+            openPage2("ustadmobile_booklist.html");
+        }else {
+            UstadMobile.getInstance().closePanel();
+        }
     }
 }
 
@@ -1054,12 +1129,6 @@ function openBookListPage2(){
 }
 //Function to log out and get back to the login page.
 function umMenuLogout(){
-    $.mobile.loading('show', {
-        text: x_('Ustad Mobile:Logging Out..'),
-        textVisible: true,
-        theme: 'b',
-        html: ""}
-    );
     localStorage.removeItem('username');
     localStorage.removeItem('password');
     openPage2("index.html");
@@ -1094,24 +1163,12 @@ function openLoginPage(){
 //This function is called from the Book List Meny to go to the download pakcages Page from the Menu.
 //We have decided to not allow user to access the Download Packages page whilist in a book (for reduction in complexity).
 function openGetPackagesPage(){
-	$.mobile.loading('show', {
-        text: x_('Ustad Mobile:Loading..'),
-        textVisible: true,
-        theme: 'b',
-        html: ""}
-    );
-	openMenuLink("ustadmobile_getPackages.html", "slide");
+    openMenuLink("ustadmobile_getPackages.html", "slide");
 }
 
 //Function to open Settings and Languages page (Preferences)
 function openSetLanguagesPage(){
-	$.mobile.loading('show', {
-        text: x_('Ustad Mobile:Loading..'),
-        textVisible: true,
-        theme: 'b',
-        html: ""}
-    );
-	openMenuLink("ustadmobile_setLanguage.html", "slide");
+    openMenuLink("ustadmobile_setLanguage.html", "slide");
 }
 
 //Function available to test refreshing a page. Not tested.
@@ -1127,17 +1184,9 @@ function refreshPage(pageToRefresh)
 
 //Function to open the About Ustad Mobile page from within the Menu (both from Book List and eXe content).
 function openAboutUM(){
-	$.mobile.loading('show', {
-        text: x_('Ustad Mobile..'),
-        textVisible: true,
-        theme: 'b',
-        html: ""}
-    );
     var	aboutLink = "ustadmobile_aboutus.html"; //Maybe make this a global variable ?..
-    
-	//aboutLink = "/" + aboutLink; 
+    //aboutLink = "/" + aboutLink; 
     openMenuLink(aboutLink, "slide");
-	//$.mobile.changePage(aboutLink, { changeHash: false, transition: "slide"});
 }
 
 function openTOCPage(){
