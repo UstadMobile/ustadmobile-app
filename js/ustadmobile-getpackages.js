@@ -85,34 +85,6 @@ UstadMobileDownloader.prototype = {
      * @type Array
      */
     downloadTransferJobs: [],
-    
-    /**
-     * Figure out for this device where downloads should be saved to
-     * 
-     * @method detectDownloadDestURI
-     * @returns {undefined}
-     */
-    detectDownloadDestURI: function() {
-        /*
-        if(window.cordova) {
-            document.addEventListener("deviceready",function() {
-                window.resolveLocalFileSystemURL("cdvfile://localhost/sdcard/ustadmobileContent/inprogress",
-                function(entry) {
-                    console.log("Found dest uri " +entry);
-                    //to download: use entry.toURL()/filename
-                    UstadMobileDownloader.getInstance().downloadDestDirURI = 
-                            entry.toURL();
-                },function(err) {
-                    console.log("bloody error");
-                });
-            }, function(err){
-                console.log("detectDownloadDestURI: error looking for deviceready");
-            });
-        }else if(UstadMobile.getInstance().isNodeWebkit()) {
-            
-        }
-        */
-    },
         
     /**
      * function called by the UI to start a download by ID - will 
@@ -304,21 +276,37 @@ UstadMobileDownloadJob.prototype = {
                 thisDlJob.downloadBaseURL = serverExportBaseURL + "/" 
                         + contentUUID + "/" + subDirName;
                 var dlJobForSubDir = thisDlJob;
-                window.resolveLocalFileSystemURL(thisDlJob.downloadDestParentDir,
-                    function(dirEntry) {
-                        console.log("Got parent dir: "+dirEntry);
-                        dirEntry.getDirectory(subDirName, 
-                            {create: true, exclusive: false},
-                            function(subDirEntry) {
-                                dlJobForSubDir.downloadDestDir = subDirEntry.toURL();
-                                dlJobForSubDir.downloadAllFilesFromXMLDoc(
-                                        successCallback, failCallback);
-                            }, function(err){
-                                console.log("error getting subdir");
-                            });
-                    }, function(err) {
-                        console.log("error getting download parent dir");
-                    });
+                
+                if(window.cordova) {
+                    window.resolveLocalFileSystemURL(thisDlJob.downloadDestParentDir,
+                        function(dirEntry) {
+                            console.log("Got parent dir: "+dirEntry);
+                            dirEntry.getDirectory(subDirName, 
+                                {create: true, exclusive: false},
+                                function(subDirEntry) {
+                                    dlJobForSubDir.downloadDestDir = 
+                                            subDirEntry.toURL();
+                                    dlJobForSubDir.downloadAllFilesFromXMLDoc(
+                                            successCallback, failCallback);
+                                }, function(err){
+                                    console.log("error getting subdir");
+                                });
+                        }, function(err) {
+                            console.log("error getting download parent dir");
+                        });
+                }else if(UstadMobile.getInstance().isNodeWebkit()) {
+                    var fs= require("fs");
+                    var path = require("path");
+                    var downloadDestSubDir = path.join(
+                            thisDlJob.downloadDestParentDir,
+                            subDirName);
+                    if(!fs.existsSync(downloadDestSubDir)) {
+                        fs.mkdirSync(downloadDestSubDir)
+                    }
+                    dlJobForSubDir.downloadDestDir = downloadDestSubDir;
+                    dlJobForSubDir.downloadAllFilesFromXMLDoc(
+                                            successCallback, failCallback);
+                }
             },
             complete: function(jqxhr, txt_status) {
                 console.log("Ajax call completed to server. Status: " + jqxhr.status);
@@ -370,6 +358,18 @@ UstadMobileDownloadJob.prototype = {
     },
     
     /**
+     * Increment the file to download, update the progress bar, and 
+     * start the next download (calls downloadNextFile)
+     * 
+     * @method startNextDownload
+     */
+    startNextDownload: function() {
+        this.fileDownloadListIndex++;
+        this.updateProgressBar();
+        this.downloadNextFile();
+    },
+    
+    /**
      * Download the next file in this job
      * 
      * @method downloadNextFile
@@ -388,20 +388,58 @@ UstadMobileDownloadJob.prototype = {
                 + nextFileName;
         var destFilePath = this.downloadDestDir + "/" 
                 + nextFileName;
-        var ft = new FileTransfer();
-        
         var dlJobObjRef = this;//to use with internal functions
-        ft.download(encodeURI(currentURL),
-            destFilePath,
-            function(entry) {
-                console.log("Downloaded: " + entry.toURL());
-                dlJobObjRef.fileDownloadListIndex++;
-                dlJobObjRef.updateProgressBar();
-                dlJobObjRef.downloadNextFile();
-            },
-            function(err) {
-                console.log("Error downloading " + currentURL);
-            }); 
+        
+        if(window.cordova) {
+            var ft = new FileTransfer();
+            
+            ft.download(encodeURI(currentURL),
+                destFilePath,
+                function(entry) {
+                    console.log("Downloaded: " + entry.toURL());
+                    dlJobObjRef.startNextDownload();
+                },
+                function(err) {
+                    console.log("Error downloading " + currentURL);
+                }); 
+        }else if(UstadMobile.getInstance().isNodeWebkit()) {
+            var fs = require("fs");
+            var http = require("http");
+            var path = require("path");
+            var url = require("url");
+            
+            destFilePath = path.join(this.downloadDestDir,
+                nextFileName);
+            
+            if(nextFileName.indexOf("/") != -1) {
+                //this has a sub directory that needs created
+                var subdirNameToCreate = nextFileName.substring(0, 
+                        nextFileName.indexOf("/"));
+                var subdirPathToCreate = path.join(this.downloadDestDir, 
+                        subdirNameToCreate);
+                if(!fs.existsSync(subdirPathToCreate)) {
+                    fs.mkdirSync(subdirPathToCreate);
+                }
+            }
+            
+            //Download
+            var file = fs.createWriteStream(destFilePath);
+            var httpOptions = {
+                host: url.parse(currentURL).hostname,
+                port: url.parse(currentURL).port,
+                path: url.parse(currentURL).pathname
+            };
+
+            http.get(httpOptions, function(res) {
+                res.on('data', function(data) {
+                    file.write(data);
+                }).on('end', function() {
+                    file.end();
+                    console.log("Downloaded " + destFilePath);
+                    dlJobObjRef.startNextDownload();
+                });
+            });
+        }
     },
     
     /**
@@ -460,8 +498,6 @@ UstadMobileDownloadJob.prototype = {
     
 };
 
-
-UstadMobileDownloader.getInstance().detectDownloadDestURI();
 
 var buttonBOOLEAN = true;   //If true, then ability to click on the button and download / get course by id. If set to false, then something is waiting to get over.
 var server = "svr2.ustadmobile.com:8010";

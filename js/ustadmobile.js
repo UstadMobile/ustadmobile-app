@@ -224,10 +224,10 @@ UstadMobile.prototype = {
             var contentDownloadDir = path.join(contentDirectory, 
                 UstadMobile.DOWNLOAD_SUBDIR);
                 
-            if(!fs.exists(contentDownloadDir)) {
+            if(!fs.existsSync(contentDownloadDir)) {
                 fs.mkdirSync(contentDownloadDir);
             }
-            
+            UstadMobile.getInstance().downloadDestDirURI = contentDownloadDir;
         }
     },
     
