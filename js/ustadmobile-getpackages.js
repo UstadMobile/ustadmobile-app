@@ -93,6 +93,7 @@ UstadMobileDownloader.prototype = {
      * @returns {undefined}
      */
     detectDownloadDestURI: function() {
+        /*
         if(window.cordova) {
             document.addEventListener("deviceready",function() {
                 window.resolveLocalFileSystemURL("cdvfile://localhost/sdcard/ustadmobileContent/inprogress",
@@ -107,7 +108,10 @@ UstadMobileDownloader.prototype = {
             }, function(err){
                 console.log("detectDownloadDestURI: error looking for deviceready");
             });
+        }else if(UstadMobile.getInstance().isNodeWebkit()) {
+            
         }
+        */
     },
         
     /**
@@ -126,9 +130,10 @@ UstadMobileDownloader.prototype = {
      * XML filelist and then create an UstadMobileDownloadJob to download it
      * 
      * @param {String} courseId courseid to download
-     * @param {type} callback callback to run when done (unused)
+     * @param {function} successCallback callback to run when done OK
+     * @param {function} failCallback callback to run when failed
      */
-    downloadByID: function(courseId, callback) {
+    downloadByID: function(courseId, successCallback, failCallback) {
         var requestURL = UstadMobile.getInstance().getDefaultServer().getCourseIDURL
             + courseId;
         
@@ -145,7 +150,8 @@ UstadMobileDownloader.prototype = {
                 umDownloader.downloadTransferJobs.push(downloadJob);
                 var serverExportBaseURL = serverEXeExport;
                 downloadJob.downloadFromXMLURL(courseURL, 
-                    umDownloader.downloadDestDirURI, serverExportBaseURL);
+                    UstadMobile.getInstance().downloadDestDirURI, 
+                    serverExportBaseURL, successCallback, failCallback);
             },
             complete: function(jqxhr, txt_status) {
                 console.log("Ajax call completed to server. Status: " + jqxhr.status);
@@ -260,15 +266,13 @@ UstadMobileDownloadJob.prototype = {
      * 
      * @method downloadFromXMLURL
      */
-    downloadFromXMLURL: function(xmlContentsURL, destParentDir, serverExportedDir) {
+    downloadFromXMLURL: function(xmlContentsURL, destParentDir, serverExportedDir, successCallback, failCallback) {
         this.downloadDestParentDir = destParentDir;
         
         var xmlContents = "";
         var contentURL = xmlContentsURL;
         var thisDlJob = this;
         var serverExportBaseURL = serverExportedDir;
-        
-        
         
         $.ajax({
             type: "GET",
@@ -307,7 +311,8 @@ UstadMobileDownloadJob.prototype = {
                             {create: true, exclusive: false},
                             function(subDirEntry) {
                                 dlJobForSubDir.downloadDestDir = subDirEntry.toURL();
-                                dlJobForSubDir.downloadAllFilesFromXMLDoc();
+                                dlJobForSubDir.downloadAllFilesFromXMLDoc(
+                                        successCallback, failCallback);
                             }, function(err){
                                 console.log("error getting subdir");
                             });
@@ -376,6 +381,7 @@ UstadMobileDownloadJob.prototype = {
         if(nextFileName === null) {
             //all done - could run the success callback
             console.log("DownloadJob: COMPLETE");
+            setTimeout(this.successCallback, 0);
             return;
         }
         var currentURL = this.downloadBaseURL + "/" 

@@ -25,7 +25,7 @@ IPADDR=$(/sbin/ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo
 TESTTIMEOUT=60
 
 #Virtual device to use for testing
-AVDNAME=AVD4
+AVDNAME=AVD44
 
 #Get rid of old results
 if [ -e result ]; then

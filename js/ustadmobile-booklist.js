@@ -251,11 +251,6 @@ UstadMobileBookList.prototype = {
       * @method umLogout    
     */
    umLogout: function() {
-       $.mobile.loading('show', {
-           text: x_('Loading Ustad Mobile'),
-           textVisible: true,
-           theme: 'b',
-           html: ""});
        localStorage.removeItem('username');
        localStorage.removeItem('password');
        $.mobile.changePage("index.html"); //BB10 specific changes.

@@ -102,6 +102,22 @@ UstadMobile.prototype = {
      */
     panelHTML : null,
     
+    
+    /**
+     * The directory that course assets are downloaded to whilst download
+     * is in process.
+     * 
+     * @type {String}
+     */
+    downloadDestDirURI: null,
+    
+    /**
+     * The directory where (complete) courses are saved to
+     * 
+     * @type {String}
+     */
+    contentDirURI: null,
+    
     showAppMenu: function() {
         $.mobile.changePage("ustadmobile_menupage_app.html");
     },
@@ -125,10 +141,9 @@ UstadMobile.prototype = {
      * @returns {undefined}
      */
     loadUMScript: function(scriptURL, callback) {
-        var loadURL = scriptURL;
         var fileref=document.createElement('script');
         fileref.setAttribute("type","text/javascript");
-        fileref.setAttribute("src", loadURL);
+        fileref.setAttribute("src", scriptURL);
         fileref.onload = callback;
         document.getElementsByTagName("head")[0].appendChild(fileref);
     },
@@ -162,7 +177,6 @@ UstadMobile.prototype = {
      */
     checkPaths: function() {
         if(window.cordova) {
-            debugger;
             document.addEventListener("deviceready",function() {
                 window.resolveLocalFileSystemURL("cdvfile://localhost/sdcard/",
                     function(baseDirEntry) {                        
@@ -170,9 +184,13 @@ UstadMobile.prototype = {
                             UstadMobile.CONTENT_DIRECTORY,
                             baseDirEntry, function(contentDirEntry) {
                                 var contentDirBase = contentDirEntry;
+                                UstadMobile.getInstance().contentDirURI = 
+                                        contentDirEntry.toURL();
                                 UstadMobile.getInstance().checkAndMakeUstadSubDir(
                                     UstadMobile.DOWNLOAD_SUBDIR, contentDirBase,
                                     function(downloadDirEntry) {
+                                        UstadMobile.getInstance().downloadDestDirURI
+                                            = downloadDirEntry.toURL();
                                         UstadMobile.getInstance().
                                                 firePathCreationEvent(true);
                                     },function(err) {
@@ -189,6 +207,27 @@ UstadMobile.prototype = {
                             err);
                 });
             });
+        }else if(UstadMobile.getInstance().isNodeWebkit()){
+            var fs= require("fs");
+            var path = require("path");
+            //see http://stackoverflow.com/questions/9080085/node-js-find-home-directory-in-platform-agnostic-way
+            var userHomeDir = process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME'];
+            var contentDirectory = path.join(userHomeDir, 
+                UstadMobile.CONTENT_DIRECTORY);
+            console.log("UstadMobile NodeWebKit HomeDirectory: " 
+                    + contentDirectory);
+            
+            if(!fs.existsSync(contentDirectory)) {
+                fs.mkdirSync(contentDirectory);
+            }
+            
+            var contentDownloadDir = path.join(contentDirectory, 
+                UstadMobile.DOWNLOAD_SUBDIR);
+                
+            if(!fs.exists(contentDownloadDir)) {
+                fs.mkdirSync(contentDownloadDir);
+            }
+            
         }
     },
     
@@ -265,7 +304,15 @@ UstadMobile.prototype = {
      * @method initPanel
      */
     initPanel: function (evt, ui) {
-        var pgEl = $(evt.target);
+        
+        
+        var pgEl = null;
+        
+        if(evt) {
+            pgEl = $(evt.target);
+        }else {
+            pgEl = $.mobile.activePage;
+        }
         if(UstadMobile.getInstance().panelHTML === null) {
             UstadMobile.getInstance().loadPanel();
             return;
@@ -286,7 +333,7 @@ UstadMobile.prototype = {
         $("#" + newPanelId).panel({
             theme: 'b',
             display: 'push'
-        });
+        }).trigger("create");
         $("#" + newPanelId).addClass("ustadpaneldiv");
 
         pgEl.find(".ustad_panel_href").attr("href", "#" + newPanelId);
@@ -314,7 +361,11 @@ UstadMobileServerSettings = function(serverName, xapiBaseURL, getCourseIDURL) {
 }
 
 UstadMobile.getInstance().loadScripts();
-UstadMobile.getInstance().loadPanel();
+
+//Load the panel when document is ready
+$(function() {
+    UstadMobile.getInstance().loadPanel();
+});
 
 
 //Flag for unit testing

@@ -68,14 +68,41 @@ console.log ("With Qunit logs in 01");
 (function () {
     QUnit.module("UstadMobile");
     
-    testUstadMobileCourseLoad();
     testLoadScript();
+    
+    //Set timeout to 60seconds (download a course)
+    QUnit.testTimeout = 60000;
+    testUstadMobileCourseDownloadById(85);
+    
+    //Set timeout to 10 seconds (scan directories)
+    QUnit.testTimeout = 10000;
+    testUstadMobileCourseLoad();
+    
     
     
 }());
 
 /**
  * 
+ * @param id - Id of course to test downloading
+ */
+function testUstadMobileCourseDownloadById(id) {
+    asyncTest("Can Download course by ID : course " + id, 1, function() {
+       UstadMobileDownloader.getInstance().downloadByID(id,
+            function() {
+                //success call back - seems good
+                ok(true, "Download success callback hit");
+                start();
+            },function() {
+                //fail call back - not so good
+                ok(false, "Download fail callback hit");
+                start();
+            });
+    });
+}
+
+/**
+ * Test to see if we can find course on the system
  * @returns 
  */
 function testUstadMobileCourseLoad() {
