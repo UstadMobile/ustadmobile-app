@@ -104,18 +104,14 @@
             <div role="content" class="ui-content" data-theme="b">
                 <div id="logincontainer">
                     <form>
-                        <img style="max-width: 95%" src="res/umres/aboutlogo.png" alt="Ustad Mobile: Mobilizing Education for All"/>
-                        <ul data-role="listview" data-inset="true">
-                            <li data-role="listview">
-                                <input type="text" name="username" id="username" value="" placeholder="Username"/>
-                                <input type="password" name="password" id="password" value="" placeholder="Password"/>
-                            </li>
+                        <div style='text-align: center'>
+                            <img style="max-width: 95%" src="res/umres/aboutlogo.png" alt="Ustad Mobile: Mobilizing Education for All"/>
+                        </div>
+                        <input type="text" name="username" id="username" value="" placeholder="Username"/>
+                        <input type="password" name="password" id="password" value="" placeholder="Password"/>
+                        <input type="button" value='Login' onclick='UstadMobileLogin.getInstance().umloginFromForm()' id="loginButton" name="loginButton" class="exeTranslated2" data-exe-translation-attr = "value" />
+                        <input type='button' value='Skip' onclick='UstadMobileLogin.getInstance().umSkip()' data-mini="false" id="skipButton" name="skipButton" class="exeTranslated2" data-exe-translation-attr = "value"/>
 
-                            <li data-role="listview" data-inset="true">
-                                <input type="button" value='Login' onclick='UstadMobileLogin.getInstance().umloginFromForm()' id="loginButton" name="loginButton" class="exeTranslated2" data-exe-translation-attr = "value" />
-                                <input type='button' value='Skip' onclick='UstadMobileLogin.getInstance().umSkip()' data-mini="false" id="skipButton" name="skipButton" class="exeTranslated2" data-exe-translation-attr = "value"/>
-                            </li>
-                        </ul>
                     </form>
                 </div>
             </div>

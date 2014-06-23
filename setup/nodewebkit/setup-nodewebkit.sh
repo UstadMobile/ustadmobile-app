@@ -31,8 +31,18 @@ source $SRCDIR/ustad_version
 
 cd $SRCDIR
 
+
+cp -r *.html img css js jqm res locale ustad_version $TARGETDIR
+
+cd $TARGETDIR
+
+if [ -e "$THEMEFILE" ]; then
+	echo "Apply Theme $THEMEFILE"
+	unzip -qo $THEMEFILE
+fi
+
 echo "Zip $TARGETDIR/UstadMobile.nw on $(pwd)"
-zip -r $TARGETDIR/UstadMobile.nw *.html img js jqm res locale ustad_version
+zip -r $TARGETDIR/UstadMobile.nw *.html img css js jqm res locale ustad_version
 
 cd $WORKINGDIR
 

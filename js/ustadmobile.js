@@ -56,6 +56,10 @@ UstadMobile = function() {
     
 };
 
+/**
+ * Get the Instance of UstadMobile class
+ * @returns {UstadMobile} UstadMobile instance
+ */
 UstadMobile.getInstance = function() {
     if(ustadMobileInstance == null) {
         ustadMobileInstance = new UstadMobile();
@@ -220,6 +224,7 @@ UstadMobile.prototype = {
             if(!fs.existsSync(contentDirectory)) {
                 fs.mkdirSync(contentDirectory);
             }
+            UstadMobile.getInstance().contentDirURI = contentDirectory;
             
             var contentDownloadDir = path.join(contentDirectory, 
                 UstadMobile.DOWNLOAD_SUBDIR);
