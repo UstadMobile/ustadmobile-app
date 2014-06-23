@@ -200,7 +200,7 @@ UstadMobileBookList.prototype = {
                 umBookListObj.foldersToScan = ["ustadmobileContent", "ustadmobileContent/umPackages"];
             }
         } else if (UstadMobile.getInstance().isNodeWebkit()) {
-            umBookListObj.foldersToScan = ["/home/mike/ustadmobileContent"]
+            umBookListObj.foldersToScan = [UstadMobile.getInstance().contentDirURI]
         }else {
             umBookListObj.foldersToScan = [
                 "file:///sdcard/ustadmobileContent",
