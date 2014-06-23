@@ -1,4 +1,5 @@
 build
+build-nw-dist
 *~
 release-settings-android.sh
 cordova.js.ignore
