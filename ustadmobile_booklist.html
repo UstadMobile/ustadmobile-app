@@ -71,7 +71,7 @@ If you need a commercial license to remove these restrictions please contact us 
                 $(".ustadbooklistpage").on("pageshow", function(event, ui) {
                     console.log("BOOKLIST: In pageshow");
                     UstadMobileBookList.getInstance().queueScan(function() {
-                        alert("Scan Complete");
+                        //no callback needed now
                     });
                 });
             </script>

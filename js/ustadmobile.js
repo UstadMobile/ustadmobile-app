@@ -1000,7 +1000,7 @@ function exeMenuPageOpen() {
     debugLog("Ustad Mobile Content: You will go into: exeMenuPage " + exeMenuPage2);
     
     var exeMenuLink2 = null;
-    if (navigator.userAgent.indexOf("Android") !== -1) {
+    if (navigator.userAgent.indexOf("Android") !== -1 || UstadMobile.getInstance().isNodeWebkit()) {
         exeMenuLink2 = localStorage.getItem("baseURL") + "/" + exeMenuPage2;
         debugLog("Ustad Mobile Content: ANDROID: You will go into: exeMenuLink " + exeMenuLink2);
     } else if(UstadMobile.getInstance().isNodeWebkit()){
