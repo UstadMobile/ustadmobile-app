@@ -149,23 +149,19 @@ UstadMobileBookList.getInstance = function() {
 UstadMobileBookList.prototype = {
     
     /** 
-      * Will run a scan when device is ready to do so... if running in Cordova
-      * will wait for cordovaonready
+      * Will run a scan when device is ready to do so... This relies on 
+      * UstadMobile runAfterPathsCreated, which if running cordova can
+      * run only after the deviceready event occurs.
+      *
+      *@param queueCallback function callback to run after scan is done
       *
       *@method onBookListLoad
       */
     queueScan: function(queueCallback) {
-        console.log("Checking if device is ready...");
-        if(window.cordova) {
-            debugLog("Running on mobile device needing listener and not desktop..");
-            document.addEventListener("deviceready", 
-                function() {
-                    UstadMobileBookList.getInstance().scanCourses(queueCallback);
-                }, false);
-        }else {
-            debugLog("Desktop Edition: ustadmobile-booklist.js: Triggering device ready..");
+        UstadMobile.getInstance().runAfterPathsCreated(function() {
+            console.log("Checking if device is ready...");
             UstadMobileBookList.getInstance().scanCourses(queueCallback);
-        }
+        });
     },
     
     /**

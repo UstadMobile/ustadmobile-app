@@ -248,24 +248,46 @@ UstadMobile.prototype = {
             var fs= require("fs");
             var path = require("path");
             //see http://stackoverflow.com/questions/9080085/node-js-find-home-directory-in-platform-agnostic-way
+            //Note for windows reg key
+            //$ Reg Query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders"
             var userHomeDir = process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME'];
-            var contentDirectory = path.join(userHomeDir, 
+            
+            var nodeSetupHomeDirFunction = function(userBaseDir) {
+                var contentDirectory = path.join(userBaseDir, 
                 UstadMobile.CONTENT_DIRECTORY);
-            console.log("UstadMobile NodeWebKit HomeDirectory: " 
-                    + contentDirectory);
-            
-            if(!fs.existsSync(contentDirectory)) {
-                fs.mkdirSync(contentDirectory);
-            }
-            UstadMobile.getInstance().contentDirURI = contentDirectory;
-            
-            var contentDownloadDir = path.join(contentDirectory, 
-                UstadMobile.DOWNLOAD_SUBDIR);
+                console.log("UstadMobile NodeWebKit HomeDirectory: " 
+                        + contentDirectory);
                 
-            if(!fs.existsSync(contentDownloadDir)) {
-                fs.mkdirSync(contentDownloadDir);
+                if(!fs.existsSync(contentDirectory)) {
+                    fs.mkdirSync(contentDirectory);
+                }
+                UstadMobile.getInstance().contentDirURI = contentDirectory;
+                
+                var contentDownloadDir = path.join(contentDirectory, 
+                    UstadMobile.DOWNLOAD_SUBDIR);
+                    
+                if(!fs.existsSync(contentDownloadDir)) {
+                    fs.mkdirSync(contentDownloadDir);
+                }
+                UstadMobile.getInstance().downloadDestDirURI = 
+                    contentDownloadDir;
+                UstadMobile.getInstance().firePathCreationEvent(true);
+            };
+            
+            if(UstadMobile.getInstance().getNodeWebKitOS() == 
+                UstadMobile.OS_WINDOWS) {
+                var exec = require('child_process').exec;
+                console.log("checking windows object");
+                var regKeyName = "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders";
+                var regQueryCmd = "Reg Query \""+ regKeyName +"\" /v Personal"
+                exec(regQueryCmd, function(error, stdout, stderr) {
+                    var myDocPath = stdout.substring(stdout.indexOf("REG_SZ")+6);
+                    myDocPath = myDocPath.trim();
+                    nodeSetupHomeDirFunction(myDocPath);
+                });
+            }else {
+                nodeSetupHomeDirFunction(userHomeDir);
             }
-            UstadMobile.getInstance().downloadDestDirURI = contentDownloadDir;
         }
     },
     
