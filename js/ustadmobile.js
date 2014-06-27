@@ -1,4 +1,4 @@
-/*
+/* Updated 19:11
 <!-- This file is part of Ustad Mobile.  
     
     Ustad Mobile Copyright (C) 2011-2013 Toughra Technologies FZ LLC.
@@ -288,6 +288,26 @@ UstadMobile.prototype = {
             }else {
                 nodeSetupHomeDirFunction(userHomeDir);
             }
+        }
+    },
+    
+    /**
+     * Remove any file:/ from the start of a path leaving at most one / at the
+     * start of it
+     */
+    removeFileProtoFromURL: function(filePath) {
+        var filePrefix = "file:";
+        if(filePath.substring(0, filePrefix.length) == filePrefix) {
+            //check how many / slashes we need rid of
+            var endPos = filePrefix.length;
+            for(; filePath.charAt(endPos+1) != '/'; endPos++) {
+                //do nothing
+            }
+            
+            var pathFixed = filePath.substring(endPos);
+            return pathFixed;
+        }else {
+            return path;
         }
     },
     

@@ -148,6 +148,17 @@ UstadMobileBookList.getInstance = function() {
 
 UstadMobileBookList.prototype = {
     
+    /**
+     * Files that should be copied from the app into the content
+     * Map in the form of src : dest
+     * 
+     * @type {Object}
+     */
+    appFilesToCopyToContent: {"js/ustadmobile.js" : "ustadmobile.js",
+        "js/ustadmobile-booklist.js" :  "ustadmobile-booklist.js",
+        "jqm/jqm-app-theme.css" : "jqm-app-theme.css"
+    },
+    
     /** 
       * Will run a scan when device is ready to do so... This relies on 
       * UstadMobile runAfterPathsCreated, which if running cordova can
@@ -521,12 +532,23 @@ UstadMobileBookList.prototype = {
        umBookListObj.populateNextDir();
    },
    
+   /**
+    * Copy required app files into the content directory
+    * 
+    * @param {String} contentDir content directory to copy to
+    * @param {function} callbackFn callback to run when done
+    */
+   copyAppFilesToContent: function(contentDir, callbackFn) {
+       
+   },
+   
    /*
     Simple Open page wrapper (+ sets language of the opened book ?)
     */
    openBLPage: function(openFile, mode) {
        var umBookListObj = UstadMobileBookList.getInstance();
-       var bookpath = "";
+       var bookpath = umBookListObj.currentBookPath.substring(0, 
+                umBookListObj.currentBookPath.lastIndexOf("/"));
        
        if (mode == "test") {
            CONTENT_MODE = mode;
@@ -543,7 +565,15 @@ UstadMobileBookList.prototype = {
        );
        jsLoaded = false;
        if(UstadMobile.getInstance().isNodeWebkit()) {
-           window.open(openFile, "_self");
+           //copy files 
+           var destDirectory = openFile.substring(0, openFile.lastIndexOf("/"));
+           destDirectory = UstadMobile.getInstance().removeFileProtoFromURL(
+                   destDirectory);
+           var copyJob = new UstadMobileAppToContentCopyJob(this.appFilesToCopyToContent, 
+               destDirectory, function() {
+                    window.open(openFile, "_self");
+           });
+           copyJob.copyNextFile();
            return;
        }else {
            console.log("Mobile Device detected. Continuing..");
@@ -553,8 +583,7 @@ UstadMobileBookList.prototype = {
            //1. We need to create a file: ustadmobile-settings.js
            //2. We need to put that file in that directory
            //3. We need to open the file.
-           bookpath = umBookListObj.currentBookPath.substring(0, 
-                umBookListObj.currentBookPath.lastIndexOf("/"));
+           
            console.log("The bookpath is: " + bookpath);
        }
 
@@ -586,4 +615,49 @@ function UstadMobileCourseEntry(courseTitle, courseDesc, coursePath, coverImg) {
     this.coverImg = coverImg;
 }
 
+function UstadMobileAppToContentCopyJob(fileDestMap, destDir, completeCallback) {
+    this.fileDestMap = fileDestMap;
+    this.fileList = [];
+    
+    for(srcFile in fileDestMap) {
+        this.fileList.push(srcFile);
+    }
+    
+    this.destDir = destDir;
+    this.completeCallback = completeCallback;
+}
+
+UstadMobileAppToContentCopyJob.prototype = {
+    
+    currentFileIndex: 0,
+    
+    copyNextFile: function() {
+        if(UstadMobile.getInstance().isNodeWebkit()) {
+            var path = require("path");
+            var fs = require("fs");
+            var copyJob = this;
+            
+            var appWorkingDir = process.cwd();
+            
+            if(this.currentFileIndex < this.fileList.length) {
+                var srcFile = this.fileList[this.currentFileIndex];
+                var fullSrcPath = path.join(appWorkingDir, srcFile);
+                var destFileName = this.fileDestMap[srcFile];
+                var fullDstPath = path.join(this.destDir, destFileName);
+                var inReadStream = fs.createReadStream(fullSrcPath);
+                var outWriteStream = fs.createWriteStream(fullDstPath);
+
+                outWriteStream.on("close", function() {
+                    copyJob.currentFileIndex++;
+                    copyJob.copyNextFile();
+                });
+
+                inReadStream.pipe(outWriteStream);
+            }else {
+                this.completeCallback();
+            }
+        }
+    }
+    
+};
 
