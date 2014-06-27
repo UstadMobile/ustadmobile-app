@@ -48,4 +48,6 @@ This has javascript settings.
 
 */
 //var ustadlocale;
+var ustadlocale = "en";
 console.log("Current value for ustadlocale is: " + ustadlocale);
+

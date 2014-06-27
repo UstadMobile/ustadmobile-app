@@ -189,16 +189,6 @@ UstadMobileBookList.prototype = {
                 "/sdcard/ustadmobile", "/sdcard/ustadmobileContent", 
                 "/ustadmobileContent/umPackages/", "/ustadmobileContent/", 
                 bbumfolder];
-        } else if (navigator.userAgent.indexOf("TideSDK") !== -1) {
-            console.log("Desktop detected - TideSDK. ustadmobile-booklist.js . Updating folders to scan..");
-
-            if (window.navigator.userAgent.indexOf("Windows") != -1) {
-                console.log("TideSDK: You are using WINDOWS.");
-                umBookListObj.foldersToScan = ["/ustadmobileContent", "/ustadmobileContent/umPackages"];
-            } else {
-                console.log("TideSDK: You are NOT using WINDOWS.");
-                umBookListObj.foldersToScan = ["ustadmobileContent", "ustadmobileContent/umPackages"];
-            }
         } else if (UstadMobile.getInstance().isNodeWebkit()) {
             umBookListObj.foldersToScan = [UstadMobile.getInstance().contentDirURI]
         }else {
@@ -297,131 +287,6 @@ UstadMobileBookList.prototype = {
    },
    
    
-    //Test function for TideSDK to download a file..
-    tideSDKDownloadFile: function(path, filename) {
-        var httpClient = Ti.Network.createHTTPClient();
-        httpClient.open('GET', path);
-        httpClient.receive(function(data) {
-            var file = Ti.Filesystem.getFile(filename);
-            var fileStream = file.open(Ti.Filesystem.MODE_APPEND);
-            fileStream.write(data);
-            fileStream.close();
-            console.log("DONE DONE DONE DONE");
-        });
-    },
-    
-    
-    //Test function for TideSDK to List all files in root directory..
-    tideSDKListRootFiles: function() {
-        console.log("TideSDK: Listing all files in Root directory..");
-
-        // For Windows root has to start with /
-        // For Linux: root doesn't start with / 
-        var rootDir;
-        if (window.navigator.userAgent.indexOf("Windows") != -1) {
-            console.log("TideSDK: You are using WINDOWS.");
-            rootDir = "/";
-        } else {
-            console.log("TideSDK: You are NOT using WINDOWS.");
-            rootDir = "ustadmobileContent"
-
-        }
-
-        var destinationDir = Ti.Filesystem.getFile(rootDir);
-
-        var dir_fofiles = destinationDir.getDirectoryListing();
-        var dir_folders = new Array();
-        for (var i = 1; i < dir_fofiles.length; i++) {
-            console.log("File " + i + ": " + dir_fofiles[i].toString());
-        }
-    },
-    
-    /*For Desktop TideSDK Will check if folders exists. Will NOT create new folders if folder doesn't exist.
-    //List directory contents within the main directory.
-    //If able to list directory contents
-    //store contents (directories) in array.
-    //Check if directory/exeFileMarker file exists
-    //If file exists
-    //Append file to html
-    //If file does NOT exist
-    //check Next directory (populateNextDir())
-    */
-   tideSDKCheckDir: function(dir) {
-       var umBooklistObj = UstadMobileBookList.getInstance();
-       //Testing the file system
-       umBooklistObj.tideSDKListRootFiles();
-       console.log("TideSDK-Moving on from Root test..");
-
-       var destinationDir = Ti.Filesystem.getFile(dir);
-       if ((destinationDir.exists() == false)) {
-           //alert('We could not find the directory: ' + dir + ' so we must abort.');
-           //Y.Global.fire('download:error');
-           return;
-       } else {
-           debugLog("Successfully found Courses Directory: " + dir + " in ustadmobile-booklist.js");
-
-
-           console.log("TideSDK: Listing all files in the directory: " + dir);
-           var dir_fofiles = destinationDir.getDirectoryListing();
-           for (var k = 0; k < dir_fofiles.length; k++) {
-               console.log("DIR: " + k + " " + dir_fofiles[k].toString());
-           }
-
-           var dir_folder_courses = new Array();
-           for (var i = 0; i < dir_fofiles.length; i++) {
-               //if(dir_fofiles[i].isDirectory()){
-               //}
-               console.log(" File " + i + ": " + dir_fofiles[i].toString());
-               var dir2 = dir_fofiles[i].toString();
-               console.log("  dir2" + i + ": " + dir2);
-               var dir_folder = Ti.Filesystem.getFile(dir2);
-
-               if (dir_folder.exists() == true && dir_folder.isDirectory() == true) {
-                   console.log("TideSDK: Going to check: " + dir2 + '/' 
-                           + umBooklistObj.exeFileMarker);
-                   var dir_folder_course = Ti.Filesystem.getFile(dir2 + '/' 
-                           + umBooklistObj.exeFileMarker);
-                   if (dir_folder_course.exists() == true && dir_folder_course.isFile() == true) {
-
-                       var coursePath = dir_folder_course.toString();
-                       console.log("TideSDK: Found course folder!: " + dir_folder_course.toString());
-
-                       var coursePathEsc = coursePath.replace(/\\/g, "\\\\");
-                       console.log("coursePathEsc: " + coursePathEsc);
-
-                       //Checking full path of course file in TideSDK file system.
-                       console.log(" TideSDK: nativePath(): " + dir_folder_course.nativePath());
-                       //console.log(" TideSDK: ");
-
-                       var courseNameParts = null;
-                       
-                       if (window.navigator.userAgent.indexOf("Windows") != -1) {
-                           console.log("TideSDK: You are using WINDOWS.");
-                           courseNameParts = coursePath.split("\\"); //For Windows
-
-                       } else {
-                           console.log("TideSDK: You are NOT using WINDOWS.");
-                           courseNameParts = coursePath.split("/"); //For Linux
-
-                       }
-                       //var courseNameParts = coursePath.split("\\"); //For Windows
-                       //var courseNameParts = coursePath.split("/"); //For Linux
-                       //For UNIX and others split by "/"
-
-                       var courseName = courseNameParts[courseNameParts.length - 2];
-                       console.log("TideSDK: course Name is: " + courseName);
-                       $("#UMBookList").append(
-                               "<a onclick='UstadMobileBookList.getInstance().openBLPage(\"" 
-                               + coursePathEsc + "\" \, \"normal\" )' href=\"#\" "
-                               + "data-role=\"button\" data-icon=\"star\" "
-                               + "data-ajax=\"false\">" + courseName 
-                               + "</a>").trigger("create");
-                   }
-               }
-
-           }
-       }
-   },
    
    /*
     Looks for subdirectories of path that contain exe content - for each
@@ -438,15 +303,7 @@ UstadMobileBookList.prototype = {
                    fs.root.getDirectory(pathFrom, {create: false, exclusive: false}, 
                    umBookListObj.dirReader, umBookListObj.failbl);
                }, umBookListObj.failbl);
-           } else if (navigator.userAgent.indexOf("TideSDK") !== -1) {
-               console.log("Detected Desktop - TideSDK when checking folders to Scan in ustadmobile-booklist.js . Checking folders now..");
-               umBookListObj.tideSDKCheckDir(pathFrom);
-
-               //For now..
-               debugLog("Population incomplete for Desktop TideSDK.");
-               umBookListObj.populateNextDir();
-
-           }else if(UstadMobile.getInstance().isNodeWebkit()) {
+           } else if(UstadMobile.getInstance().isNodeWebkit()) {
                console.log("Detected NodeWebkit");
                var fs = require("fs");
                console.log("loaded fs");
@@ -504,7 +361,15 @@ UstadMobileBookList.prototype = {
             var secondLastSlashPos = fileEntry.lastIndexOf('/', lastSlashPos -1);
             var folderName = fileEntry.substring(secondLastSlashPos+1, 
                 lastSlashPos);
-            var fileFullPath = "file://" + fileEntry;
+                
+            //On Windows we need to change \ (invalid escape) to / for paths
+            var fileEntryEsc = fileEntry;
+            var nodeWebKitOS = UstadMobile.getInstance().getNodeWebKitOS();
+            if(nodeWebKitOS == UstadMobile.OS_WINDOWS) {
+                fileEntryEsc = fileEntry.replace(/\\/g, "/");
+            }
+                
+            var fileFullPath = "file://" + fileEntryEsc;
             var courseEntryObj = new UstadMobileCourseEntry(folderName, "", 
                 fileFullPath, null);
             umBookListObj.coursesFound.push(courseEntryObj);
@@ -531,7 +396,7 @@ UstadMobileBookList.prototype = {
                 $("#UMBookList").append(
                         "<a onclick='UstadMobileBookList.getInstance().openBLPage(\"" 
                         + fileFullPath 
-                        + "\" \, \"normal\" )' href=\"#\" data-role=\"button\" "
+                        + "\", \"normal\" )' href=\"#\" data-role=\"button\" "
                         + "data-icon=\"star\" data-ajax=\"false\">" + folderName 
                         + "</a>").trigger("create");
             }, function(error) {
@@ -681,40 +546,9 @@ UstadMobileBookList.prototype = {
            html: ""}
        );
        jsLoaded = false;
-       if (navigator.userAgent.indexOf("TideSDK") !== -1) {
-           console.log("Desktop - TideSDK detected. Adding file protocol to open Courses..");
-
-           if (window.navigator.userAgent.indexOf("Windows") != -1) {
-               console.log("TideSDK: You are using WINDOWS.");
-               umBookListObj.currentBookPath = "file:\\\\" + openFile;	//For Windows..
-               //Check the below for Windows vs Linux..
-               bookpath = umBookListObj.currentBookPath.substring(0, 
-                    umBookListObj.currentBookPath.lastIndexOf("\\"));
-               console.log("TideSDK-The bookpath 1 is: " + bookpath);
-               var bookpathSplit = bookpath.split('\\\\');
-               bookpath = bookpathSplit[bookpathSplit.length - 1];
-           } else {
-               console.log("TideSDK: You are NOT using WINDOWS.");
-               umBookListObj.currentBookPath = "file://" + openFile; 	//For Linux..
-               //Check the below for Windows vs Linux..
-               bookpath = umBookListObj.currentBookPath.substring(
-                       0, umBookListObj.currentBookPath.lastIndexOf("/"));
-               console.log("TideSDK-The bookpath 1 is: " + bookpath);
-               var bookpathSplit = bookpath.split('//');
-               bookpath = bookpathSplit[bookpathSplit.length - 1];
-           }
-
-           console.log("Book URL that UM is going to is: " 
-                   + umBookListObj.currentBookPath);
-           //1. We need to create a file: ustadmobile-settings.js
-           //2. We need to put that file in that directory
-           //3. We need to open the file.
-
-
-           console.log("TideSDK: The bookpath is: " + bookpath);
-           openFile = umBookListObj.currentBookPath;
-       }else if(UstadMobile.getInstance().isNodeWebkit()) {
+       if(UstadMobile.getInstance().isNodeWebkit()) {
            window.open(openFile, "_self");
+           return;
        }else {
            console.log("Mobile Device detected. Continuing..");
            umBookListObj.currentBookPath = openFile;

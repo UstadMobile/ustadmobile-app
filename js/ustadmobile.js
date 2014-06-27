@@ -85,6 +85,19 @@ UstadMobile.CONTENT_DIRECTORY = "ustadmobileContent";
  */
 UstadMobile.DOWNLOAD_SUBDIR = "inprogress";
 
+/**
+ * Constant representing Linux OS
+ * @type Number
+ */
+UstadMobile.OS_LINUX = 0;
+
+/**
+ * Constant representing the Windows OS
+ * @type type
+ */
+UstadMobile.OS_WINDOWS = 1;
+
+
 UstadMobile.prototype = {
     
     /**
@@ -135,6 +148,26 @@ UstadMobile.prototype = {
             return true;
         }else {
             return false;
+        }
+    },
+    
+    /**
+     * Detect what Operating System NodeWebKit is running
+     * on - really just using process.platform (for now)
+     *
+     * @return Number Numerical flag representing the OS: 
+     * UstadMobile.OS_WINDOWS or OS_LINUX etc, -1 if not nodewebkit
+     * @method getNodeWebKitOS
+     */
+    getNodeWebKitOS: function() {
+        if(UstadMobile.getInstance().isNodeWebkit()) {
+            if(process.platform == "win32") {
+                return UstadMobile.OS_WINDOWS;
+            }else if(process.platform == "linux") {
+                return UstadMobile.OS_LINUX;
+            }
+        }else {
+            return -1;
         }
     },
     
@@ -365,6 +398,10 @@ UstadMobileServerSettings = function(serverName, xapiBaseURL, getCourseIDURL) {
     this.getCourseIDURL = getCourseIDURL;
 }
 
+// Put this in a central location in case we don't manage to load it
+var messages = [];
+//default lang
+
 UstadMobile.getInstance().loadScripts();
 
 //Load the panel when document is ready
@@ -446,23 +483,6 @@ if(navigator.userAgent.indexOf("Android") !== -1){
     }else if(navigator.userAgent.indexOf("Chrome") !== -1){
         platform = "chrome";
         debugLog("You are using Chrome on ustadmobile.js()"); 
-    }else if(navigator.userAgent.indexOf("TideSDK") !== -1){
-        platform=null;
-        //platform = "tidesdk";
-        //debugLog("You are using Desktop TideSDK on ustadmobile.js()"); 
-        if (window.navigator.userAgent.indexOf("Windows NT 6.2") != -1) platform="tidesdk-WIN8";
-        if (window.navigator.userAgent.indexOf("Windows NT 6.1") != -1) platform="tidesdk-WIN7";
-        if (window.navigator.userAgent.indexOf("Windows NT 6.0") != -1) platform="tidesdk-WINVista";
-        if (window.navigator.userAgent.indexOf("Windows NT 5.1") != -1) platform="tidesdk-WinXP";
-        if (window.navigator.userAgent.indexOf("Windows NT 5.0") != -1) platform="tidesdk-WIN2000";
-        if (window.navigator.userAgent.indexOf("Mac")!=-1) platform="tidesdk-MAC";
-        if (window.navigator.userAgent.indexOf("X11")!=-1) platform="tidesdk-UNIX";
-        if (window.navigator.userAgent.indexOf("Linux")!=-1) platform="tidesdkLinux";
-        debugLog("You are using Desktop TideSDK platform: " + platform + " on ustadmobile.js()");
-        //if(typeof platform != 'undefined' && platform != null){
-            //debugLog("Triggering device ready.."); //Because Tide Does not have a device ready..
-            //onAppDeviceReady();
-        //}
     }else{          // More to add: IE10: MSIE 10, etc.
         //alert("Could not verify your device or platform. Your device isn't tested with our developers. Error. Contact an ustad mobile developer.");
     }
@@ -722,7 +742,7 @@ $(document).on("pageshow", function(event, ui) {
     On Pagechange, the logic for touch, swipe and scroll events are executed.
 */
 
-
+/*
 $(document).on("pagechange", function(event){
     setupClozeWidth();
     $('.ui-page-active').swipe( {   //On the active page..
@@ -776,7 +796,7 @@ $(document).on("pagechange", function(event){
     	}
 
 });
-
+*/
 
 
 
@@ -970,8 +990,10 @@ $(window).load(function(){
 //Function to handle Previous Page button within eXe content's footer.
 function exePreviousPageOpen(){
     var previousPageHREF = $(".ui-page-active #exePreviousPage").attr("href");
-	debugLog("Ustad Mobile CONTENT: Going to previous page: " + previousPageHREF);
-    $.mobile.changePage( previousPageHREF, { transition: "slide", reverse: true }, true, true );
+    debugLog("Ustad Mobile CONTENT: Going to previous page: " + previousPageHREF);
+    if(previousPageHREF) {
+        $.mobile.changePage( previousPageHREF, { transition: "slide", reverse: true }, true, true );
+    }
 }
 
 //Function to handle First Next Page button within eXe content's footer. (Is not used)
@@ -986,7 +1008,9 @@ function exeFirstNextPageOpen(){
 function exeNextPageOpen(){
     var nextPageHREF = $(".ui-page-active #exeNextPage").attr("href");
     debugLog("Ustad Mobile Content: Going to next page: " + nextPageHREF);  
-    $.mobile.changePage( nextPageHREF, { transition: "slide" }, true, true );
+    if(nextPageHREF) {
+        $.mobile.changePage( nextPageHREF, { transition: "slide" }, true, true );
+    }
 }
 
 //Function to handle Menu Page within eXe content's footer.
@@ -1202,7 +1226,11 @@ function umMenuLogout2(){
 	//Commented because localStoage of app is not accessible on windows phone
     //localStorage.removeItem('username');
     //localStorage.removeItem('password');
-    openPage2("ustadmobile_login2.html");
+    if(!UstadMobile.getInstance().isNodeWebkit()) {
+        openPage2("index.html");
+    }else {
+        window.open("index.html", "_self");
+    }
 }
 
 //This function gets called from the Book List Menu to go back to the Login Page from the Menu.

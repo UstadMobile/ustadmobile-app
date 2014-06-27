@@ -94,8 +94,8 @@ If you need a commercial license to remove these restrictions please contact us 
                 </ul>               
                 
                 <br></br>
-                <input onclick='UstadMobileBookList.getInstance().onBookListLoad()' type="button" id="rescancourselist"  name="rescancourselist" class="exeTranslated2" data-exe-translation-attr = "value" value="Rescan"/>
-                <p><i>(Tap to rescan your course list)</i></p>
+                <input onclick="UstadMobileBookList.getInstance().queueScan(function() {})" type="button" id="rescancourselist"  name="rescancourselist" class="exeTranslated2" data-exe-translation-attr = "value" value="Refresh"/>
+                
 
             </div>
             

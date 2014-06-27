@@ -44,7 +44,7 @@ If you need a commercial license to remove these restrictions please contact us 
 -->
 */
 
-var messages = new Array();
+
 messages['test'] = "You are in en-gb.js";
 messages['login'] = "Login";
 messages['error'] = "Error";
