@@ -72,7 +72,7 @@ console.log ("With Qunit logs in 01");
     
     //Set timeout to 60seconds (download a course)
     QUnit.testTimeout = 60000;
-    testUstadMobileCourseDownloadById(85);
+    testUstadMobileCourseDownloadById(5);
     
     //Set timeout to 10 seconds (scan directories)
     QUnit.testTimeout = 10000;

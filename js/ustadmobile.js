@@ -203,7 +203,7 @@ UstadMobile.prototype = {
     getDefaultServer: function() {
         var umServer = new UstadMobileServerSettings("UstadMobile",
             "http://svr2.ustadmobile.com:8001/xAPI/statements",
-            "http://svr2.ustadmobile.com:8010/getcourse/?id=");
+            "http://umcloud1.ustadmobile.com:8010/getcourse/?id=");
         return umServer;
     },
     

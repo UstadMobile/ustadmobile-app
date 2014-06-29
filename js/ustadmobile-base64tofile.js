@@ -46,8 +46,10 @@ If you need a commercial license to remove these restrictions please contact us 
   
 		
 		//var base64VarName = ["base64Testjs", "ustadmobilejs", "jquerymobilejs", "ustadmobilebooklistjs", "ustadmobilecommonjs", "ustadmobileconstantsjs", "ustadmobilegetpackagesjs", "ustadmobileloginjs", "ustadmobiletestjs"];
-		
-		var base64VarName = [base64Testjs, ustadmobilejs, jquerymobilejs, ustadmobilebooklistjs, ustadmobilecommonjs, ustadmobileconstantsjs, ustadmobilegetpackagesjs, ustadmobileloginjs, ustadmobiletestjs, touchswipejs, modernizrjs];
+		var base64VarName = []
+		if(typeof base64Testjs !== "undefined") {
+                    base64VarName = [base64Testjs, ustadmobilejs, jquerymobilejs, ustadmobilebooklistjs, ustadmobilecommonjs, ustadmobileconstantsjs, ustadmobilegetpackagesjs, ustadmobileloginjs, ustadmobiletestjs, touchswipejs, modernizrjs];
+                }
 		//9Dec2013: added modernizrjs
 
 		var currentB64Index = 0;
