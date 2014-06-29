@@ -9,4 +9,5 @@ build-test
 ustadmobileContent
 temp
 node-qunit-testresults.txt
-
+nbproject/private/
+nbproject
