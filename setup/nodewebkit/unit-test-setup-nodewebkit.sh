@@ -1,6 +1,9 @@
 #!/bin/bash
 
-
+#
+# Node: In order for NodeWebKit to run make sure on minimal install servers
+#  ttf-mscorefonts-installer (requires cabextract)
+#
 NODEPORT=7079
 NWPATH=$(which nw)
 

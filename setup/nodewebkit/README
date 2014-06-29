@@ -1,0 +1,35 @@
+# 
+# UstadMobile NodeWebKit Version
+#
+
+NodeWebKit is the Chromium browser running with Node; NodeWebKit packages are 
+zip files with the extension .nw  .  This version uses NodeJS methods and not
+the Corova methods
+
+To Run Tests:
+
+1. Make sure nw executable from NodeWebKit is in path
+2. If running Windows: make sure 7zip 7z is in the path
+3. Make sure that the package ttf-mscorefonts-installer (requires cabextract)
+   is installed ... otherwise NodeWebKit will crash
+
+./unit-test-setup-nodewebkit.sh
+
+To Build:
+
+./setup-nodewebkit.sh run 
+
+Will make the .nw file
+
+To make distributable packages:
+
+./nw2packages.sh ./build/UstadMobile.nw
+
+Will make a Zip containing everything needed on Windows
+
+
+
+
+
+
+
