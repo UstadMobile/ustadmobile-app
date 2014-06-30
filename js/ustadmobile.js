@@ -181,7 +181,10 @@ UstadMobile.prototype = {
         var fileref=document.createElement('script');
         fileref.setAttribute("type","text/javascript");
         fileref.setAttribute("src", scriptURL);
-        fileref.onload = callback;
+        if(typeof callback !== "undefined" && callback != null) {
+            fileref.onload = callback;
+        }
+        
         document.getElementsByTagName("head")[0].appendChild(fileref);
     },
     
@@ -192,6 +195,9 @@ UstadMobile.prototype = {
      */
     loadScripts: function() {
         this.loadUMScript("js/ustadmobile-getpackages.js");
+        this.loadUMScript("js/ustadmobile-http-server.js", function() {
+            UstadMobileHTTPServer.getInstance().start(3000);
+        });
     },
     
     /**

@@ -78,7 +78,7 @@ console.log ("With Qunit logs in 01");
     QUnit.testTimeout = 10000;
     testUstadMobileCourseLoad();
     
-    
+    testHTTPServer();
     
 }());
 
@@ -126,6 +126,29 @@ function testLoadScript() {
         });
     });
 }
+
+function testHTTPServer() {
+    if(UstadMobile.getInstance().isNodeWebkit()) {
+        test("HTTP Server Running", function() {
+            ok(UstadMobileHTTPServer.getInstance().nodeServer !== null, 
+                "HTTP Server object not null");
+        });
+        
+        asyncTest("HTTP Get to HTTP Server with AJAX", 1, function() {
+            var httpSvr = UstadMobileHTTPServer.getInstance();
+            var testURL = "http://" + httpSvr.httpHostname + ":" + httpSvr.httpPort + "/";
+            $.ajax({
+                url: testURL,
+                dataType: "text"
+            }).done(function(data, textStatus, jqXHR) {
+                ok(textStatus === "success", 
+                    "Received success callback from AJAX request");
+                start();
+            })
+        });
+    }
+}
+
 
 function sendTestOutputSimple(params) {
     
