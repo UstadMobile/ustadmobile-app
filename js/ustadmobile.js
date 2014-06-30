@@ -114,6 +114,21 @@ UstadMobile.prototype = {
     pendingPathEventListeners: [],
     
     /**
+     * If the internal http server is ready
+     * 
+     * @type Boolean
+     */
+    httpServerReady: false,
+    
+    /**
+     * Array of functions to run once the http server is ready
+     * 
+     * @type {Array}
+     */
+    pendingHttpListeners: [],
+    
+    
+    /**
      * Panel HTML to be used
      * @type {String}
      */
@@ -349,8 +364,38 @@ UstadMobile.prototype = {
         }
     },
     
+    
     /**
+     * Run once the http server is ready
      * 
+     * @param {type} callback
+     * @returns {undefined}
+     */
+    runAfterHTTPReady: function(callback) {
+        if(this.httpReady) {
+            callback();
+        }else {
+            this.pendingHttpListeners.push(callback);
+        }
+    },
+    
+    /**
+     * Run any callbacks that are waiting for the HTTP Server to be ready
+     * 
+     */
+    fireHTTPReady: function() {
+        this.httpReady = true;
+        console.log("UstadMobile.js: Informing pending listeners http is ready");
+        while(this.pendingHttpListeners.length > 0) {
+            var fn = this.pendingHttpListeners.pop();
+            fn();
+        }
+    },
+    
+    /**
+     * Run a callback when paths are ready (content and download directory).
+     * 
+     * @param callback function to run when paths are created 
      */
     runAfterPathsCreated: function(callback) {
         if(this.pathsReady) {

@@ -127,24 +127,66 @@ function testLoadScript() {
     });
 }
 
+//This global is used to see when we got ajax back from all the courses
+var numBooksLoadedCount = 0;
+
 function testHTTPServer() {
     if(UstadMobile.getInstance().isNodeWebkit()) {
-        test("HTTP Server Running", function() {
-            ok(UstadMobileHTTPServer.getInstance().nodeServer !== null, 
-                "HTTP Server object not null");
-        });
-        
-        asyncTest("HTTP Get to HTTP Server with AJAX", 1, function() {
-            var httpSvr = UstadMobileHTTPServer.getInstance();
-            var testURL = "http://" + httpSvr.httpHostname + ":" + httpSvr.httpPort + "/";
-            $.ajax({
-                url: testURL,
-                dataType: "text"
-            }).done(function(data, textStatus, jqXHR) {
-                ok(textStatus === "success", 
-                    "Received success callback from AJAX request");
+        asyncTest("HTTP Server starts up", 1 , function() {
+            UstadMobile.getInstance().runAfterHTTPReady(function(){
+                ok(true, "HTTP Server fired up");
                 start();
-            })
+            });
+        });
+
+
+        asyncTest("HTTP Get to HTTP Server with AJAX", 1, function() {
+            UstadMobile.getInstance().runAfterHTTPReady(function(){
+                var httpSvr = UstadMobileHTTPServer.getInstance();
+                var testURL = "http://" + httpSvr.httpHostname + ":" + httpSvr.httpPort + "/";
+                $.ajax({
+                    url: testURL,
+                    dataType: "text"
+                }).done(function(data, textStatus, jqXHR) {
+                    ok(textStatus === "success", 
+                        "Received success callback from AJAX request");
+                    start();
+                });
+            });
+        });
+
+        //make sure that all courses detected are accessible via HTTP
+
+
+        
+        var bookList = UstadMobileBookList.getInstance().coursesFound;
+        
+        asyncTest("Check all courses are available", function() {
+            //there will be bookList.length callbacks
+            expect(bookList.length);
+            
+            UstadMobile.getInstance().runAfterHTTPReady(function(){
+                var httpSvr = UstadMobileHTTPServer.getInstance();
+                for(var i = 0; i < bookList.length; i++) {
+                    var courseEntry = bookList[i];
+                    var folderName = courseEntry.relativeURI;
+                    var urlToLoad = "http://" + httpSvr.httpHostname + ":" 
+                            + httpSvr.httpPort + "/" + UstadMobile.CONTENT_DIRECTORY +
+                            "/" + folderName + "/index.html";
+                    var thisCourseURL = urlToLoad;
+                    $.ajax({
+                        url: urlToLoad,
+                        dataType: "html"
+                    }).done(function(data, textStatus, jqXHR){
+                        ok(textStatus === "success", 
+                            "Loaded " + this.url + " OK");
+                        numBooksLoadedCount++;
+                        if(numBooksLoadedCount === bookList.length) {
+                            start();
+                        }
+                    });
+                }
+            });
         });
     }
 }

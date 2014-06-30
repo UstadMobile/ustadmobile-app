@@ -378,7 +378,7 @@ UstadMobileBookList.prototype = {
                 
             var fileFullPath = "file://" + fileEntryEsc;
             var courseEntryObj = new UstadMobileCourseEntry(folderName, "", 
-                fileFullPath, null);
+                fileFullPath, null, folderName);
             umBookListObj.coursesFound.push(courseEntryObj);
             
             
@@ -604,8 +604,17 @@ UstadMobileBookList.prototype = {
    
 };
 
-
-function UstadMobileCourseEntry(courseTitle, courseDesc, coursePath, coverImg) {
+/**
+ * 
+ * @param {String} courseTitle Title to be displayed
+ * @param {String} courseDesc Description of course to show
+ * @param {String} coursePath Full path to open the course
+ * @param {String} coverImg Path to image
+ * @param {String} relativeURI URI relative to UstadMobileContent directory
+ * 
+ * @return {UstadMobileCourseEntry}
+ */
+function UstadMobileCourseEntry(courseTitle, courseDesc, coursePath, coverImg, relativeURI) {
     this.courseTitle = courseTitle;
     
     this.courseDesc = courseDesc;
@@ -613,6 +622,14 @@ function UstadMobileCourseEntry(courseTitle, courseDesc, coursePath, coverImg) {
     this.coursePath = coursePath;
     
     this.coverImg = coverImg;
+    
+    /** URI from the UstadMobileContent Dir*/
+    this.relativeURI = null;
+    if(typeof relativeURI !== "undefined" && relativeURI != null) {
+        this.relativeURI = relativeURI;
+    }
+    
+    
 }
 
 function UstadMobileAppToContentCopyJob(fileDestMap, destDir, completeCallback) {

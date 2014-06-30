@@ -104,13 +104,79 @@ UstadMobileHTTPServer.prototype = {
             
             console.log("UstadMobile Internal HTTP listening on:" +
                     hostname + ":" + port);
+            
+            setTimeout(function() {
+                UstadMobile.getInstance().fireHTTPReady();
+            }, 0);
         }
     },
     
+    /**
+     * Handle an incoming HTTP request
+     * 
+     * @param {type} request request object
+     * @param {type} response response object
+     */
     handleRequest: function(request, response) {
-        response.writeHead(200, { 'Content-Type': 'text/plain'});
-        response.end("Hello");
+        var url = request.url;
+        var contentDir = UstadMobile.CONTENT_DIRECTORY;
+        
+        if(url.match(new RegExp("^\/" + contentDir + "\/"))){
+            //strip off the contentDirName prefix (its length plus two slashes)
+            this.serveContentFile(request, response);
+        }else {
+            response.writeHead(200, { 'Content-Type': 'text/plain'});
+            response.end("Hello");
+        }
+    },
+    
+    /**
+     * Extract the file name on it's own from a URL path
+     * 
+     * @param {String} url URL Path eg. /path/to/page.html?blie=blah 
+     * @return Filename on its own e.g. page.html
+     */
+    getFilenameFromURL: function(url) {
+        var filename = new String(url);
+        if(filename.lastIndexOf('/') !== -1) {
+            filename = filename.substring(filename.lastIndexOf('/')+1);
+        }
+
+        if(filename.indexOf("?") !== -1) {
+            filename = filename.substring(0, filename.indexOf("?"));
+        }
+        
+        return filename;
+    },
+    
+    serveContentFile: function(request, response) {
+        var contentDirName = UstadMobile.CONTENT_DIRECTORY;
+        var url = new String(request.url);
+        var fromSubDirURL = url.substring(contentDirName.length +2);
+        if(UstadMobile.getInstance().isNodeWebkit()) {
+            var fs = require("fs");
+            var path = require("path");
+            var mime = require("mime");
+            
+            var filename = this.getFilenameFromURL(fromSubDirURL);
+            
+            var mimeType = mime.lookup(filename);
+            
+            
+            var fileURI = path.join(UstadMobile.getInstance().contentDirURI,
+                fromSubDirURL);
+            fs.readFile(fileURI, function(err,data) {
+               if(err) {
+                   response.writeHead(404);
+                   response.end(JSON.stringify(err));
+               } 
+               
+               response.writeHead(200, { 'Content-Type': mimeType});
+               response.end(data);
+            });
+        }
     }
+    
     
     
 };

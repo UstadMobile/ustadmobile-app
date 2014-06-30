@@ -1,6 +1,6 @@
 {
   "name": "UstadMobile",
-  "main": "index.html",
+  "main" : "index.html",
   "user-agent" : "Mozilla/5.0 %osinfo NodeWebKit",
   "window" : {
     "frame" : true,

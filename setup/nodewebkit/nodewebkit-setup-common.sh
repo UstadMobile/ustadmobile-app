@@ -53,7 +53,10 @@ if [ -e "$THEMEFILE" ]; then
 fi
 
 echo "Zip $TARGETDIR/UstadMobile.nw on $(pwd)"
-FILELIST="*.html img css js jqm res locale ustad_version package.json"
+
+npm install mime
+
+FILELIST="*.html img css js jqm res locale ustad_version package.json node_modules"
 if [ "$ZIPMODE" == "normal" ]; then
     zip -r $TARGETDIR/UstadMobile.nw $FILELIST
 else
