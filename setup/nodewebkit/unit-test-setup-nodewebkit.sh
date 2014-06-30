@@ -6,10 +6,23 @@
 #
 NODEPORT=7079
 NWPATH=$(which nw)
+NODEJSCMD=$(which nodejs)
 
 if [ "$NWPATH" == "" ]; then
     echo "Cannot find nw in path - add nodewebkit to path and try again"
     exit 1
+fi
+
+if [ "$NODEJSCMD" != "" ]; then
+    NODEJSCMD=nodejs
+else
+    NODEJSCMD=$(which node)
+    if [ "$NODEJSCMD" == "" ]; then
+        echo "ERROR: Could not find nodejs server in path"
+        exit 1
+    else
+        NODEJSCMD=node
+    fi
 fi
 
 . ./nodewebkit-setup-common.sh $1 $2
@@ -27,7 +40,7 @@ else
 fi
 
 cd $WORKINGDIR
-nodejs $WORKINGDIR/../node-qunit-server/node-qunit-server.js $NODEPORT &
+$NODEJSCMD $WORKINGDIR/../node-qunit-server/node-qunit-server.js $NODEPORT &
 NODEPID=$!
 
 cd $TARGETDIR
