@@ -360,7 +360,7 @@ UstadMobileBookList.prototype = {
        console.log("dirReader OK for: " + dirEntry.fullPath);
        directoryReader.readEntries(umBookListObj.successDirectoryReader, 
            umBookListObj.failDirectoryReader);
-   },
+    },
 
     
     /*
@@ -556,6 +556,48 @@ UstadMobileBookList.prototype = {
    },
    
    /**
+    * Opens the course provided by courseIndex (index in coursesFound)
+    * 
+    * @param courseIndex {Number} index of coursoe in this.coursesFound
+    * @param callback {function} callback to run when course show happens - will provide param with display object (e.g. iframe)
+    * @param show {Boolean} true to show immediately, false otherwise
+    * @param onloadCallback {function} (Optional) callback to run when new content has loaded
+    */
+   openBLCourse: function(courseIndex, callback, show, onloadCallback) {
+       var umBookListObj = UstadMobileBookList.getInstance();
+       var courseObj = umBookListObj.coursesFound[courseIndex];
+       
+       if(UstadMobile.getInstance().isNodeWebkit()) {
+           var destDirectory = courseObj.coursePath.substring(0, 
+               courseObj.coursePath.lastIndexOf("/"));
+           destDirectory = UstadMobile.getInstance().removeFileProtoFromURL(
+                   destDirectory);
+           
+           var httpURL = UstadMobileHTTPServer.getInstance().getURLForCourseEntry(
+                   courseObj);
+           var copyJob = new UstadMobileAppToContentCopyJob(this.appFilesToCopyToContent, 
+               destDirectory, function() {
+                   //make an iframe with the content in it
+                   var iframeEl = $("<iframe src='" + httpURL + "'></iframe>");
+                   iframeEl.css("position", "absolute");
+                   iframeEl.css("width", "100%");
+                   iframeEl.css("height", "100%");
+                   iframeEl.css("z-index", "50000");
+                   if(show === false) {
+                       iframeEl.css("display", "none");
+                   }
+                   if(typeof onloadCallback !== "undefined" && onloadCallback != null) {
+                       iframeEl.load(onloadCallback);
+                   }
+                   
+                   $("BODY").prepend(iframeEl);
+                   callback(iframeEl);
+           });
+           copyJob.copyNextFile();
+       }
+   },
+   
+   /**
     * Open the given booklist page
     * @param courseIndex {Number} Index of the course object in UstadMobileBookList.coursesFound
     */
@@ -578,28 +620,8 @@ UstadMobileBookList.prototype = {
        }
        jsLoaded = false;
        if(UstadMobile.getInstance().isNodeWebkit()) {
-           //copy files 
-           var destDirectory = courseObj.coursePath.substring(0, 
-               courseObj.coursePath.lastIndexOf("/"));
-           destDirectory = UstadMobile.getInstance().removeFileProtoFromURL(
-                   destDirectory);
-           
-           var httpURL = UstadMobileHTTPServer.getInstance().getURLForCourseEntry(
-                   courseObj);
-           var copyJob = new UstadMobileAppToContentCopyJob(this.appFilesToCopyToContent, 
-               destDirectory, function() {
-                   //make an iframe with the content in it
-                   var iframeEl = $("<iframe src='" + httpURL + "'></iframe>");
-                   iframeEl.css("position", "absolute");
-                   iframeEl.css("width", "100%");
-                   iframeEl.css("height", "100%");
-                   iframeEl.css("z-index", "50000");
-                   
-                   $("BODY").prepend(iframeEl);
-                   
-                   //window.open(openFile, "_self");
-           });
-           copyJob.copyNextFile();
+           //use the open course handler
+           umBookListObj.openBLCourse(courseIndex, function() {}, true);
            return;
        }else {
            $.mobile.loading('show', {

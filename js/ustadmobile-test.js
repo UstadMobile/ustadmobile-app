@@ -78,7 +78,11 @@ console.log ("With Qunit logs in 01");
     QUnit.testTimeout = 10000;
     testUstadMobileCourseLoad();
     
+    //make sure internal http server (if any) is working
     testHTTPServer();
+    
+    //make sure courses open
+    testBookOpen();
     
 }());
 
@@ -125,6 +129,34 @@ function testLoadScript() {
             start();
         });
     });
+}
+
+var numBooksOpened = 0;
+function testBookOpen() {
+    if(UstadMobile.getInstance().isNodeWebkit()) {
+        asyncTest("Check all courses are available", function() {
+            expect(1);
+            var bookList = UstadMobileBookList.getInstance().coursesFound;
+
+            UstadMobile.getInstance().runAfterHTTPReady(function(){
+                for(var i = 0; i < bookList.length; i++) {
+                    UstadMobileBookList.getInstance().openBLCourse(i,function() {
+                        console.log("course display created");
+                    }, false, function(frameEl) {
+                        console.log("Loaded  " + $(frameEl).attr('src'));
+                        $(frameEl).remove();
+                        numBooksOpened++;
+                        if(numBooksOpened === bookList.length) {
+                            ok(numBooksOpened ===bookList.length, "All " 
+                                    + bookList.length 
+                                    + " packages in list triggered onload for frame");
+                            start();
+                        }
+                    });
+                }
+            });
+        });
+    }
 }
 
 //This global is used to see when we got ajax back from all the courses
