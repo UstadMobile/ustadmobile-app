@@ -63,20 +63,8 @@ function localStorageToFile(bookpath, localStorageVariable, openFile) {
             + localStorageVariable, +" openFile: " + openFile);
     fileToOpen = openFile;
     var localStorageFilePath;
-    if (navigator.userAgent.indexOf("TideSDK") !== -1) {
-        if (window.navigator.userAgent.indexOf("Windows") != -1) {
-            console.log("TideSDK: You are using WINDOWS.");
-            localStorageFilePath = bookpath + "\\" + localStorageVariable; // If js, should end with .js
-        } else {
-            console.log("TideSDK: You are NOT using WINDOWS.");
-            localStorageFilePath = bookpath + "/" + localStorageVariable; // If js, should end with .js
-        }
-        //var localStorageFilePath = bookpath + "\\" + localStorageVariable; // If js, should end with .js
-        //Check if this is different for Windows and Linux
-        //var localStorageFilePath = bookpath + "/" + localStorageVariable; // If js, should end with .js
-    } else {
-        var localStorageFilePath = bookpath + "/" + localStorageVariable; // If js, should end with .js
-    }
+    
+    var localStorageFilePath = bookpath + "/" + localStorageVariable; // If js, should end with .js
 
     console.log(" file to be made: " + localStorageFilePath);
     //Maybe add checks if localStorage exists..
@@ -95,28 +83,7 @@ function localStorageToFile(bookpath, localStorageVariable, openFile) {
 
             }, notLS2FFileSystem);
 
-        } else if (navigator.userAgent.indexOf("TideSDK") !== -1) {
-            console.log("Detected Desktop - TideSDK. Continuing in localStoragetoFile.js..");
-
-            //Make the file
-            var destinationFile = Ti.Filesystem.getFile(localStorageFilePath);
-            if (destinationFile.exists() == false && destinationFile.touch() == false) {
-                alert('We could not create the file: ' + localStorageFilePath + ' so we must abort.');
-                Y.Global.fire('download:error');
-                return;
-            } else {
-                debugLog("Successfully created file: " + localStorageFilePath);
-
-                //Now WRITE TO FILE:
-
-                //destinationFile.open(Ti.Filesystem.MODE_WRITE);
-                //destinationFile.write(localStorageValue);
-                //destinationFile.close();
-
-                //AFTER WRITE SUCCESS (CHECK IT):
-                window.open(fileToOpen, '_self').trigger("create");
-            }
-        } else { //if all other devices except blackberry 10
+        }else { //if all other devices except blackberry 10
             
             window.resolveLocalFileSystemURL(bookpath,
                     function(fileEntry) {

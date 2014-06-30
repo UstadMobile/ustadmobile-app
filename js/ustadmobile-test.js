@@ -134,7 +134,7 @@ function testLoadScript() {
 var numBooksOpened = 0;
 function testBookOpen() {
     if(UstadMobile.getInstance().isNodeWebkit()) {
-        asyncTest("Check all courses are available", function() {
+        asyncTest("Check book open triggers onload event for content page", function() {
             expect(1);
             var bookList = UstadMobileBookList.getInstance().coursesFound;
 
