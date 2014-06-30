@@ -321,14 +321,14 @@ UstadMobile.prototype = {
         if(filePath.substring(0, filePrefix.length) == filePrefix) {
             //check how many / slashes we need rid of
             var endPos = filePrefix.length;
-            for(; filePath.charAt(endPos+1) != '/'; endPos++) {
+            for(; filePath.charAt(endPos+1) == '/'; endPos++) {
                 //do nothing
             }
             
             var pathFixed = filePath.substring(endPos);
             return pathFixed;
         }else {
-            return path;
+            return filePath;
         }
     },
     

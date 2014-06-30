@@ -175,9 +175,18 @@ UstadMobileHTTPServer.prototype = {
                response.end(data);
             });
         }
+    },
+    
+    /**
+     * Get the full absolute HTTP URL for a course on this HTTP server
+     * 
+     * @param {UstadMobileCourseEntry} courseEntryObj
+     * @returns {String} Absolute HTTP URL for the course on this server
+     */
+    getURLForCourseEntry: function(courseEntryObj) {
+        return "http://" + this.httpHostname + ":" + this.httpPort + "/"
+            + UstadMobile.CONTENT_DIRECTORY + "/" + courseEntryObj.getHttpURI();
     }
-    
-    
     
 };
 

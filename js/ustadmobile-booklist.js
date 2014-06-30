@@ -149,6 +149,13 @@ UstadMobileBookList.getInstance = function() {
 UstadMobileBookList.prototype = {
     
     /**
+     *  The URL of the next page to open, used by nodewebkit code
+     *  
+     * @type {String}
+     */
+    nextPageToOpen: "",
+    
+    /**
      * Files that should be copied from the app into the content
      * Map in the form of src : dest
      * 
@@ -379,13 +386,18 @@ UstadMobileBookList.prototype = {
             var fileFullPath = "file://" + fileEntryEsc;
             var courseEntryObj = new UstadMobileCourseEntry(folderName, "", 
                 fileFullPath, null, folderName);
+            
+            var courseIndex = umBookListObj.coursesFound.length;
             umBookListObj.coursesFound.push(courseEntryObj);
             
             
+            var courseHTTPURL = UstadMobileHTTPServer.getInstance().getURLForCourseEntry(
+                            courseEntryObj);
+            
             $("#UMBookList").append(
                         "<a onclick='UstadMobileBookList.getInstance().openBLPage(\"" 
-                        + fileFullPath 
-                        + "\" \, \"normal\" )' href=\"#\" data-role=\"button\" "
+                        + courseIndex
+                        + "\", \"normal\" )' href=\"#\" data-role=\"button\" "
                         + "data-icon=\"star\" data-ajax=\"false\">" + folderName 
                         + "</a>").trigger("create");
         }else {
@@ -397,12 +409,13 @@ UstadMobileBookList.prototype = {
                 debugLog("The full path = " + parentEntry.fullPath);
                 folderName = parentEntry.name;
                 var courseEntryObj = new UstadMobileCourseEntry(folderName, "",
-                    fileFullPath, null);
-                umBookListObj.coursesFound.push(folderName);
+                    fileFullPath, null, folderName);
+                var courseIndex = umBookListObj.coursesFound.length;
+                umBookListObj.coursesFound.push(courseEntryObj);
                 
                 $("#UMBookList").append(
                         "<a onclick='UstadMobileBookList.getInstance().openBLPage(\"" 
-                        + fileFullPath 
+                        + courseIndex 
                         + "\", \"normal\" )' href=\"#\" data-role=\"button\" "
                         + "data-icon=\"star\" data-ajax=\"false\">" + folderName 
                         + "</a>").trigger("create");
@@ -542,13 +555,19 @@ UstadMobileBookList.prototype = {
        
    },
    
-   /*
-    Simple Open page wrapper (+ sets language of the opened book ?)
+   /**
+    * Open the given booklist page
+    * @param courseIndex {Number} Index of the course object in UstadMobileBookList.coursesFound
     */
-   openBLPage: function(openFile, mode) {
+   openBLPage: function(courseIndex, mode) {
        var umBookListObj = UstadMobileBookList.getInstance();
+       var courseObj = umBookListObj.coursesFound[courseIndex];
+       var openFile = courseObj.coursePath;
+       
+       umBookListObj.currentBookPath = openFile;
        var bookpath = umBookListObj.currentBookPath.substring(0, 
                 umBookListObj.currentBookPath.lastIndexOf("/"));
+       
        
        if (mode == "test") {
            CONTENT_MODE = mode;
@@ -557,27 +576,41 @@ UstadMobileBookList.prototype = {
            CONTENT_MODE = mode;
            console.log("booklist: The CONTENT_MODE is normal: " + CONTENT_MODE);
        }
-       $.mobile.loading('show', {
-           text: x_('Ustad Mobile: Loading..'),
-           textVisible: true,
-           theme: 'b',
-           html: ""}
-       );
        jsLoaded = false;
        if(UstadMobile.getInstance().isNodeWebkit()) {
            //copy files 
-           var destDirectory = openFile.substring(0, openFile.lastIndexOf("/"));
+           var destDirectory = courseObj.coursePath.substring(0, 
+               courseObj.coursePath.lastIndexOf("/"));
            destDirectory = UstadMobile.getInstance().removeFileProtoFromURL(
                    destDirectory);
+           
+           var httpURL = UstadMobileHTTPServer.getInstance().getURLForCourseEntry(
+                   courseObj);
            var copyJob = new UstadMobileAppToContentCopyJob(this.appFilesToCopyToContent, 
                destDirectory, function() {
-                    window.open(openFile, "_self");
+                   //make an iframe with the content in it
+                   var iframeEl = $("<iframe src='" + httpURL + "'></iframe>");
+                   iframeEl.css("position", "absolute");
+                   iframeEl.css("width", "100%");
+                   iframeEl.css("height", "100%");
+                   iframeEl.css("z-index", "50000");
+                   
+                   $("BODY").prepend(iframeEl);
+                   
+                   //window.open(openFile, "_self");
            });
            copyJob.copyNextFile();
            return;
        }else {
+           $.mobile.loading('show', {
+                text: x_('Ustad Mobile: Loading..'),
+                textVisible: true,
+                theme: 'b',
+                html: ""}
+           );
+       
            console.log("Mobile Device detected. Continuing..");
-           umBookListObj.currentBookPath = openFile;
+           
            console.log("Book URL that UM is going to is: " 
                    + umBookListObj.currentBookPath);
            //1. We need to create a file: ustadmobile-settings.js
@@ -628,9 +661,19 @@ function UstadMobileCourseEntry(courseTitle, courseDesc, coursePath, coverImg, r
     if(typeof relativeURI !== "undefined" && relativeURI != null) {
         this.relativeURI = relativeURI;
     }
-    
-    
 }
+
+UstadMobileCourseEntry.prototype = {
+    
+    /**
+     * 
+     * @return {String} URL relative to /ustadmobileContent/
+     */
+    getHttpURI : function() {
+        return this.relativeURI + "/exetoc.html";
+    }
+}
+
 
 function UstadMobileAppToContentCopyJob(fileDestMap, destDir, completeCallback) {
     this.fileDestMap = fileDestMap;
