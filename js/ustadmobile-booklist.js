@@ -579,6 +579,7 @@ UstadMobileBookList.prototype = {
                destDirectory, function() {
                    //make an iframe with the content in it
                    var iframeEl = $("<iframe src='" + httpURL + "'></iframe>");
+                   iframeEl.css("border-width", "0px");
                    iframeEl.css("position", "absolute");
                    iframeEl.css("width", "100%");
                    iframeEl.css("height", "100%");
