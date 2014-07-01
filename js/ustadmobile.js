@@ -388,10 +388,19 @@ UstadMobile.prototype = {
      */
     removeFileProtoFromURL: function(filePath) {
         var filePrefix = "file:";
+        var um = UstadMobile.getInstance();
         if(filePath.substring(0, filePrefix.length) == filePrefix) {
             //check how many / slashes we need rid of
             var endPos = filePrefix.length;
-            for(; filePath.charAt(endPos+1) == '/'; endPos++) {
+            
+            //in Unix file:/// should change to just / , in Windoze 
+            //there should not be a leading slash
+            var numSlashesAllowed = 1;
+            if(um.getNodeWebKitOS() == UstadMobile.OS_WINDOWS) {
+                numSlashesAllowed = 0;
+            }
+            
+            for(; filePath.charAt(endPos+numSlashesAllowed) == '/'; endPos++) {
                 //do nothing
             }
             
