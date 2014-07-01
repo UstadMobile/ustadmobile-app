@@ -124,6 +124,10 @@ UstadMobileHTTPServer.prototype = {
         if(url.match(new RegExp("^\/" + contentDir + "\/"))){
             //strip off the contentDirName prefix (its length plus two slashes)
             this.serveContentFile(request, response);
+        }else if(url === "/closeiframe") {
+            UstadMobileBookList.getInstance().closeBlCourseIframe();
+            response.writeHead(200, { 'Content-Type': 'text/plain'});
+            response.end("Killed Iframe");
         }else {
             response.writeHead(200, { 'Content-Type': 'text/plain'});
             response.end("Hello");

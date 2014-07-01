@@ -145,6 +145,8 @@ UstadMobileBookList.getInstance = function() {
     return ustadMobileBookListInstance;
 };
 
+/** Classname used to find iframes we made for content */
+UstadMobileBookList.IRAME_CLASSNAME = "umcontentiframe";
 
 UstadMobileBookList.prototype = {
     
@@ -583,6 +585,8 @@ UstadMobileBookList.prototype = {
                    iframeEl.css("width", "100%");
                    iframeEl.css("height", "100%");
                    iframeEl.css("z-index", "50000");
+                   //so it can be found to close it
+                   iframeEl.addClass(UstadMobileBookList.IRAME_CLASSNAME);
                    if(show === false) {
                        iframeEl.css("display", "none");
                    }
@@ -595,6 +599,19 @@ UstadMobileBookList.prototype = {
            });
            copyJob.copyNextFile();
        }
+   },
+   
+   /**
+    * Close any iframes that are being used to display content
+    * 
+    * @return {Number} number of iframes closed
+    */
+   closeBlCourseIframe: function() {
+       var elResult = $("." + UstadMobileBookList.IRAME_CLASSNAME);
+       var numRemoved = elResult.length;
+       elResult.remove();
+       
+       return numRemoved;
    },
    
    /**

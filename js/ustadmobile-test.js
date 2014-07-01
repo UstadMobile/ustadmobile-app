@@ -84,6 +84,9 @@ console.log ("With Qunit logs in 01");
     //make sure courses open
     testBookOpen();
     
+    //make sure if we are using iframes that they can be closed
+    testCloseCourseIframe();
+    
 }());
 
 /**
@@ -158,6 +161,26 @@ function testBookOpen() {
         });
     }
 }
+
+function testCloseCourseIframe() {
+    if(UstadMobile.getInstance().isNodeWebkit()) {
+        asyncTest("Check can close content iframe", function() {
+            expect(1);
+            UstadMobile.getInstance().runAfterHTTPReady(function(){
+                UstadMobileBookList.getInstance().openBLCourse(0,function() {
+                        console.log("course display created - lets close it");
+                    }, false, function(frameEl) {
+                        //close it
+                        var framesClosed = 
+                            UstadMobileBookList.getInstance().closeBlCourseIframe();
+                        ok(framesClosed > 0, "Found and closed content iframe");
+                        start();
+                    });
+            });
+        });
+    }
+}
+
 
 //This global is used to see when we got ajax back from all the courses
 var numBooksLoadedCount = 0;
