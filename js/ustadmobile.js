@@ -98,6 +98,28 @@ UstadMobile.OS_LINUX = 0;
 UstadMobile.OS_WINDOWS = 1;
 
 
+/**
+ * Constant telling UstadMobile to get the in content menu contents from the
+ * content directory itself - use for NodeWebKit
+ * 
+ * @type {Number} 
+ */
+UstadMobile.MENUMODE_USECONTENTDIR = 0;
+
+/**
+ * Constant representing the runtime config key for the menu
+ * 
+ * @type {String}
+ */
+UstadMobile.RUNTIME_MENUMODE = "ustad_menumode";
+
+/**
+ * Constant: URL for Internal HTTP server to use to close content iframe
+ * 
+ * @type String
+ */
+UstadMobile.URL_CLOSEIFRAME = "/closeiframe";
+
 UstadMobile.prototype = {
     
     /**
@@ -149,6 +171,14 @@ UstadMobile.prototype = {
      * @type {String}
      */
     contentDirURI: null,
+    
+    /**
+     * Information needed for the running of the app - can be set by a file
+     * that gets lazy loaded.
+     * 
+     * @returns {Object}
+     */
+    runtimeInfo: {},
     
     showAppMenu: function() {
         $.mobile.changePage("ustadmobile_menupage_app.html");
@@ -212,7 +242,47 @@ UstadMobile.prototype = {
         this.loadUMScript("js/ustadmobile-getpackages.js");
         this.loadUMScript("js/ustadmobile-http-server.js", function() {
             UstadMobileHTTPServer.getInstance().start(3000);
+        });     
+    },
+    
+    /**
+     * Load ustad_runtime.json if it exists to acquire hints (e.g. path back
+     * to the app directory etc.
+     * 
+     * @param runtimeCallback {function} callback to run on fail/success passes data, textStatus, jqXHR from $.ajax
+     */
+    loadRuntimeInfo: function(runtimeCallback) {
+        $.ajax({
+            url: "ustad_runtime.json",
+            dataType: "json"
+        }).done(function(data, textStatus, jqXHR) {
+            UstadMobile.getInstance().runtimeInfo = data;
+            if(data['baseURL']) {
+                localStorage.setItem("baseURL", data['baseURL']);
+            }
+            if(typeof runtimeCallback !== "undefined" && runtimeCallback !== null) {
+                runtimeCallback(data, textStatus, jqXHR);
+            }
+        }).fail(function(data, textStatus, jqXHR) {
+            console.log("Package does not have ustad_runtime.json");
+            if(typeof runtimeCallback !== "undefined" && runtimeCallback !== null) {
+                runtimeCallback(data, textStatus, jqXHR);
+            }
         });
+    },
+    
+    /**
+     *  Get a runtime value, or return null if this value is not set
+     *  
+     *  @param key variable keyname 
+     *  @return the value if set, null otherwise
+     */
+    getRuntimeInfoVal: function(key) {
+        if(typeof this.runtimeInfo[key] !== "undefined") {
+            return this.runtimeInfo[key];
+        }else {
+            return null;
+        }
     },
     
     /**
@@ -496,6 +566,7 @@ var messages = [];
 //default lang
 
 UstadMobile.getInstance().loadScripts();
+UstadMobile.getInstance().loadRuntimeInfo();
 
 //Load the panel when document is ready
 $(function() {
@@ -688,17 +759,9 @@ function callOnLanguageDeviceReady(){
     }else if(navigator.userAgent.indexOf("Chrome") !== -1){
         console.log("Detected Chrome/Chromium Browser");
         onLanguageContentReady();
-    }else if(navigator.userAgent.indexOf("TideSDK") !== -1){
-        console.log("[COURSE] Desktop - TideSDK detected in course content.");
-        if (window.navigator.userAgent.indexOf("Windows") != -1) {
-            console.log("[COURSE] TideSDK: You are using WINDOWS.");
-            onLanguageContentReady();
-        }else{
-            console.log("[COURSE] TideSDK: You are NOT using WINDOWS.");
-            onLanguageContentReady();
-        }    
     }else{   
         console.log("Could not verify the platform.");
+        //onLanguageContentReady();
         // More to add: IE10: MSIE 10, etc.
         //alert("Could not verify your device or platform. Your device isn't tested with our developers. Error. Contact an ustad mobile developer.");
     }
@@ -1117,7 +1180,14 @@ function exeMenuPageOpen() {
     debugLog("Ustad Mobile Content: You will go into: exeMenuPage " + exeMenuPage2);
     
     var exeMenuLink2 = null;
-    if (navigator.userAgent.indexOf("Android") !== -1 || UstadMobile.getInstance().isNodeWebkit()) {
+    
+    if(UstadMobile.getInstance().getRuntimeInfoVal(UstadMobile.RUNTIME_MENUMODE) !== null) {
+        //use the copy that is in our own directory, this was probably copied in by the app
+        var menuLinkMode = UstadMobile.getInstance().runtimeInfo[UstadMobile.RUNTIME_MENUMODE];
+        if(menuLinkMode === UstadMobile.MENUMODE_USECONTENTDIR) {
+            exeMenuLink2 = exeMenuPage2;
+        }
+    }else if (navigator.userAgent.indexOf("Android") !== -1 || UstadMobile.getInstance().isNodeWebkit()) {
         exeMenuLink2 = localStorage.getItem("baseURL") + "/" + exeMenuPage2;
         debugLog("Ustad Mobile Content: ANDROID: You will go into: exeMenuLink " + exeMenuLink2);
     } else if(UstadMobile.getInstance().isNodeWebkit()){
@@ -1139,20 +1209,8 @@ function exeMenuPageOpen() {
         exeMenuLink2 = localStorage.getItem("baseURL") + "/" + exeMenuPage2;
         debugLog("Ustad Mobile Content: iOS: You will go into: exeMenuLink " + exeMenuLink2);
         //alert("exeMenuLink: " + exeMenuLink2);
-    } else if (navigator.userAgent.indexOf("TideSDK") !== -1) {
-        console.log("Detected Desktop - TideSDK. Continuing in [CONTENT]");
-        if (window.navigator.userAgent.indexOf("Windows") != -1) {
-            console.log("TideSDK: You are using WINDOWS.");
-            exeMenuLink2 = "app://" + exeMenuPage2;
-            debugLog("Ustad Mobile Content: Deskop-Tide-SDK-NonWindows: You will go into: exeMenuLink " + exeMenuLink2);
-        } else {
-            console.log("TideSDK: You are NOT using WINDOWS.");
-            //var exeMenuLink2 = localStorage.getItem("baseURL") + "/" + exeMenuPage2;
-            //var baseURL = Ti.API.Application.getResourcesPath();
-            //var exeMenuLink2 = baseURL + "/" + exeMenuPage2;
-            exeMenuLink2 = "app://" + exeMenuPage2;
-            debugLog("Ustad Mobile Content: Deskop-Tide-SDK-NonWindows: You will go into: exeMenuLink " + exeMenuLink2);
-        }
+    } else if(localStorage.getItem("baseURL")) {
+        exeMenuLink2 = localStorage.getItem("baseURL") + "/" + exeMenuPage2;
     } else {
         console.log("Unable to detect your device platform. Error.");
         //alert("Unable to get platform..");
@@ -1280,6 +1338,11 @@ function openPage2(openFile){
 function openBookListPage(){    
     if(UstadMobile.getInstance().isNodeWebkit()) {
         window.open("ustadmobile_booklist.html", "_self");
+    }else if(UstadMobile.getInstance().getRuntimeInfoVal(UstadMobile.RUNTIME_MENUMODE) !== null){
+        $.ajax({
+           url : UstadMobile.URL_CLOSEIFRAME,
+           dataType: "text"
+        });
     }else {
         if(!isPageOpen("ustadmobile_booklist.html")) {
             openPage2("ustadmobile_booklist.html");

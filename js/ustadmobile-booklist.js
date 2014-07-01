@@ -165,7 +165,8 @@ UstadMobileBookList.prototype = {
      */
     appFilesToCopyToContent: {"js/ustadmobile.js" : "ustadmobile.js",
         "js/ustadmobile-booklist.js" :  "ustadmobile-booklist.js",
-        "jqm/jqm-app-theme.css" : "jqm-app-theme.css"
+        "jqm/jqm-app-theme.css" : "jqm-app-theme.css",
+        "ustadmobile_menupage_content.html" : "ustadmobile_menupage_content.html"
     },
     
     /** 
@@ -737,6 +738,17 @@ UstadMobileAppToContentCopyJob.prototype = {
             var copyJob = this;
             
             var appWorkingDir = process.cwd();
+            
+            var runtimeInfo = { 
+                "baseURL": appWorkingDir,
+            };
+            
+            runtimeInfo[UstadMobile.RUNTIME_MENUMODE] 
+                    = UstadMobile.MENUMODE_USECONTENTDIR;
+            
+            
+            fs.writeFileSync(path.join(this.destDir, "ustad_runtime.json"), 
+                JSON.stringify(runtimeInfo));
             
             if(this.currentFileIndex < this.fileList.length) {
                 var srcFile = this.fileList[this.currentFileIndex];

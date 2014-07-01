@@ -60,6 +60,7 @@ UstadMobileHTTPServer.getInstance = function() {
     return ustadMobileHTTPServerInstance;
 };
 
+
 UstadMobileHTTPServer.prototype = {
     
     /** Server object used with NodeJS*/
@@ -124,7 +125,7 @@ UstadMobileHTTPServer.prototype = {
         if(url.match(new RegExp("^\/" + contentDir + "\/"))){
             //strip off the contentDirName prefix (its length plus two slashes)
             this.serveContentFile(request, response);
-        }else if(url === "/closeiframe") {
+        }else if(url === UstadMobile.URL_CLOSEIFRAME) {
             UstadMobileBookList.getInstance().closeBlCourseIframe();
             response.writeHead(200, { 'Content-Type': 'text/plain'});
             response.end("Killed Iframe");
