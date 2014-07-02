@@ -129,6 +129,12 @@ UstadMobileHTTPServer.prototype = {
             UstadMobileBookList.getInstance().closeBlCourseIframe();
             response.writeHead(200, { 'Content-Type': 'text/plain'});
             response.end("Killed Iframe");
+        }else if(url.match(new RegExp("^\/browse\/"))) {
+            var browseDir = "/browse/";
+            var launchURL = decodeURI(url.substring(browseDir.length));
+            require("nw.gui").Shell.openExternal(launchURL);
+            response.writeHead(200, { 'Content-Type': 'text/plain'});
+            response.end("Launched browser to " + launchURL);
         }else {
             response.writeHead(200, { 'Content-Type': 'text/plain'});
             response.end("Hello");

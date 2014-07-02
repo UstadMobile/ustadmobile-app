@@ -596,6 +596,7 @@ UstadMobileBookList.prototype = {
                        iframeEl.load(onloadCallback);
                    }
                    
+                   $(".ustadbooklistpage").css("display", "none");
                    $("BODY").prepend(iframeEl);
                    callback(iframeEl);
            });
@@ -610,8 +611,11 @@ UstadMobileBookList.prototype = {
     */
    closeBlCourseIframe: function() {
        var elResult = $("." + UstadMobileBookList.IRAME_CLASSNAME);
+       $(".ustadbooklistpage").css("display", "inherit");
+       
        var numRemoved = elResult.length;
        elResult.remove();
+       
        
        return numRemoved;
    },

@@ -804,6 +804,21 @@ $(document).on("pagebeforecreate", function(event, ui) {
                     });
                 }
             });
+            
+            $("A").each(function() {
+                var href = $(this).attr("href");
+                if(typeof href !== "undefined" && href != null){
+                    if(href.substring(0,7)==="http://") {
+                        $(this).attr("href", "#");
+                        $(this).on("click", function() {
+                            $.ajax({
+                                url: "/browse/" + encodeURI(href),
+                                dataType: "text"
+                            });
+                        });
+                    }
+                }
+            });
         }
     });
     
