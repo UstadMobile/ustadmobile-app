@@ -791,8 +791,17 @@ $(document).on("pagebeforecreate", function(event, ui) {
         if(UstadMobile.getInstance().getRuntimeInfoVal("FixAttachmentLinks") === true) {
             $(".FileAttachIdeviceInc .exeFileList A").each(function() {
                 var href= $(this).attr('href');
-                if(href.indexOf("download=true") === -1) {
-                    $(this).attr("href", href + "?download=true");
+                if(href.indexOf("startdownload=true") === -1) {
+                    var ajaxHref = href + "?startdownload=true";
+                    $(this).attr("href", "#");
+                    $(this).attr("data-startdownload-url", ajaxHref);
+                    $(this).on("click", function() {
+                        var hrefToOpen = $(this).attr("data-startdownload-url");
+                        $.ajax({
+                            url: hrefToOpen,
+                            dataType : "text"
+                        });
+                    });
                 }
             });
         }

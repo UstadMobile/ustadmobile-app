@@ -193,6 +193,18 @@ UstadMobileHTTPServer.prototype = {
                         + filename;
             }
             
+            //check and see if this is just an ajax call for NWGUI to launch browser
+            if(httpQuery === "startdownload=true") {
+                var fullURL = "http://" + this.httpHostname + ":" + this.httpPort 
+                    + "/" + UstadMobile.CONTENT_DIRECTORY + "/" + filePath 
+                    + "?download=true";
+                require("nw.gui").Shell.openExternal(fullURL);
+                response.setHeader("Content-Type", "text/plain");
+                response.writeHead(200);
+                response.end("Launched browser to " + fullURL);
+                return;
+            }
+            
             var fileURI = path.join(UstadMobile.getInstance().contentDirURI,
                 decodeURI(filePath));
             fs.readFile(fileURI, function(err,data) {
