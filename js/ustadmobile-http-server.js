@@ -121,9 +121,9 @@ UstadMobileHTTPServer.prototype = {
     handleRequest: function(request, response) {
         var url = request.url;
         var contentDir = UstadMobile.CONTENT_DIRECTORY;
+        var attachPostfix = UstadMobile.HTTP_ATTACHMENT_POSTFIX;
         
         if(url.match(new RegExp("^\/" + contentDir + "\/"))){
-            //strip off the contentDirName prefix (its length plus two slashes)
             this.serveContentFile(request, response);
         }else if(url === UstadMobile.URL_CLOSEIFRAME) {
             UstadMobileBookList.getInstance().closeBlCourseIframe();
@@ -154,30 +154,56 @@ UstadMobileHTTPServer.prototype = {
         return filename;
     },
     
-    serveContentFile: function(request, response) {
+    /**
+     * 
+     * @param {type} request
+     * @param {type} response
+     * @returns {undefined}
+     */
+    serveContentFile: function(request, response, headers) {
         var contentDirName = UstadMobile.CONTENT_DIRECTORY;
         var url = new String(request.url);
-        var fromSubDirURL = url.substring(contentDirName.length +2);
+        var positionOfContentDir = url.indexOf("/"+contentDirName);
+        var fromSubDirURL = url.substring(contentDirName.length + 2 
+                + positionOfContentDir);
+        var httpHeaders = {};
+        
+        var httpQuery = "";
+        if(url.indexOf("?") !== -1) {
+            httpQuery = url.substring(url.indexOf("?")+1);
+        }
+        
         if(UstadMobile.getInstance().isNodeWebkit()) {
             var fs = require("fs");
             var path = require("path");
             var mime = require("mime");
             
+            
             var filename = this.getFilenameFromURL(fromSubDirURL);
             
             var mimeType = mime.lookup(filename);
             
+            var filePath = fromSubDirURL;
+            if(filePath.indexOf("?") !== -1) {
+                filePath = filePath.substring(0, filePath.indexOf("?"));
+            }
+            
+            if(httpQuery === "download=true") {
+                httpHeaders['Content-Disposition'] = "attachment; filename=" 
+                        + filename;
+            }
             
             var fileURI = path.join(UstadMobile.getInstance().contentDirURI,
-                fromSubDirURL);
+                decodeURI(filePath));
             fs.readFile(fileURI, function(err,data) {
                if(err) {
                    response.writeHead(404);
                    response.end(JSON.stringify(err));
-               } 
-               
-               response.writeHead(200, { 'Content-Type': mimeType});
-               response.end(data);
+               } else {
+                   response.setHeader("Content-Type", mimeType);
+                   response.writeHead(200, httpHeaders);
+                   response.end(data);
+               }
             });
         }
     },

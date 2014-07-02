@@ -746,7 +746,7 @@ UstadMobileAppToContentCopyJob.prototype = {
             
             runtimeInfo[UstadMobile.RUNTIME_MENUMODE] 
                     = UstadMobile.MENUMODE_USECONTENTDIR;
-            
+            runtimeInfo['FixAttachmentLinks'] = true;
             
             fs.writeFileSync(path.join(this.destDir, "ustad_runtime.json"), 
                 JSON.stringify(runtimeInfo));

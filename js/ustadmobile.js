@@ -78,6 +78,14 @@ UstadMobile.getInstance = function() {
 UstadMobile.CONTENT_DIRECTORY = "ustadmobileContent";
 
 /**
+ * Constant: the prefix to add to force an attachment to download for save-as
+ * on the HTTP server
+ * 
+ * @type String
+ */
+UstadMobile.HTTP_ATTACHMENT_POSTFIX = "ustad_attachment_download"
+
+/**
  * Constant: The subdirectory, under CONTENT_DIRECTORY where in progress
  * downloads are carried out until complete
  * 
@@ -180,6 +188,20 @@ UstadMobile.prototype = {
      */
     runtimeInfo: {},
     
+    /**
+     * Whether or not the runtime info has loaded
+     * 
+     * @type Boolean
+     */
+    runtimeInfoLoaded : false,
+    
+    /**
+     * List of functions that need to run once we have loaded runtime info
+     * @returns {undefined}
+     */
+    pendingRuntimeInfoLoadedListeners: [],
+    
+    
     showAppMenu: function() {
         $.mobile.changePage("ustadmobile_menupage_app.html");
     },
@@ -257,18 +279,44 @@ UstadMobile.prototype = {
             dataType: "json"
         }).done(function(data, textStatus, jqXHR) {
             UstadMobile.getInstance().runtimeInfo = data;
+            UstadMobile.getInstance().runtimeInfoLoaded = true;
             if(data['baseURL']) {
                 localStorage.setItem("baseURL", data['baseURL']);
             }
             if(typeof runtimeCallback !== "undefined" && runtimeCallback !== null) {
                 runtimeCallback(data, textStatus, jqXHR);
             }
+            UstadMobile.getInstance().fireRuntimeInfoLoadedEvent();
         }).fail(function(data, textStatus, jqXHR) {
+            UstadMobile.getInstance().runtimeInfoLoaded = true;
             console.log("Package does not have ustad_runtime.json");
             if(typeof runtimeCallback !== "undefined" && runtimeCallback !== null) {
                 runtimeCallback(data, textStatus, jqXHR);
             }
+            UstadMobile.getInstance().fireRuntimeInfoLoadedEvent();
         });
+    },
+    
+    /**
+     * Run this once the runtime info has loaded (or failed to load)
+     * @param {function} callback
+     */
+    runAfterRuntimeInfoLoaded: function(callback) {
+        if(this.runtimeInfoLoaded) {
+            callback();
+        }else {
+            this.pendingRuntimeInfoLoadedListeners.push(callback);
+        }
+    },
+    
+    /**
+     * Run all pending listeners
+     */
+    fireRuntimeInfoLoadedEvent: function() {
+        for(var i = 0; i < this.pendingRuntimeInfoLoadedListeners.length; i++) {
+            var fn = this.pendingRuntimeInfoLoadedListeners.pop();
+            fn();
+        }
     },
     
     /**
@@ -703,6 +751,11 @@ $(document).on("pagebeforecreate", function(event, ui) { //pageinit gets trigger
  accessibility is handled in eXe.  For JQueryMobile purposes - put
  whole answer inside label element, fix up floats/width etc.
 */
+
+/*
+ * Fix issue of download links if we are using NodeWebKit, depending on the runtime
+ * settings
+ */
 $(document).on("pagebeforecreate", function(event, ui) {
     var fixItFunction = function() {
         var alreadyFixed=$(this).attr("data-exefixed");
@@ -733,6 +786,18 @@ $(document).on("pagebeforecreate", function(event, ui) {
     };
     
     $(".MultichoiceIdevice LABEL, .MultiSelectIdevice LABEL").each(fixItFunction);
+    
+    UstadMobile.getInstance().runAfterRuntimeInfoLoaded(function() {
+        if(UstadMobile.getInstance().getRuntimeInfoVal("FixAttachmentLinks") === true) {
+            $(".FileAttachIdeviceInc .exeFileList A").each(function() {
+                var href= $(this).attr('href');
+                if(href.indexOf("download=true") === -1) {
+                    $(this).attr("href", href + "?download=true");
+                }
+            });
+        }
+    });
+    
 });
 
 
