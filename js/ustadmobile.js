@@ -1420,7 +1420,8 @@ function openPage2(openFile){
 //function that opens Books. this uses openPage2() because it needs to reload the page.
 function openBookListPage(){    
     if(UstadMobile.getInstance().isNodeWebkit()) {
-        window.open("ustadmobile_booklist.html", "_self");
+        openMenuLink("ustadmobile_booklist.html", "slide");
+        //window.open("ustadmobile_booklist.html", "_self");
     }else if(UstadMobile.getInstance().getRuntimeInfoVal(UstadMobile.RUNTIME_MENUMODE) !== null){
         $.ajax({
            url : UstadMobile.URL_CLOSEIFRAME,
