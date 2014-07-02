@@ -1,5 +1,5 @@
 #!/bin/bash
 
 
-WINPACK_URL="http://dl.node-webkit.org/v0.9.2/node-webkit-v0.9.2-win-ia32.zip"
+WINPACK_URL="http://www.ustadmobile.com/nodewebkit/node-webkit-v0.10.0-rc1-win-ia32-ustad-ffmpeg.zip"
 
