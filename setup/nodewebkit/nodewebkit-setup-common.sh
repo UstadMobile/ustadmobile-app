@@ -48,8 +48,12 @@ cp $WORKINGDIR/package.json $TARGETDIR
 cd $TARGETDIR
 
 if [ -e "$THEMEFILE" ]; then
-	echo "Apply Theme $THEMEFILE"
-	unzip -qo $THEMEFILE
+    echo "Apply Theme $THEMEFILE"
+    if [ "$ZIPMODE" == "normal" ]; then
+        unzip -qo $THEMEFILE
+    else
+        7z x -tzip -y $THEMEFILE
+    fi
 fi
 
 echo "Zip $TARGETDIR/UstadMobile.nw on $(pwd)"
