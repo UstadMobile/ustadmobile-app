@@ -1,7 +1,7 @@
 /*
  <!-- This file is part of Ustad Mobile.  
  
- Ustad Mobile Copyright (C) 2011-2013 Toughra Technologies FZ LLC.
+ Ustad Mobile Copyright (C) 2011-2014 UstadMobile Ltd
  
  Ustad Mobile is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
