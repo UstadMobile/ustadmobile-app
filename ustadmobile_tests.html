@@ -47,6 +47,11 @@ If you need a commercial license to remove these restrictions please contact us 
 <html>
     <head>
         <title>Ustad Mobile Tests</title>
+        <script type="text/javascript">
+            //Variable used in conjunction with test-loadme to make sure our 
+            //functions auto reject loading the same script twice
+            var umLoadCount = 0;
+        </script>
 
         <link rel='stylesheet' href='css/qunit-1.12.0.css' type='text/css'/>
 
@@ -70,7 +75,7 @@ If you need a commercial license to remove these restrictions please contact us 
 
 
     </head>
-    <body>
+    <body data-zone="app">
         <div id="qunit"></div>
         <div id="qunit-fixture"></div>
     </body>

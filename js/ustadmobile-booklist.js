@@ -581,7 +581,7 @@ UstadMobileBookList.prototype = {
            var copyJob = new UstadMobileAppToContentCopyJob(this.appFilesToCopyToContent, 
                destDirectory, function() {
                    //make an iframe with the content in it
-                   var iframeEl = $("<iframe src='" + httpURL + "'></iframe>");
+                   var iframeEl = $("<iframe src='" + httpURL + "' nwdisable nwfaketop></iframe>");
                    iframeEl.css("border-width", "0px");
                    iframeEl.css("position", "absolute");
                    iframeEl.css("width", "100%");

@@ -70,6 +70,8 @@ console.log ("With Qunit logs in 01");
     
     testLoadScript();
     
+    testLoadScriptOnceOnly();
+    
     //Set timeout to 60seconds (download a course)
     QUnit.testTimeout = 60000;
     testUstadMobileCourseDownloadById(5);
@@ -133,6 +135,17 @@ function testLoadScript() {
         });
     });
 }
+
+function testLoadScriptOnceOnly() {
+    asyncTest("Will not load a script more than once", function() {
+        expect(1);
+        UstadMobile.getInstance().loadUMScript("js/ustadmobile-test-loadme.js", function() {
+            ok(umLoadCount === 1, "Script ustadmobile-test-loadme.js loaded once only");
+            start();
+        });
+    });
+}
+
 
 var numBooksOpened = 0;
 function testBookOpen() {

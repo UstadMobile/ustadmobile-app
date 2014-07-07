@@ -213,12 +213,17 @@ UstadMobileHTTPServer.prototype = {
             
             var fileURI = path.join(UstadMobile.getInstance().contentDirURI,
                 decodeURI(filePath));
+            
             fs.readFile(fileURI, function(err,data) {
                if(err) {
                    response.writeHead(404);
                    response.end(JSON.stringify(err));
                } else {
+                   var fileStat = fs.statSync(fileURI);
+                   var fileSize = fileStat['size'];
+            
                    response.setHeader("Content-Type", mimeType);
+                   response.setHeader("Content-Length", fileSize);
                    response.writeHead(200, httpHeaders);
                    response.end(data);
                }

@@ -1,7 +1,7 @@
-/* Updated 19:11
+/* 
 <!-- This file is part of Ustad Mobile.  
     
-    Ustad Mobile Copyright (C) 2011-2013 Toughra Technologies FZ LLC.
+    Ustad Mobile Copyright (C) 2011-2014 UstadMobile Inc.
 
     Ustad Mobile is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -105,6 +105,39 @@ UstadMobile.OS_LINUX = 0;
  */
 UstadMobile.OS_WINDOWS = 1;
 
+/**
+ * Indicates page goes to the left - fixed 0 value
+ * 
+ * @type Number
+ */
+UstadMobile.LEFT = 0;
+
+/**
+ * Indicates spage goes to the right - fixed 1 value
+ * 
+ * @type Number
+ */
+UstadMobile.RIGHT = 1;
+
+/**
+ * 
+ * @type Number
+ */
+UstadMobile.MIDDLE = 2;
+
+/**
+ * Indicates that we are in the app context
+ * 
+ * @type Number
+ */
+UstadMobile.ZONE_APP = 0;
+
+/**
+ * Indicates that we are in the content context
+ * 
+ * @type Number
+ */
+UstadMobile.ZONE_CONTENT = 1;
 
 /**
  * Constant telling UstadMobile to get the in content menu contents from the
@@ -201,9 +234,50 @@ UstadMobile.prototype = {
      */
     pendingRuntimeInfoLoadedListeners: [],
     
+    /**
+     * JQuery elements for the left (previous), right (next) page and current page
+     * 
+     * @type {Array}
+     */
+    contentPages: [null, null, null],
     
-    showAppMenu: function() {
-        $.mobile.changePage("ustadmobile_menupage_app.html");
+    /**
+     * Duration to run animations for when changing pages
+     * 
+     * @type {Number}
+     */
+    contentPageTransitionTime: 1000,
+    
+    /**
+     * Primary startup method - To happen on mobileinit
+     * 
+     */
+    init: function() {
+        debugger;
+        $.mobile.allowCrossDomainPages = true;
+        $.support.cors = true;
+        console.log("Mobileinit changes set for jQuery mobile for PhoneGap");
+        
+        $(document).on( "pagecontainershow", function( event, ui ) {
+            UstadMobile.getInstance().pageInit(event, ui);
+        });
+    },
+    
+    /**
+     * Pre init - happens on documentready
+     * 
+     */
+    preInit: function() {
+        this.loadPanel();
+        this.loadRuntimeInfo();
+    },
+    
+    /**
+     * Runs when the page event is triggered
+     * 
+     */
+    pageInit: function(evt, ui) {
+        UstadMobile.getInstance().initPagePreload(evt, ui);
     },
     
     /**
@@ -245,6 +319,17 @@ UstadMobile.prototype = {
      * @returns {undefined}
      */
     loadUMScript: function(scriptURL, callback) {
+        var scriptEls = document.getElementsByTagName("script");
+        for(var i = 0; i < scriptEls.length; i++) {
+            if(scriptEls[i].getAttribute("src") === scriptURL) {
+                //this script already loaded; return
+                if(typeof callback !== "undefined" && callback !== null) {
+                    callback();
+                }
+                return;
+            }
+        }
+        
         var fileref=document.createElement('script');
         fileref.setAttribute("type","text/javascript");
         fileref.setAttribute("src", scriptURL);
@@ -606,6 +691,307 @@ UstadMobile.prototype = {
      */
     closePanel: function() {
         $(".ui-page-active .ustadpaneldiv").panel("close");
+    },
+    
+    /**
+     * Check if we are in the app or content zone in this context
+     * 
+     * @method getZone
+     * 
+     * @return UstadMobile.ZONE_APP or UstadMobile.ZONE_CONTENT
+     */
+    getZone: function() {
+        var zoneVal = $("BODY").attr("data-zone");
+        if(typeof zoneVal !== "undefined" && zoneVal === "app") {
+            return UstadMobile.ZONE_APP;
+        }else {
+            return UstadMobile.ZONE_CONTENT;
+        }
+    },
+    
+    /**
+     * If appropriate, load the previous and next page
+     * @returns {undefined}
+     */
+    initPagePreload: function() {
+        if(this.getZone() === UstadMobile.ZONE_CONTENT) {
+            if(this.contentPages[UstadMobile.MIDDLE] === null) {
+                var contentPageResult = $(".ui-page-active #content");
+                if(contentPageResult.length > 0) {
+                    this.contentPages[UstadMobile.MIDDLE] = $(".ui-page-active #content");
+                    this.contentPages[UstadMobile.MIDDLE].attr("data-url", 
+                        document.location.href);
+                }
+            }
+            
+            this.checkContentNavLinks(this.contentPages[UstadMobile.MIDDLE]);
+            
+            //look for the next and previous links, load them
+            
+            var hrefs = [
+                $(".ui-page-active #exePreviousPage").attr("href"),
+                $(".ui-page-active #exeNextPage").attr("href")
+            ];
+            
+            // This works because next pos 0 = UstadMobile.LEFT
+            // 1 = UstadMobile.RIGHT
+            for(var i = 0; i < hrefs.length; i++) {
+                if(typeof hrefs[i] !== "undefined" && hrefs[i] !== "#") {
+                    this.preloadPage(hrefs[i], i);
+                }
+            }
+        }
+    },
+    
+    /**
+     * Check and make sure the links are set on a page - if not then find them
+     * from the sibling #exeNextPage and #exePreviousPage hrefs
+     * 
+     */
+    checkContentNavLinks: function(contentDiv) {
+        //look for the next and previous links
+        var linkNames = [["data-content-prev", "#exePreviousPage"],
+            ["data-content-next", "#exeNextPage"]];
+        
+        if(contentDiv === null) {
+            return;
+        }
+        
+        for(var i = 0; i < linkNames.length; i++) {
+            if(typeof contentDiv.attr(linkNames[i][0]) === "undefined") {
+                if(contentDiv.siblings(linkNames[i][1]).length > 0) {
+                    contentDiv.attr(linkNames[i][0], 
+                        contentDiv.siblings(
+                                linkNames[i][1]).attr("href"));
+                }
+            }
+        }
+    },
+    
+    /**
+     * 
+     * @param {String} url URL of page to be loaded
+     * @param {Number} UstadMobile.LEFT or UstadMobile.RIGHT
+     * 
+     * @returns {undefined}
+     */
+    preloadPage: function(pageURL, position) {
+        //make a container, local context copy of variable
+        var pgPos = position;
+        $.ajax({
+            url: pageURL,
+            dataType: "html"
+        }).done(function(data, textStatus, jqXHR) {
+            var newPageContentEl = $(data).children("#content");
+            console.log("Attempting to preload into DOM:" + this.url);
+            
+            //remove inline scripts; they can cause NodeWebKit trouble
+            newPageContentEl.find("script").each(function() {
+               var scriptSrc = $(this).attr('src');
+               if(typeof scriptSrc !== "undefined") {
+                   UstadMobile.getInstance().loadUMScript(scriptSrc, function() {
+                       
+                   });
+                   $(this).remove();
+               }
+            });
+            
+            newPageContentEl.attr("data-url", this.url);
+            
+            if(newPageContentEl !== null) {
+                UstadMobile.getInstance().checkContentNavLinks(newPageContentEl);
+            }
+            newPageContentEl = newPageContentEl.detach();
+            
+            //dont need data no more
+            data = null;
+            
+            
+            var viewWidth = $(window).width();
+            newPageContentEl.css("position", "absolute");
+                       
+            var newPosFactor = 1;
+            if(pgPos === UstadMobile.LEFT) {
+                newPosFactor = -1;
+            }
+            
+            newPageContentEl.css("transform", "translateX(" 
+                    + (viewWidth * newPosFactor)+ "px)");
+           
+            //to find active content div - use .ui-content #content
+            UstadMobile.getInstance().processPageContent(newPageContentEl);
+            
+            $.mobile.pageContainer.find(".ui-content").prepend(
+                    newPageContentEl).enhanceWithin();
+            
+            console.log("Preloaded page for position: " + pgPos);
+            
+            UstadMobile.getInstance().contentPages[pgPos] = newPageContentEl;
+           
+           
+            //this can crash it - if there are scripts embedded...
+            //$.mobile.activePage.find(".ui-content #content").html(newPageContentEl.html());
+           
+            //this seems safe
+            //document.getElementById("content").innerHTML = newPageContentEl.html();
+        });
+    },
+    
+    /**
+     * Pre-Process the content items to make sure that they are displayed as 
+     * desired 
+     * 
+     * @param {jQuery} contentEl
+     */
+    processPageContent: function(contentEl) {
+        var fixItFunction = function() {
+            var alreadyFixed=$(this).attr("data-exefixed");
+            if(alreadyFixed != "true") {
+                var answerFor = $(this).attr("for");
+                //ID of radio button is going to be iELEMENTID
+                //eg i0_100 idevice=0, field=100
+                var answerId = "";
+                if(answerFor.substring(0, 1) == 'i') {
+                    //mcq radio button
+                    answerId = answerFor.substring(1);
+                }else {
+                    //multi select checkbox
+                    answerId = $(this).children("A").first().attr("href");
+                    answerId = answerId.split("-")[1];
+                }
+
+                var ideviceAnswerContainer = $(this).closest(".iDevice_answer-field");
+                ideviceAnswerContainer.css("width", "auto").css("float", "none");
+
+                contentEl.find("#answer-"+ answerId).css("padding-left", "0px");
+                $(this).removeClass("sr-av");
+
+                $(this).html("");
+                contentEl.find("#answer-"+ answerId).detach().appendTo($(this));
+                $(this).attr("data-exefixed", "true");
+            }
+        };
+
+        contentEl.find(".MultichoiceIdevice LABEL, "
+                + ".MultiSelectIdevice LABEL").each(fixItFunction);
+        
+        UstadMobile.getInstance().runAfterRuntimeInfoLoaded(function() {
+            if(UstadMobile.getInstance().getRuntimeInfoVal("FixAttachmentLinks") === true) {
+                contentEl.find(".FileAttachIdeviceInc .exeFileList A").each(function() {
+                    var href= $(this).attr('href');
+                    if(href.indexOf("startdownload=true") === -1) {
+                        var ajaxHref = href + "?startdownload=true";
+                        $(this).attr("href", "#");
+                        $(this).attr("data-startdownload-url", ajaxHref);
+                        $(this).on("click", function() {
+                            var hrefToOpen = $(this).attr("data-startdownload-url");
+                            $.ajax({
+                                url: hrefToOpen,
+                                dataType : "text"
+                            });
+                        });
+                    }
+                });
+
+                contentEl.find("A").each(function() {
+                    var href = $(this).attr("href");
+                    if(typeof href !== "undefined" && href != null){
+                        if(href.substring(0,7)==="http://") {
+                            $(this).attr("href", "#");
+                            $(this).on("click", function(evt) {
+                                evt.preventDefault();
+                                $.ajax({
+                                    url: "/browse/" + encodeURI(href),
+                                    dataType: "text"
+                                });
+                            });
+                        }
+                    }
+                });
+            }
+        });
+    },
+    
+    /**
+     * Shows the next or previous page
+     * 
+     * @param {Number} dir UstadMobile.LEFT or UstadMobile.RIGHT
+     * 
+     * @returns {undefined}
+     */
+    contentPageGo: function(dir) {
+        var umObj = UstadMobile.getInstance();
+        
+        var currentPage = umObj.contentPages[UstadMobile.MIDDLE];
+        var nextPage = umObj.contentPages[dir];
+        if(nextPage === null) {
+            return;
+        }
+        
+        //-1 or 1 for left or right respectively
+        var movementDir = 1;
+        if(dir === UstadMobile.RIGHT) {
+            movementDir = -1;
+        }
+        
+        var animTime = umObj.contentPageTransitionTime;
+        //nextPage.css("visibility", "visible");
+        $.mobile.pageContainer.find(".ui-content").prepend(nextPage.detach());
+        
+        currentPage.css("transition", "all " + animTime + "ms ease-in-out");
+        nextPage.css("transition", "all " + animTime + "ms ease-in-out");
+        
+        var viewWidth = $(window).width();
+        
+        currentPage.css("transform", "translateX(" 
+                    + (movementDir * viewWidth)+ "px)");
+        nextPage.css("transform", "translateX(0px)");
+        
+        var dirArg = dir;
+        
+        setTimeout(function() {
+            currentPage.css("transition", "");
+            nextPage.css("transition", "");
+            
+            var umObj = UstadMobile.getInstance();
+            
+            umObj.contentPages[UstadMobile.MIDDLE] = nextPage;
+            umObj.contentPages[UstadMobile.MIDDLE].css("position", "");
+            
+            if(dirArg === UstadMobile.RIGHT) {
+                //delete the current page on the left from DOM
+                if(umObj.contentPages[UstadMobile.LEFT] !== null) {
+                    umObj.contentPages[UstadMobile.LEFT].remove();
+                }
+                
+                umObj.contentPages[UstadMobile.LEFT] = currentPage;
+                //umObj.contentPages[UstadMobile.LEFT].css("visibility", "hidden");
+                
+                var nextLink = nextPage.attr("data-content-next");
+                if(nextLink !== "#") {
+                    umObj.preloadPage(nextPage.attr("data-content-next"),
+                        UstadMobile.RIGHT);
+                }else {
+                    umObj.contentPages[UstadMobile.RIGHT] = null;
+                }
+            }else if(dirArg === UstadMobile.LEFT) {
+                if(umObj.contentPages[UstadMobile.RIGHT] !== null) {
+                    umObj.contentPages[UstadMobile.RIGHT].remove();
+                }
+                
+                umObj.contentPages[UstadMobile.RIGHT] = currentPage;
+                //umObj.contentPages[UstadMobile.RIGHT].css("visibility", "hidden");
+                
+                var prevLink = nextPage.attr("data-content-prev");
+                if(prevLink !== "#") {
+                    umObj.preloadPage(nextPage.attr("data-content-prev"),
+                        UstadMobile.LEFT);
+                }else {
+                    umObj.contentPages[UstadMobile.LEFT] = null;
+                }
+            }
+            
+        }, animTime + Math.round(animTime * 0.1));
     }
     
 };
@@ -623,12 +1009,15 @@ var messages = [];
 //default lang
 
 UstadMobile.getInstance().loadScripts();
-UstadMobile.getInstance().loadRuntimeInfo();
 
-//Load the panel when document is ready
 $(function() {
-    UstadMobile.getInstance().loadPanel();
+    UstadMobile.getInstance().preInit();
 });
+
+$(document).on("mobileinit", function() {
+   UstadMobile.getInstance().init(); 
+});
+
 
 
 //Flag for unit testing
@@ -641,15 +1030,6 @@ var CONTENT_MODE;
 if (typeof CONTENT_MODE !== 'undefined'){
 	console.log("ustadmobile.js: CONTENT_MODE is: " + CONTENT_MODE);
 }
-
-//For jQuery mobile and Cordova/PhoneGap framework configurations.
-$( document ).bind( "mobileinit", function() {
-    // Make your jQuery Mobile framework configuration changes here!
-    $.mobile.allowCrossDomainPages = true;
-    $.support.cors = true;
-	console.log("Mobileinit changes set for jQuery mobile for PhoneGap");
-
-}); //as per jQuery's documentation and Cordova/Phonegap
 
 //Set to 1 for Debug mode, otherwise 0 (will silence console.log messages)
 var USTADDEBUGMODE = 1;
@@ -730,13 +1110,15 @@ function setupClozeWidth() {
     $(".ClozeIdevice input[type=text]").css("width", "");
 }
 
-$(document).on("pagebeforecreate", function(event, ui) { //pageinit gets triggered when app start.
-    console.log("In pagebeforecreate");
-    if(typeof(onLanguageDeviceReady) == "function" ){
-        onLanguageDeviceReady();
-    }else{ // meaning it is in Content..
-        callOnLanguageDeviceReady();
-    }
+$(function() {
+    $(document).on("pagebeforecreate", function(event, ui) { //pageinit gets triggered when app start.
+        console.log("In pagebeforecreate");
+        if(typeof(onLanguageDeviceReady) == "function" ){
+            onLanguageDeviceReady();
+        }else{ // meaning it is in Content..
+            callOnLanguageDeviceReady();
+        }
+    });
 });
 
 
@@ -756,71 +1138,7 @@ $(document).on("pagebeforecreate", function(event, ui) { //pageinit gets trigger
  * Fix issue of download links if we are using NodeWebKit, depending on the runtime
  * settings
  */
-$(document).on("pagebeforecreate", function(event, ui) {
-    var fixItFunction = function() {
-        var alreadyFixed=$(this).attr("data-exefixed");
-        if(alreadyFixed != "true") {
-            var answerFor = $(this).attr("for");
-            //ID of radio button is going to be iELEMENTID
-            //eg i0_100 idevice=0, field=100
-            var answerId = "";
-            if(answerFor.substring(0, 1) == 'i') {
-                //mcq radio button
-                answerId = answerFor.substring(1);
-            }else {
-                //multi select checkbox
-                answerId = $(this).children("A").first().attr("href");
-                answerId = answerId.split("-")[1];
-            }
-            
-            var ideviceAnswerContainer = $(this).closest(".iDevice_answer-field");
-            ideviceAnswerContainer.css("width", "auto").css("float", "none");
-            
-            $("#answer-"+ answerId).css("padding-left", "0px");
-            $(this).removeClass("sr-av");
-            
-            $(this).html("");
-            $("#answer-"+ answerId).detach().appendTo($(this));
-            $(this).attr("data-exefixed", "true");
-        }
-    };
-    
-    $(".MultichoiceIdevice LABEL, .MultiSelectIdevice LABEL").each(fixItFunction);
-    
-    UstadMobile.getInstance().runAfterRuntimeInfoLoaded(function() {
-        if(UstadMobile.getInstance().getRuntimeInfoVal("FixAttachmentLinks") === true) {
-            $(".FileAttachIdeviceInc .exeFileList A").each(function() {
-                var href= $(this).attr('href');
-                if(href.indexOf("startdownload=true") === -1) {
-                    var ajaxHref = href + "?startdownload=true";
-                    $(this).attr("href", "#");
-                    $(this).attr("data-startdownload-url", ajaxHref);
-                    $(this).on("click", function() {
-                        var hrefToOpen = $(this).attr("data-startdownload-url");
-                        $.ajax({
-                            url: hrefToOpen,
-                            dataType : "text"
-                        });
-                    });
-                }
-            });
-            
-            $("A").each(function() {
-                var href = $(this).attr("href");
-                if(typeof href !== "undefined" && href != null){
-                    if(href.substring(0,7)==="http://") {
-                        $(this).attr("href", "#");
-                        $(this).on("click", function() {
-                            $.ajax({
-                                url: "/browse/" + encodeURI(href),
-                                dataType: "text"
-                            });
-                        });
-                    }
-                }
-            });
-        }
-    });
+$(function() {
     
 });
 
@@ -1243,11 +1561,7 @@ $(window).load(function(){
 
 //Function to handle Previous Page button within eXe content's footer.
 function exePreviousPageOpen(){
-    var previousPageHREF = $(".ui-page-active #exePreviousPage").attr("href");
-    debugLog("Ustad Mobile CONTENT: Going to previous page: " + previousPageHREF);
-    if(previousPageHREF) {
-        $.mobile.changePage( previousPageHREF, { transition: "slide", reverse: true }, true, true );
-    }
+    UstadMobile.getInstance().contentPageGo(UstadMobile.LEFT);
 }
 
 //Function to handle First Next Page button within eXe content's footer. (Is not used)
@@ -1260,11 +1574,7 @@ function exeFirstNextPageOpen(){
 
 //Function to handle Next Page button within eXe content's footer.
 function exeNextPageOpen(){
-    var nextPageHREF = $(".ui-page-active #exeNextPage").attr("href");
-    debugLog("Ustad Mobile Content: Going to next page: " + nextPageHREF);  
-    if(nextPageHREF) {
-        $.mobile.changePage( nextPageHREF, { transition: "slide" }, true, true );
-    }
+    UstadMobile.getInstance().contentPageGo(UstadMobile.RIGHT);
 }
 
 //Function to handle Menu Page within eXe content's footer.
