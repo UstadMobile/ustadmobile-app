@@ -346,10 +346,12 @@ UstadMobile.prototype = {
      * @method loadScripts
      */
     loadScripts: function() {
-        this.loadUMScript("js/ustadmobile-getpackages.js");
-        this.loadUMScript("js/ustadmobile-http-server.js", function() {
-            UstadMobileHTTPServer.getInstance().start(3000);
-        });     
+        //if(this.getZone() === UstadMobile.ZONE_APP) {
+            this.loadUMScript("js/ustadmobile-getpackages.js");
+            this.loadUMScript("js/ustadmobile-http-server.js", function() {
+                UstadMobileHTTPServer.getInstance().start(3000);
+            });     
+        //}
     },
     
     /**
@@ -716,9 +718,15 @@ UstadMobile.prototype = {
     initPagePreload: function() {
         if(this.getZone() === UstadMobile.ZONE_CONTENT) {
             if(this.contentPages[UstadMobile.MIDDLE] === null) {
-                var contentPageResult = $(".ui-page-active #content");
+                var contentPageResult = $(".ui-page-active .ustadcontent");
+                if(contentPageResult.length === 0) {
+                    //maybe try the #content selector
+                    contentPageResult = $(".ui-page-active #content");
+                }
+                
                 if(contentPageResult.length > 0) {
-                    this.contentPages[UstadMobile.MIDDLE] = $(".ui-page-active #content");
+                    this.contentPages[UstadMobile.MIDDLE] = contentPageResult;
+                    
                     this.contentPages[UstadMobile.MIDDLE].attr("data-url", 
                         document.location.href);
                 }
@@ -782,7 +790,11 @@ UstadMobile.prototype = {
             url: pageURL,
             dataType: "html"
         }).done(function(data, textStatus, jqXHR) {
-            var newPageContentEl = $(data).children("#content");
+            var newPageContentEl = $(data).children(".ustadcontent");
+            if(newPageContentEl.length === 0) {
+                //try old #content selector
+                newPageContentEl = $(data).children("#content");
+            }
             console.log("Attempting to preload into DOM:" + this.url);
             
             //remove inline scripts; they can cause NodeWebKit trouble
@@ -821,8 +833,9 @@ UstadMobile.prototype = {
             //to find active content div - use .ui-content #content
             UstadMobile.getInstance().processPageContent(newPageContentEl);
             
-            $.mobile.pageContainer.find(".ui-content").prepend(
-                    newPageContentEl).enhanceWithin();
+            $.mobile.pageContainer.find(".ui-page-active .ui-content").prepend(
+                    newPageContentEl);
+            newPageContentEl.enhanceWithin();
             
             console.log("Preloaded page for position: " + pgPos);
             
@@ -936,7 +949,7 @@ UstadMobile.prototype = {
         
         var animTime = umObj.contentPageTransitionTime;
         //nextPage.css("visibility", "visible");
-        $.mobile.pageContainer.find(".ui-content").prepend(nextPage.detach());
+        //$.mobile.pageContainer.find(".ui-content").prepend(nextPage.detach());
         
         currentPage.css("transition", "all " + animTime + "ms ease-in-out");
         nextPage.css("transition", "all " + animTime + "ms ease-in-out");
