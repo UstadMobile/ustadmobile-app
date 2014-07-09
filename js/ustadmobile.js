@@ -61,13 +61,13 @@ UstadMobile = function() {
  * @returns {UstadMobile} UstadMobile instance
  */
 UstadMobile.getInstance = function() {
-    if(ustadMobileInstance == null) {
+    if(ustadMobileInstance === null) {
         ustadMobileInstance = new UstadMobile();
         ustadMobileInstance.checkPaths();
     }
     
     return ustadMobileInstance;
-}
+};
 
 /**
  * Constant: the base directory name where content is put - in the global or
@@ -83,7 +83,7 @@ UstadMobile.CONTENT_DIRECTORY = "ustadmobileContent";
  * 
  * @type String
  */
-UstadMobile.HTTP_ATTACHMENT_POSTFIX = "ustad_attachment_download"
+UstadMobile.HTTP_ATTACHMENT_POSTFIX = "ustad_attachment_download";
 
 /**
  * Constant: The subdirectory, under CONTENT_DIRECTORY where in progress
@@ -309,6 +309,8 @@ UstadMobile.prototype = {
     /**
      * Runs when the page event is triggered
      * 
+     * @param evt {Object} from jQueryMobile
+     * @param ui {Object} UI param from jQueryMobile event
      */
     pageInit: function(evt, ui) {
         UstadMobile.getInstance().initPagePreload(evt, ui);
@@ -336,9 +338,9 @@ UstadMobile.prototype = {
      */
     getNodeWebKitOS: function() {
         if(UstadMobile.getInstance().isNodeWebkit()) {
-            if(process.platform == "win32") {
+            if(process.platform === "win32") {
                 return UstadMobile.OS_WINDOWS;
-            }else if(process.platform == "linux") {
+            }else if(process.platform === "linux") {
                 return UstadMobile.OS_LINUX;
             }
         }else {
@@ -367,7 +369,7 @@ UstadMobile.prototype = {
         var fileref=document.createElement('script');
         fileref.setAttribute("type","text/javascript");
         fileref.setAttribute("src", scriptURL);
-        if(typeof callback !== "undefined" && callback != null) {
+        if(typeof callback !== "undefined" && callback !== null) {
             fileref.onload = callback;
         }
         
@@ -493,7 +495,7 @@ UstadMobile.prototype = {
                                     },function(err) {
                                         UstadMobile.getInstance().
                                                 firePathCreationEvent(false, err);
-                                    })
+                                    });
                             },
                             function(err) {
                                 UstadMobile.getInstance().
@@ -510,7 +512,7 @@ UstadMobile.prototype = {
             //see http://stackoverflow.com/questions/9080085/node-js-find-home-directory-in-platform-agnostic-way
             //Note for windows reg key
             //$ Reg Query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders"
-            var userHomeDir = process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME'];
+            var userHomeDir = process.env[(process.platform === 'win32') ? 'USERPROFILE' : 'HOME'];
             
             var nodeSetupHomeDirFunction = function(userBaseDir) {
                 var contentDirectory = path.join(userBaseDir, 
@@ -534,12 +536,12 @@ UstadMobile.prototype = {
                 UstadMobile.getInstance().firePathCreationEvent(true);
             };
             
-            if(UstadMobile.getInstance().getNodeWebKitOS() == 
+            if(UstadMobile.getInstance().getNodeWebKitOS() ===
                 UstadMobile.OS_WINDOWS) {
                 var exec = require('child_process').exec;
                 console.log("checking windows object");
                 var regKeyName = "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders";
-                var regQueryCmd = "Reg Query \""+ regKeyName +"\" /v Personal"
+                var regQueryCmd = "Reg Query \""+ regKeyName +"\" /v Personal";
                 exec(regQueryCmd, function(error, stdout, stderr) {
                     var myDocPath = stdout.substring(stdout.indexOf("REG_SZ")+6);
                     myDocPath = myDocPath.trim();
@@ -553,23 +555,26 @@ UstadMobile.prototype = {
     
     /**
      * Remove any file:/ from the start of a path leaving at most one / at the
-     * start of it
+     * start of it.  E.g. to be used to change from file:/// used by a browser
+     * to something to be used by filesystem libs
+     * 
+     * @param filePath {String} Path from which we will remove file:/// from
      */
     removeFileProtoFromURL: function(filePath) {
         var filePrefix = "file:";
         var um = UstadMobile.getInstance();
-        if(filePath.substring(0, filePrefix.length) == filePrefix) {
+        if(filePath.substring(0, filePrefix.length) === filePrefix) {
             //check how many / slashes we need rid of
             var endPos = filePrefix.length;
             
             //in Unix file:/// should change to just / , in Windoze 
             //there should not be a leading slash
             var numSlashesAllowed = 1;
-            if(um.getNodeWebKitOS() == UstadMobile.OS_WINDOWS) {
+            if(um.getNodeWebKitOS() === UstadMobile.OS_WINDOWS) {
                 numSlashesAllowed = 0;
             }
             
-            for(; filePath.charAt(endPos+numSlashesAllowed) == '/'; endPos++) {
+            for(; filePath.charAt(endPos+numSlashesAllowed) === '/'; endPos++) {
                 //do nothing
             }
             
@@ -586,7 +591,7 @@ UstadMobile.prototype = {
      * @param {String} subdirName subdirectory name to be created
      * @param {DirectoryEntry} parentDirEntry Parent persistent storage dir to create under
      * @param {function} successCallback called when successfully done
-     * @param {function} called when directory creation fails
+     * @param {function} failCallback when directory creation fails
      */
     checkAndMakeUstadSubDir: function(subdirName, parentDirEntry, successCallback, failCallback) {
         parentDirEntry.getDirectory(subdirName, 
@@ -700,7 +705,7 @@ UstadMobile.prototype = {
         var thisPgId = pgEl.attr("id");
         var newPanelId = "ustad_panel_" + thisPgId;
 
-        if(pgEl.children(".ustadpaneldiv").length == 0) {
+        if(pgEl.children(".ustadpaneldiv").length === 0) {
             var htmlToAdd = "<div id='" + newPanelId + "'>";
             htmlToAdd += UstadMobile.getInstance().panelHTML;
             htmlToAdd += "</div>";
@@ -786,9 +791,12 @@ UstadMobile.prototype = {
     },
     
     /**
-     * Check and make sure the links are set on a page - if not then find them
+     * Check and make sure the links are set on a page div - if not then find them
      * from the sibling #exeNextPage and #exePreviousPage hrefs
      * 
+     * Links get set as data-content-prev and data-content-next
+     * 
+     * @param contentDiv {jQuery} Ustad Mobile content div we will dig nav links for
      */
     checkContentNavLinks: function(contentDiv) {
         //look for the next and previous links
@@ -813,6 +821,8 @@ UstadMobile.prototype = {
     /**
      * Loads a page using AJAX - and removes scripts with inline src that cause
      * NodeWebKit to crash
+     * 
+     * @param pageURL - URL to load and remove crash causing elements from
      * 
      * @returns {undefined}
      */
@@ -869,8 +879,8 @@ UstadMobile.prototype = {
     
     /**
      * 
-     * @param {String} url URL of page to be loaded
-     * @param {Number} UstadMobile.LEFT or UstadMobile.RIGHT
+     * @param {String} pageURL URL of page to be loaded
+     * @param {Number} position UstadMobile.LEFT or UstadMobile.RIGHT
      * 
      * @returns {undefined}
      */
@@ -983,7 +993,7 @@ UstadMobile.prototype = {
 
                 contentEl.find("A").each(function() {
                     var href = $(this).attr("href");
-                    if(typeof href !== "undefined" && href != null){
+                    if(typeof href !== "undefined" && href !== null){
                         if(href.substring(0,7)==="http://" ||
                             href.substring(0, 8) === "https://") {
                             $(this).attr("href", "#");
