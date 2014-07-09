@@ -1059,12 +1059,8 @@ UstadMobile.prototype = {
             umObj.contentPages[UstadMobile.MIDDLE] = nextPage;
             umObj.contentPages[UstadMobile.MIDDLE].css("position", "");
             
-            /*currentPage.css("position", "absolute").css("top", "0px").css(
-                    "left", "0px").
-                    css("transform", "translateX(" 
-                    + (movementDir * viewWidth)+ "px)");
-            */
-           
+            window.scrollTo(0,0);
+            
             if(dirArg === UstadMobile.RIGHT) {
                 //delete the current page on the left from DOM
                 if(umObj.contentPages[UstadMobile.LEFT] !== null) {

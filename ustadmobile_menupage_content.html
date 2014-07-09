@@ -62,37 +62,27 @@ If you need a commercial license to remove these restrictions please contact us 
         <link rel="stylesheet" href="css/ustad-app.css" />
     </head>
     <body onload='onMenuLoad();'>
-        <h1></h1>
-
-            <!--<script type='text/javascript'>writeBodyStart("Menu");</script>-->  
-            
-            <div data-role="page" id="exemainpage" data-theme="b">
+        <div data-role="page" id="exemainpage" data-theme="b">
             <div data-role="header" data-position="fixed" data-theme="b">
-            
-            <h3><span id="menu2titletext" class="exeTranslated" data-exe-translation="Menu">Menu</span></h3>
+                <h3><span id="menu2titletext" class="exeTranslated" data-exe-translation="Menu">Menu</span></h3>
             </div>
-	        <div data-role="content">
+            <div data-role="content">
 
-		        <div id="Explorer" style="float:left"></div>
+                <div id="Explorer" style="float:left"></div>
                 <ul data-role="listview" data-inset="true" data-filter="false">
-                <!--<li><a style="text-align: center;" data-rel="back" data-icon="ui-btn-right" data-theme="a">Go back</a></li>-->
-                <li><a onclick="openTOCPage()"><span id="tocmenutext" class="exeTranslated" data-exe-translation="Table of Contents">Table of Contents</span></a></li>
-                <li><a onclick="openBookListPage()"><span id="exittocoursetext" class="exeTranslated" data-exe-translation="Exit to Course List">Exit to Course List</span></a></li>
-                <li><a onclick="umMenuLogout2()"><span id="logoutloginmenu2text" class="exeTranslated" data-exe-translation="Logout/Login">Logout/Login</span></a></li>
-                <!--<li><a onclick="openAboutUM()">About Ustad Mobile</a></li>-->
-            </ul>
-           
-	        </div>
+                    <li><a onclick="openTOCPage()"><span id="tocmenutext" class="exeTranslated" data-exe-translation="Table of Contents">Table of Contents</span></a></li>
+                    <li><a onclick="openBookListPage()"><span id="exittocoursetext" class="exeTranslated" data-exe-translation="Exit to Course List">Exit to Course List</span></a></li>
+                </ul>
 
-           <!--<script type='text/javascript'>writeBodyEnd();</script>-->
-
-           <div data-role="footer" data-position="fixed" style="text-align: center;" data-tap-toggle="false" data-theme="b"> 
-           
-			<a style="text-align: center;" data-rel="back" data-direction="reverse" data-icon="ui-btn-left"><span id="gobackmenu2text" class="exeTranslated" data-exe-translation="Go back">Go backF</span></a>
-            <!--<a onclick="exeLastPageOpen()" style="text-align: center;" data-direction="reverse" data-icon="ui-btn-left" data-theme="a">Go back</a>-->
-            <!--data-rel="back"-->
+            </div>
+        
+            
+            <div data-role="footer" data-position="fixed" style="text-align: center;" data-tap-toggle="false" data-theme="b"> 
+                <!--<a style="text-align: center;" data-rel="back" data-direction="reverse" data-icon="ui-btn-left"><span id="gobackmenu2text" class="exeTranslated" data-exe-translation="Go back">Go backF</span></a>-->
+                <!--<a onclick="exeLastPageOpen()" style="text-align: center;" data-direction="reverse" data-icon="ui-btn-left" data-theme="a">Go back</a>-->
+                <!--data-rel="back"-->
             </div>
 
-        <!--</div>   -->
+        </div>
     </body>
 </html>
