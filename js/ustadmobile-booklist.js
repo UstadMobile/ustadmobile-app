@@ -166,6 +166,8 @@ UstadMobileBookList.prototype = {
     appFilesToCopyToContent: {"js/ustadmobile.js" : "ustadmobile.js",
         "js/ustadmobile-booklist.js" :  "ustadmobile-booklist.js",
         "jqm/jqm-app-theme.css" : "jqm-app-theme.css",
+        "jqm/jqm-content-theme.css" : "jqm-content-theme.css",
+        "jqm/jquery.mobile.icons.min.css" : "jquery.mobile.icons.min.css",
         "ustadmobile_menupage_content.html" : "ustadmobile_menupage_content.html"
     },
     

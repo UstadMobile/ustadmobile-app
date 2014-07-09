@@ -840,13 +840,6 @@ UstadMobile.prototype = {
             console.log("Preloaded page for position: " + pgPos);
             
             UstadMobile.getInstance().contentPages[pgPos] = newPageContentEl;
-           
-           
-            //this can crash it - if there are scripts embedded...
-            //$.mobile.activePage.find(".ui-content #content").html(newPageContentEl.html());
-           
-            //this seems safe
-            //document.getElementById("content").innerHTML = newPageContentEl.html();
         });
     },
     
@@ -909,7 +902,8 @@ UstadMobile.prototype = {
                 contentEl.find("A").each(function() {
                     var href = $(this).attr("href");
                     if(typeof href !== "undefined" && href != null){
-                        if(href.substring(0,7)==="http://") {
+                        if(href.substring(0,7)==="http://" ||
+                            href.substring(0, 8) === "https://") {
                             $(this).attr("href", "#");
                             $(this).on("click", function(evt) {
                                 evt.preventDefault();
@@ -949,7 +943,9 @@ UstadMobile.prototype = {
         
         var animTime = umObj.contentPageTransitionTime;
         //nextPage.css("visibility", "visible");
-        //$.mobile.pageContainer.find(".ui-content").prepend(nextPage.detach());
+        nextPage = nextPage.detach();
+        nextPage.css("position", "absolute");
+        $.mobile.pageContainer.find(".ui-page-active .ui-content").prepend(nextPage);
         
         currentPage.css("transition", "all " + animTime + "ms ease-in-out");
         nextPage.css("transition", "all " + animTime + "ms ease-in-out");
@@ -971,6 +967,12 @@ UstadMobile.prototype = {
             umObj.contentPages[UstadMobile.MIDDLE] = nextPage;
             umObj.contentPages[UstadMobile.MIDDLE].css("position", "");
             
+            /*currentPage.css("position", "absolute").css("top", "0px").css(
+                    "left", "0px").
+                    css("transform", "translateX(" 
+                    + (movementDir * viewWidth)+ "px)");
+            */
+           
             if(dirArg === UstadMobile.RIGHT) {
                 //delete the current page on the left from DOM
                 if(umObj.contentPages[UstadMobile.LEFT] !== null) {
@@ -978,6 +980,7 @@ UstadMobile.prototype = {
                 }
                 
                 umObj.contentPages[UstadMobile.LEFT] = currentPage;
+                //umObj.contentPages[UstadMobile.LEFT].css("position", "absolute");
                 //umObj.contentPages[UstadMobile.LEFT].css("visibility", "hidden");
                 
                 var nextLink = nextPage.attr("data-content-next");
@@ -993,6 +996,7 @@ UstadMobile.prototype = {
                 }
                 
                 umObj.contentPages[UstadMobile.RIGHT] = currentPage;
+                //umObj.contentPages[UstadMobile.RIGHT].css("position", "absolute");
                 //umObj.contentPages[UstadMobile.RIGHT].css("visibility", "hidden");
                 
                 var prevLink = nextPage.attr("data-content-prev");
@@ -1870,10 +1874,6 @@ function openTOCPage(){
     $.mobile.changePage( tableOfContentsPage, { transition: "slideup", reverse: true} );	
 }
 
-//Test function. Does nothing. Delete it.
-function listPackagesFromServer2(){
-		alert("Works..");
-	}
 function initTableOfContents() {
     $(document).on("pageinit", "#exemainpage", function () {
         tocClicked = false;
