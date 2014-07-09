@@ -253,13 +253,45 @@ UstadMobile.prototype = {
      * 
      */
     init: function() {
-        debugger;
         $.mobile.allowCrossDomainPages = true;
         $.support.cors = true;
         console.log("Mobileinit changes set for jQuery mobile for PhoneGap");
         
         $(document).on( "pagecontainershow", function( event, ui ) {
             UstadMobile.getInstance().pageInit(event, ui);
+        });
+        
+        $(document).on("pagebeforecreate", function(evt, ui) {
+            var pgEl = null;
+            if(evt) {
+                pgEl = $(evt.target);
+            }else {
+                pgEl = $(".ui-page-active");
+            }
+            
+            UstadMobile.getInstance().processPageContent(pgEl);
+            
+            var pgName = pgEl.attr("data-url");
+            if(typeof pgName !== "undefined") {
+                var fileName = pgName.substring(pgName.lastIndexOf("/")+1);
+                if(fileName === "exetoc.html")  {
+                    UstadMobile.getInstance().makeTOCLinksSafe(pgEl);
+                }
+            }
+        });
+    },
+    
+    makeTOCLinksSafe: function(pgEl) {
+        pgEl.find(".ui-content A").each(function() {
+            var thisHref = $(this).attr("href");
+            if(typeof thisHref !== "undefined" && thisHref !== "#") {
+                $(this).attr("href", "#");
+                $(this).attr("data-toc-page", thisHref);
+                $(this).on("click",function() {
+                    UstadMobile.getInstance().safePageLoad(
+                            $(this).attr("data-toc-page"));
+                });
+            }
         });
     },
     
@@ -268,6 +300,8 @@ UstadMobile.prototype = {
      * 
      */
     preInit: function() {
+        //required to make sure exe created pages show correctly
+        $("body").addClass("js");
         this.loadPanel();
         this.loadRuntimeInfo();
     },
@@ -768,12 +802,69 @@ UstadMobile.prototype = {
         for(var i = 0; i < linkNames.length; i++) {
             if(typeof contentDiv.attr(linkNames[i][0]) === "undefined") {
                 if(contentDiv.siblings(linkNames[i][1]).length > 0) {
-                    contentDiv.attr(linkNames[i][0], 
-                        contentDiv.siblings(
-                                linkNames[i][1]).attr("href"));
+                    var pgHref = contentDiv.siblings(
+                            linkNames[i][1]).attr("href");
+                    contentDiv.attr(linkNames[i][0], pgHref);
                 }
             }
         }
+    },
+    
+    /**
+     * Loads a page using AJAX - and removes scripts with inline src that cause
+     * NodeWebKit to crash
+     * 
+     * @returns {undefined}
+     */
+    safePageLoad: function(pageURL) {
+        var newPageId = pageURL;
+        newPageId = newPageId.replace(".", "_");
+        
+        $.ajax({
+            url: pageURL,
+            dataType: "html"
+        }).done(function(data, textStatus, jqXHR) {
+            debugger;
+            
+            //for some reason - jQuery Selector will not here find the 
+            //data-role=page div... re-assemble it... assume only one page
+            
+            var pgEl = $("<div data-role='page' id='" + newPageId +"'></div>");
+            var header = $(data).find("[data-role='header']").first();
+            if(header) {
+                pgEl.append(header);
+            }
+            var pageContent = $(data).find('.ui-content').first();
+            UstadMobile.getInstance().removeInlineScripts(pageContent);
+            pgEl.append(pageContent);
+            
+            var footer = $(data).find("[data-role='footer']").first();
+            if(footer) {
+                pgEl.append(footer);
+            }
+            
+            $.mobile.pageContainer.append(pgEl);
+            $( ":mobile-pagecontainer" ).pagecontainer( "change", "#" + newPageId);
+        });
+    },
+    
+    /**
+     * Will remove inline scripts from the page content to make sure that it
+     * cannot crash NodeWebKit.  Will instead insert the scripts into the
+     * head.
+     * 
+     * @param {jQuery} el
+     */
+    removeInlineScripts: function(el) {
+        el.find("script").each(function() {
+           var scriptSrc = $(this).attr('src');
+           if(typeof scriptSrc !== "undefined") {
+               UstadMobile.getInstance().loadUMScript(scriptSrc, function() {
+
+               });
+               $(this).remove();
+           }
+        });
     },
     
     /**
@@ -790,23 +881,14 @@ UstadMobile.prototype = {
             url: pageURL,
             dataType: "html"
         }).done(function(data, textStatus, jqXHR) {
-            var newPageContentEl = $(data).children(".ustadcontent");
+            var newPageContentEl = $(data).find(".ustadcontent");
             if(newPageContentEl.length === 0) {
                 //try old #content selector
-                newPageContentEl = $(data).children("#content");
+                newPageContentEl = $(data).find("#content");
             }
             console.log("Attempting to preload into DOM:" + this.url);
             
-            //remove inline scripts; they can cause NodeWebKit trouble
-            newPageContentEl.find("script").each(function() {
-               var scriptSrc = $(this).attr('src');
-               if(typeof scriptSrc !== "undefined") {
-                   UstadMobile.getInstance().loadUMScript(scriptSrc, function() {
-                       
-                   });
-                   $(this).remove();
-               }
-            });
+            UstadMobile.getInstance().removeInlineScripts(newPageContentEl);
             
             newPageContentEl.attr("data-url", this.url);
             
