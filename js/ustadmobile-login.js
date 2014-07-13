@@ -100,14 +100,8 @@ UstadMobileLogin.prototype = {
     onLoginLoad: function() {
         debugLog("Starting onLoginLoad..");
         document.addEventListener("deviceready", this.onLoginDeviceReady, false);
-        //For desktop - tidesdk: triggering device ready
-        if (navigator.userAgent.indexOf("TideSDK") !== -1) {
-            debugLog("TideSDK: ustadmobile-login.js: Triggering device ready..");
-            //Device ready and will call function directly on TideSDK.
-            this.onLoginDeviceReady();
-        } else {
-            debugLog("Running on mobile device and not desktop..");
-        }
+        
+        debugLog("Running on mobile device and not desktop..");
     },
     
     /** PhoneGap is ready

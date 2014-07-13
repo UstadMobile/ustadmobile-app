@@ -6,13 +6,6 @@
 //var devicelanguage = localStorage.getItem('checklanguage');
 
 document.addEventListener("deviceready", onSetLocalisationReady, false);
-if(navigator.userAgent.indexOf("TideSDK") !== -1){
-    debugLog("TideSDK: ustadmobile-setlocalisation.js: Triggering device ready..");
-	//Device ready and will call function directly on TideSDK.
-	onSetLocalisationReady();
-}else{
-    debugLog("Running on mobile device and not desktop..");
-}
 
 function onSetLocalisationReady(){
 	console.log("in onSetLocalisationReady()");

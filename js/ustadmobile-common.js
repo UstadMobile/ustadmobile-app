@@ -78,49 +78,9 @@ document.addEventListener('deviceready', function(){
                           ,commonfail);
 */
 
-if(navigator.userAgent.indexOf("TideSDK") !== -1){
-    debugLog("TideSDK: ustadmobile-common.js: Triggering device ready..");
-	tideSDKCreateUMFolders();
-	//Check for ustadmobileContent and ustadmobileContent/all and make folders if not present.
-	
-}else{
-    debugLog("Running on mobile device and not desktop..");
-}
+debugLog("Running on mobile device and not desktop..");
 
-function tideSDKCreateUMFolders(){
 
-    if(navigator.userAgent.indexOf("TideSDK") !== -1){
-            console.log("[COMMON] Desktop - TideSDK detected in course content.");
-            if (window.navigator.userAgent.indexOf("Windows") != -1) {
-                console.log("[COMMON] TideSDK: You are using WINDOWS.");
-                //Doesnt have to exist yet.
-	            debugLog("Attempting to create ustadmobileContent dir in root..");
-	            tideSDKCreateDir('/ustadmobileContent');
-	            debugLog("Attempting to create ustadmobileContent/all dir in root..");
-	            tideSDKCreateDir('/ustadmobileContent/'+globalXMLListFolderName);
-            }else{
-                console.log("[COMMON] TideSDK: You are NOT using WINDOWS.");
-                //Doesnt have to exist yet.
-	            debugLog("Attempting to create ustadmobileContent dir in root..");
-	            tideSDKCreateDir('ustadmobileContent');
-	            debugLog("Attempting to create ustadmobileContent/all dir in root..");
-	            tideSDKCreateDir('ustadmobileContent/'+globalXMLListFolderName);
-            }    
-        }else{
-            console.log("[COMMON]: ERROR: Not in TideSDK. Why am I here?");
-        }
-}
-
-function tideSDKCreateDir(dir){
-	var destinationDir = Ti.Filesystem.getFile(dir);
-	if( (destinationDir.exists() == false) && (destinationDir.createDirectory() == false)) {
-		alert('We could not create the directory: /ustadmobileContent/ so we must abort.');
-		Y.Global.fire('download:error');
-		return;
-	}else{
-		debugLog("Successfully created dir or dir already exists: " + dir );
-	}
-}
 
 
 function _(msgid) {
