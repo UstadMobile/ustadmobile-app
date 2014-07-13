@@ -3,7 +3,8 @@
  * 
  * Usage: node-qunit-server.js BindAddress BindPort
  * 
- * Send an http POST request with params: numPass, numFail, logtext
+ * Send an http POST request with params: numPass, numFail, logtext 
+ *  Optional: jscover - will be written to coverage_report/jscoverage.json
  * 
  * Saves two files:
  *  testresults.txt : text received from parameter logtext
@@ -45,6 +46,10 @@ http.createServer(function (req, res) {
             var numPass = post['numPass'];
             var numFail = post['numFail'];
             var logtext = post['logtext'];
+            if(post['jscover']) {
+                fs.writeFile("coverage_report/jscoverage.json", post['jscover'], onFileWritten);
+            }
+            
             var textToSave = "Passed: " + numPass + "\n Failed " + numFail + "\n"
                 + logtext;
             

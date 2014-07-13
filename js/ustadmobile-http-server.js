@@ -89,26 +89,30 @@ UstadMobileHTTPServer.prototype = {
         var ustadHTTP = this;
         if(UstadMobile.getInstance().isNodeWebkit()) {
             var http = require('http');
-            this.nodeServer = http.createServer(function(request, response) {
-                ustadHTTP.handleRequest(request, response);
-            });
-            if(typeof hostname !== "undefined" && hostname != null) {
-                this.nodeServer.listen(port, hostname);
-                this.httpHostname = hostname;
-                this.httpPort = port;
-            }else {
-                this.nodeServer.listen(port);
-                this.httpHostname = "localhost";
-                this.httpPort = port;
-                hostname = "*";
+            //alert("Thinking to start server: is now " + ustadHTTP.nodeServer);
+            
+            if(this.nodeServer === null) {
+                this.nodeServer = http.createServer(function(request, response) {
+                    ustadHTTP.handleRequest(request, response);
+                });
+                if(typeof hostname !== "undefined" && hostname != null) {
+                    this.nodeServer.listen(port, hostname);
+                    this.httpHostname = hostname;
+                    this.httpPort = port;
+                }else {
+                    this.nodeServer.listen(port);
+                    this.httpHostname = "localhost";
+                    this.httpPort = port;
+                    hostname = "*";
+                }
+
+                console.log("UstadMobile Internal HTTP listening on:" +
+                        hostname + ":" + port);
+
+                setTimeout(function() {
+                    UstadMobile.getInstance().fireHTTPReady();
+                }, 0);
             }
-            
-            console.log("UstadMobile Internal HTTP listening on:" +
-                    hostname + ":" + port);
-            
-            setTimeout(function() {
-                UstadMobile.getInstance().fireHTTPReady();
-            }, 0);
         }
     },
     

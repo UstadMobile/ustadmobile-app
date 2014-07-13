@@ -66,10 +66,13 @@ console.log ("With Qunit logs in 01");
 
 
 (function () {
+    
+
     QUnit.module("UstadMobile");
     
     testLoadScript();
     
+
     testLoadScriptOnceOnly();
     
     //Set timeout to 60seconds (download a course)
@@ -127,9 +130,10 @@ function testUstadMobileCourseLoad() {
 }
 
 function testLoadScript() {
-    asyncTest("Can dynamically load script", 1, function() {
+    asyncTest("Can dynamically load script", function() {
+        expect(1);
         UstadMobile.getInstance().loadUMScript("js/ustadmobile-test-loadme.js", function() {
-            ok(typeof umLoadedFlag !== "undefined" && umLoadedFlag == "loaded",
+            ok(typeof umLoadedFlag !== "undefined" && umLoadedFlag === "loaded",
                 "Loaded script dynamically");
             start();
         });
@@ -322,20 +326,26 @@ QUnit.testDone(function( details ) {
     var msg =  "QUnit: Finished Running Test: " + details.module + " : "
         + details.name + "Failed/total: " +  details.failed + "/" 
         + details.total + " Duration:" + details.duration;
-    console.log(msg);
+    
+    console.log(msg);       
     qunitOutput += msg + "\n";
-});
+});                                                                                                                                 
 
 
 
 //Final.
 QUnit.done(function( details ) {
     var msg =  "QUnit: Test Suit Ending. Results: Total: " + details.total
-        + " Failed: " + details.failed +  " Passed: " +  details.passed
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                + " Failed: " + details.failed +  " Passed: " +  details.passed
         + " Runtime: " + details.runtime;
     qunitOutput += msg;
     var paramsToSend = { "numPass" : details.passed, "numFail" : details.failed,
         "logtext" : qunitOutput};
+    
+    if(typeof jscoverage_serializeCoverageToJSON === "function") {
+        paramsToSend['jscover'] = jscoverage_serializeCoverageToJSON();                       
+    }
+    
     sendTestOutputSimple(paramsToSend);
 });
  

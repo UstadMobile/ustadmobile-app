@@ -11,3 +11,5 @@ temp
 node-qunit-testresults.txt
 nbproject/private/
 nbproject
+testing-files-downloads
+coverage_report
