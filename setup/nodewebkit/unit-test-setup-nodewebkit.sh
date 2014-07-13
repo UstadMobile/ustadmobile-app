@@ -37,6 +37,10 @@ fi
 . ./nodewebkit-setup-common.sh $1 $2
 
 if [ ! -e ../testing-files-downloads/JSCover-1.0.13.zip ]; then
+    if [ ! -d ../testing-files-downlodas ]; then
+        mkdir ../testing-files-downloads
+    fi
+
     cd ../testing-files-downloads
     echo "Downloading JSCover from $JSCOVERURL"
     curl -O "$JSCOVERURL"
