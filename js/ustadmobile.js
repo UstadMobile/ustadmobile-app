@@ -52,6 +52,12 @@ var UstadMobile;
 
 var ustadMobileInstance = null;
 
+/**
+ * Creates the main UstadMobile Object
+ * 
+ * @class UstadMobile
+ * @constructor
+ */
 UstadMobile = function() {
     
 };
