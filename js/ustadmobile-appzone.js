@@ -1,6 +1,7 @@
+/* 
 <!-- This file is part of Ustad Mobile.  
     
-    Ustad Mobile Copyright (C) 2011-2013 Toughra Technologies FZ LLC.
+    Ustad Mobile Copyright (C) 2011-2014 UstadMobile Inc.
 
     Ustad Mobile is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -38,54 +39,40 @@ All names, links, and logos of Ustad Mobile and Toughra Technologies FZ LLC must
 If you need a commercial license to remove these restrictions please contact us by emailing info@ustadmobile.com 
 
 -->
+*/
 
-<!--
-    Unit Tests of as many logical tests for Ustad Mobile using Quit testing.
--->
+var UstadMobileAppZone;
 
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>Ustad Mobile Tests</title>
-        <script type='text/javascript'>
-            var USTADAPPZONE = true;
-        </script>
-        
-        <script type="text/javascript">
-            //Variable used in conjunction with test-loadme to make sure our 
-            //functions auto reject loading the same script twice
-            var umLoadCount = 0;
-        </script>
-        <script src="js/jquery.min.js" type='text/javascript'></script>
-        
-        
-        <script type="text/javascript" src="js/qunit-1.12.0.js"></script>
-        
+/**
+ * Object that handles logic and functions that work within the content context
+ * (as opposed to the app context)
+ * 
+ * @class UstadMobileAppZone
+ * @constructor
+ */
+UstadMobileAppZone = function() {
+    
+};
 
-        <link rel='stylesheet' href='css/qunit-1.12.0.css' type='text/css'/>
+/**
+ * Main single instance of UstadMobileAppZone
+ * 
+ * @type {UstadMobileAppZone}
+ */
+UstadMobileAppZone.mainInstance = null;
 
-        
-        <!--<script type="text/javascript" charset="utf-8" src="cordova.js"></script>-->
-        
-        
-        <script src="js/ustadmobile.js" type='text/javascript' ></script>
-        <script src="js/ustadmobile-setlocalisation.js" type='text/javascript'></script>
-        <script src="jqm/jquery.mobile.min.js" type='text/javascript'></script>
-        <script src="js/ustadmobile-booklist.js" type='text/javascript' ></script>
-        <script src="js/ustadmobile-login.js" type='text/javascript'></script>
-        <script type="text/javascript" src="js/ustadmobile-getpackages.js"></script>
-        <script src="js/ustadmobile-base64tofile.js" type='text/javascript'></script>
-        <script type="text/javascript" src="js/ustadmobile-test.js"></script>
-        <script type="text/javascript" src="js/ustadmobile-test-settings.js"></script>
-        <meta name="viewport" content="width=device-width, initial-scale=1"> 
-        
-        <link rel='stylesheet' href='jqm/jqm-base.css' type='text/css'/>
-        <link rel='stylesheet' href='jqm/jqm-app-theme.css' type='text/css'/>
+/**
+ * Gets an instance of UstadMobileAppZone
+ * 
+ * @returns {UstadMobileAppZone}
+ */
+UstadMobileAppZone.getInstance = function() {
+    if(UstadMobileAppZone.mainInstance === null) {
+        UstadMobileAppZone.mainInstance = new UstadMobileAppZone();
+    }
+    return UstadMobileAppZone.mainInstance;
+};
 
-
-    </head>
-    <body data-zone="app">
-        <div id="qunit"></div>
-        <div id="qunit-fixture"></div>
-    </body>
-</html>
+UstadMobileAppZone.prototype = {
+    
+};

@@ -168,6 +168,7 @@ UstadMobileBookList.prototype = {
         "jqm/jqm-app-theme.css" : "jqm-app-theme.css",
         "jqm/jqm-content-theme.css" : "jqm-content-theme.css",
         "jqm/jquery.mobile.icons.min.css" : "jquery.mobile.icons.min.css",
+        "js/ustadmobile-contentzone.js" : "ustadmobile-contentzone.js",
         "ustadmobile_menupage_content.html" : "ustadmobile_menupage_content.html"
     },
     
