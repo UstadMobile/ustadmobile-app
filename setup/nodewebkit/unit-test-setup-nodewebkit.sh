@@ -122,7 +122,7 @@ else
 fi
 
 #Update documentation
-jsdoc -d=./jsdoc_output $SRCDIR
+jsdoc -d=./jsdoc_output $SRCDIR/js
 
 
 exit $RESULTCODE
