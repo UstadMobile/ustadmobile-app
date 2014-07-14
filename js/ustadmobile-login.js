@@ -322,6 +322,7 @@ UstadMobileLogin.prototype = {
      * @method umSkip
      */
    umSkip: function() {
+       //temp       
        localStorage.removeItem('username');
        //openPage("ustadmobile_booklist.html");
        //try jquerymobile changepage

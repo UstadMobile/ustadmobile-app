@@ -44,8 +44,8 @@ If you need a commercial license to remove these restrictions please contact us 
 var UstadMobileAppZone;
 
 /**
- * Object that handles logic and functions that work within the content context
- * (as opposed to the app context)
+ * Object that handles logic and functions that work within the app context
+ * (as opposed to the content context)
  * 
  * @class UstadMobileAppZone
  * @constructor
@@ -75,4 +75,13 @@ UstadMobileAppZone.getInstance = function() {
 
 UstadMobileAppZone.prototype = {
     
+    init: function() {
+        //Make sure the implementation (e.g. cordova, NodeWebKit is ready)
+        UstadMobile.getInstance().runWhenImplementationReady(function() {
+            alert("Implementation ready ");
+            UstadMobile.getInstance().systemImpl.getSystemLang(function(lang){
+            });
+        });
+
+    }
 };

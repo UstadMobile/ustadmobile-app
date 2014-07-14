@@ -255,6 +255,42 @@ UstadMobile.prototype = {
     initScriptsLoaded: [],
     
     /**
+     * Whether or not all init scripts have loaded
+     * 
+     * @type Boolean
+     */
+    initScriptsAllLoaded: false,
+    
+    /**
+     * User interface language - lang code as in en-US
+     * 
+     * @type string
+     */
+    _uiLang: null,
+    
+    /**
+     * System implementation layer 
+     * 
+     * @type UstadMobileAppImplementation
+     */
+    systemImpl: null,
+    
+    /**
+     * Functions to run after init has taken place
+     * @type Array
+     */
+    pendingRunAfterInitListeners: [],
+    
+    /**
+     * Listeners and callbacks to run 
+     * @type Array
+     */
+    implementationReadyListeners: [],
+    
+    
+    
+    
+    /**
      * Primary startup method - To happen on mobileinit
      * 
      */
@@ -264,7 +300,7 @@ UstadMobile.prototype = {
         console.log("Mobileinit changes set for jQuery mobile for PhoneGap");
         
         //Load the scripts appropriate to the implementation and context
-        this.loadInitScripts(function() {
+        this.loadInitScripts(function() {            
             UstadMobile.getInstance().checkPaths();
             
             $(document).on( "pagecontainershow", function( event, ui ) {
@@ -273,9 +309,56 @@ UstadMobile.prototype = {
 
             if(UstadMobile.getInstance().getZone() === UstadMobile.ZONE_CONTENT) {
                 UstadMobileContentZone.getInstance().init();
+            }else {
+                UstadMobileAppZone.getInstance().init();
             }
+            
+            UstadMobile.getInstance().initScriptsAllLoaded = true;
+            
+            UstadMobileUtils.runAllFunctions(
+                    UstadMobile.getInstance().pendingRunAfterInitListeners,
+                    [true], UstadMobile.getInstance());
+            
         });
     },
+    
+    /**
+     * Run the given function when the given implementation is ready.  If 
+     * implementation is ready run it immediately, otherwise 
+     * 
+     * @method
+     * @param function fn function to run
+     */
+    runWhenImplementationReady: function(fn) {
+        var isReady = this.systemImpl !== null
+                && this.systemImpl.implementationReady;
+        UstadMobileUtils.runOrWait(isReady, fn, [true], this, 
+            this.implementationReadyListeners);
+    },
+    
+    /**
+     * Fire the implementation readyd event
+     * @method
+     */
+    fireImplementationReady: function() {
+        this.systemImpl.implementationReady = true;
+        UstadMobileUtils.runAllFunctions(this.implementationReadyListeners, [true],
+            this);
+    },
+    
+    
+    /**
+     * Run the given function once all init scripts have loaded
+     * this will refere to UstadMobile.getInstance() .  If this has already
+     * happened - run now.  Otherwise run when it's all done.
+     * 
+     * @param {type} fn
+     */
+    runWhenInitDone: function(fn) {
+        UstadMobileUtils.runOrWait(this.initScriptsAllLoaded, fn, [true], this,
+            this.pendingRunAfterInitListeners);
+    },
+    
     
     /**
      * Function to load all init scripts required depending on the environment
@@ -288,8 +371,10 @@ UstadMobile.prototype = {
     loadInitScripts: function(successCallback, failCallback) {
         var umObj = UstadMobile.getInstance();
         if(umObj.getZone() === UstadMobile.ZONE_CONTENT) {
+            umObj.initScriptsToLoad.push("ustadmobile-localization.js")
             umObj.initScriptsToLoad.push("ustadmobile-contentzone.js");
         }else {
+            umObj.initScriptsToLoad.push("js/ustadmobile-localization.js")
             umObj.initScriptsToLoad.push("js/ustadmobile-appzone.js");
             var implName = umObj.isNodeWebkit() ? "nodewebkit" : (window.cordova ?
                 "cordova" : null);
@@ -314,6 +399,25 @@ UstadMobile.prototype = {
                 }
             });
         }
+    },
+    
+    /**
+     * Load the localization Strings for the given language
+     * 
+     * @param string localeCode
+     * @param function completeCallback - optional run when initLocale is done
+     * 
+     * @returns {undefined}
+     */
+    initLocale: function(localeCode, completeCallback) {
+        if(UstadMobileLocalization.SUPPORTED_LANGS.indexOf(localeCode) === -1) {
+            throw "Exception: Language " + localeCode + " is not supported";
+        }
+        
+        this.loadUMScript("locale/" + localeCode + ".js", function() {
+            UstadMobileUtils.runCallback(completeCallback, [true], 
+                UstadMobile.getInstance());
+        });
     },
     
     /**
@@ -372,7 +476,9 @@ UstadMobile.prototype = {
      * @param ui {Object} UI param from jQueryMobile event
      */
     pageInit: function(evt, ui) {
-        UstadMobileContentZone.getInstance().initPagePreload(evt, ui);
+        if(UstadMobile.getInstance().getZone() === UstadMobile.ZONE_CONTENT) {
+            UstadMobileContentZone.getInstance().initPagePreload(evt, ui);
+        }
     },
     
     /**
@@ -490,6 +596,7 @@ UstadMobile.prototype = {
             this.pendingRuntimeInfoLoadedListeners.push(callback);
         }
     },
+    
     
     /**
      * Run all pending listeners
@@ -779,6 +886,32 @@ UstadMobile.prototype = {
         }
     },
     
+    localizePage: function(pgEl) {
+        if(typeof pgEl === "undefined" || pgEl === null) {
+            pgEl = $(".ui-page-active");
+        }
+        
+        console.log("[setlocalisation][ustadmobile] In localizePage()");
+        debugger;
+        pgEl.find(".exeTranslated").each(function(index, value) {
+            var textToTranslate = $(this).attr("data-exe-translation");
+            //var attrTextToTranslate = $(this).attr("data-exe-translation-attr");
+            console.log("text to translate: " + textToTranslate);
+            console.log(" translated value: " + x_(textToTranslate)); // Need to include the locale/lang.js file before this is called. 
+            $(value).text(x_(textToTranslate));
+        });
+
+        pgEl.find(".exeTranslated2").each(function(index, value){
+            var attrText = $(this).attr("data-exe-translation-attr");
+            console.log("TEST: attrText is: " + attrText);
+            var attrTextToTranslate = $(this).attr(attrText);
+            var idTextToTranslate = $(this).attr("id");
+
+            console.log("For the attribute: " + attrText + " and id: " + idTextToTranslate + " of value: " + attrTextToTranslate + ", Translation is: " + x_(attrTextToTranslate));
+            $("#" + idTextToTranslate).attr(attrText, x_(attrTextToTranslate));
+        });
+    }
+    
 };
 
 var UstadMobileServerSettings;
@@ -787,7 +920,97 @@ UstadMobileServerSettings = function(serverName, xapiBaseURL, getCourseIDURL) {
     this.serverName = serverName;
     this.xapiBaseURL = xapiBaseURL;
     this.getCourseIDURL = getCourseIDURL;
+};
+
+var UstadMobileUtils;
+
+/**
+ * Holds static utility methods
+ * 
+ * @class UstadMobileUtils
+ * @constructor
+ */
+UstadMobileUtils = function() {
+};
+
+/**
+ * Utility function to run all functions in an array (e.g. event listeners)
+ * Removes them from the list using .pop as we go
+ * 
+ * @method
+ * @param Array arr Array holding function objects - MUST be an array
+ * @param thisObj Object that will be 'this' inside function when called
+ * @param mixed args to send (optional)
+ * 
+ */
+UstadMobileUtils.runAllFunctions = function(arr, args, thisObj) {
+    while(arr.length > 0) {
+        var fn = arr.pop();
+        fn.apply(thisObj, args);
+    }
+};
+
+/**
+ * Utility method that can be used to run optional callback functions
+ * 
+ * @param function fn - function to run - can be null or undefined
+ * @param mixed args - arguments array to pass function
+ * @param {Object} thisObj what to use for this in function 
+ * 
+ */
+UstadMobileUtils.runCallback = function(fn, args, thisObj) {
+    if(typeof fn !== "undefined" && fn !== null) {
+        fn.apply(thisObj, args);
+    }
 }
+
+/**
+ * Utility method to run a function if a property is true, if not apppend to
+ * waiting listeners
+ * 
+ * @returns {UstadMobileAppImplementation}
+ */
+UstadMobileUtils.runOrWait = function(runNow, fn, args, thisObj, waitingList) {
+    if(runNow) {
+        UstadMobileUtils.runCallback(fn, args, thisObj);
+    }else {
+        waitingList.push(fn);
+    }
+}
+
+/**
+ * Abstract class that defines what an implementation of the app needs to be 
+ * able to do - e.g. get the default language of the system, file system scans, 
+ * etc.  There will be an implementation for Cordova and NodeWebKit
+ * 
+ * @constructor
+ * @class UstadMobileAppImplementation
+ */
+var UstadMobileAppImplementation = function() {
+            
+    
+};
+
+UstadMobileAppImplementation.prototype = {
+    
+    /**
+     * Boolean if the implementation is ready (e.g. cordova.ondeviceready etc)
+     * @type Boolean
+     */
+    implementationReady: false,
+    
+    /**
+     * 
+     * @param function callbackFunction Called when the system returns the 
+     * language or a failure occurs with arg 
+     * 
+     * @method
+     */
+    getSystemLang: function(callbackFunction) {
+        
+    }
+};
+
 
 // Put this in a central location in case we don't manage to load it
 var messages = [];
@@ -840,41 +1063,38 @@ console.log("User agent is: " + userAgent);
 //var isNodeWebkit = (typeof process == "object");
 
 if(navigator.userAgent.indexOf("Android") !== -1){
-        platform = "android";
-        console.log("You are using Android on ustadmobile.js.");
-        
-    }else if(navigator.userAgent.indexOf("iPhone OS") !== -1 ){
-        platform = "ios";
-        debugLog("You are using ios on ustadmobile.js()");
+    platform = "android";
+    console.log("You are using Android on ustadmobile.js.");
 
-    }else if(navigator.userAgent.indexOf("Windows Phone OS 7.0") !== -1){
-        platform = "wp7";
-        debugLog("You are using wp7 on ustadmobile.js()");
+}else if(navigator.userAgent.indexOf("iPhone OS") !== -1 ){
+    platform = "ios";
+    debugLog("You are using ios on ustadmobile.js()");
 
-    }else if(navigator.userAgent.indexOf("Windows Phone OS 7.5") !== -1){
-        platform = "wp7.5";
-        debugLog("You are using wp7.5 on ustadmobile.js()");
+}else if(navigator.userAgent.indexOf("Windows Phone OS 7.0") !== -1){
+    platform = "wp7";
+    debugLog("You are using wp7 on ustadmobile.js()");
 
-    }else if(navigator.userAgent.indexOf("Windows Phone OS 8.0") !== -1){
-        debugLog("You are using wp8 on ustadmobile.js()");
-        platform = "wp8";
+}else if(navigator.userAgent.indexOf("Windows Phone OS 7.5") !== -1){
+    platform = "wp7.5";
+    debugLog("You are using wp7.5 on ustadmobile.js()");
 
-    }else if(navigator.userAgent.indexOf("BB10") !== -1){
-        platform = "bb10";
-        //alert("Blackberry detected in ustadmobile.js()");
- 
-    }else if(navigator.userAgent.indexOf("Firefox") !== -1){
-        platform = "firefox";
-        debugLog("You are using Firefox on ustadmobile.js()"); 
-    }else if(navigator.userAgent.indexOf("Chrome") !== -1){
-        platform = "chrome";
-        debugLog("You are using Chrome on ustadmobile.js()"); 
-    }else{          // More to add: IE10: MSIE 10, etc.
-        //alert("Could not verify your device or platform. Your device isn't tested with our developers. Error. Contact an ustad mobile developer.");
-    }
+}else if(navigator.userAgent.indexOf("Windows Phone OS 8.0") !== -1){
+    debugLog("You are using wp8 on ustadmobile.js()");
+    platform = "wp8";
+
+}else if(navigator.userAgent.indexOf("BB10") !== -1){
+    platform = "bb10";
+
+}else if(navigator.userAgent.indexOf("Firefox") !== -1){
+    platform = "firefox";
+    debugLog("You are using Firefox on ustadmobile.js()"); 
+}else if(navigator.userAgent.indexOf("Chrome") !== -1){
+    platform = "chrome";
+    debugLog("You are using Chrome on ustadmobile.js()"); 
+}
 
 //Cordova device ready event handler
-document.addEventListener("deviceready", onAppDeviceReady, false);
+//document.addEventListener("deviceready", onAppDeviceReady, false);
 
 //Global variable set in scroll login. Can be disabled from the Content (!1) to disable scroll.
 var scrollEnabled = 1;
@@ -913,15 +1133,6 @@ $(function() {
  whole answer inside label element, fix up floats/width etc.
 */
 
-/*
- * Fix issue of download links if we are using NodeWebKit, depending on the runtime
- * settings
- */
-$(function() {
-    
-});
-
-
 function callOnLanguageDeviceReady(){
 
     if(navigator.userAgent.indexOf("Android") !== -1){
@@ -946,7 +1157,6 @@ function callOnLanguageDeviceReady(){
         onLanguageContentReady();
     }else if(navigator.userAgent.indexOf("BB10") !== -1){
         platform = "bb10";
-        //alert("Blackberry detected in callOnLanguageDeviceReady()");
         onLanguageContentReady();
     }else if(navigator.userAgent.indexOf("Firefox") !== -1){
         console.log("Detected Mozilla Firefox Browser");
@@ -958,10 +1168,11 @@ function callOnLanguageDeviceReady(){
         console.log("Could not verify the platform.");
         //onLanguageContentReady();
         // More to add: IE10: MSIE 10, etc.
-        //alert("Could not verify your device or platform. Your device isn't tested with our developers. Error. Contact an ustad mobile developer.");
     }
     
 }
+
+/*
 
 function onLanguageContentReady(){
     console.log("*****************************IN ONLANGUAGECONTENTREADY()!!*******************************");
@@ -1027,6 +1238,9 @@ function onLanguageContentReady(){
     localizePage();
     $.mobile.loading('hide');
 }
+*/
+
+
 
 /*
 Even though the documentation says that this should
@@ -1114,42 +1328,6 @@ $(document).on("pagechange", function(event){
 });
 */
 
-
-
-//Function called whenever Cordova is ready within the app's navigation.
-function onAppDeviceReady(){
-    console.log("Cordova device ready (onAppDeviceReady())");
-    
-    var baseURL = localStorage.getItem("baseURL");
-    console.log(" Startup: ustadmobile.js->onAppDeviceReady()->baseURL: " + baseURL);
-
-    debugLog("Detected mobile device- Cordova.");
-    navigator.globalization.getPreferredLanguage(
-        function langsuccess(language){
-           debugLog(" Your device's language is: " +  language.value + "\n");
-            var langGlob = language.value;
-            if (langGlob == "English"){
-                langGlob = "en";
-            }
-            if (langGlob == "Arabic"){
-                langGlob = "ar";
-            }
-           localStorage.setItem('checklanguage', langGlob); 
-        },
-        function errorCB(){
-            debugLog("Failed to get your device's language.");
-        }
-    );
-    
-
-    debugLog(" checklanguage set: " + localStorage.getItem('checklanguage'));
-}
-
-//When the Menu Loads, this is called. You can write in your actions and code that needs to be run in the start here.
-function onMenuLoad(){
-	debugLog("Menu triggered: ustadmobile_menuPage/2.html -> ustadmobile.js -> onMenuLoad()");
-}
-
 /*
  Localization function - will return original English if not in JSON
 */
@@ -1177,137 +1355,15 @@ Gets called on page load (e.g. before is shown)
 
 pageSelector - class or id selector e.g. .ui-page-active
 */
-function localizePage() { 
+function localizePage(containerEl) { 
 
-    console.log("[setlocalisation][ustadmobile] In localizePage()");
-    $(".exeTranslated").each(function(index, value) {
-        var textToTranslate = $(this).attr("data-exe-translation");
-        //var attrTextToTranslate = $(this).attr("data-exe-translation-attr");
-        //$('#skipButton').attr( attrTextToTranslate, "Hey");
-        //console.log("THE attribute text to translate: " + attrTextToTranslate);
-        console.log("text to translate: " + textToTranslate);
-        //console.log(" value for: " + value);
-        console.log(" translated value: " + x_(textToTranslate)); // Need to include the locale/lang.js file before this is called. 
-        $(value).text(x_(textToTranslate));
-    });
-    
-    $(".exeTranslated2").each(function(index, value){
-        var attrText = $(this).attr("data-exe-translation-attr");
-        console.log("TEST: attrText is: " + attrText);
-        var attrTextToTranslate = $(this).attr(attrText);
-        var idTextToTranslate = $(this).attr("id");
-
-        console.log("For the attribute: " + attrText + " and id: " + idTextToTranslate + " of value: " + attrTextToTranslate + ", Translation is: " + x_(attrTextToTranslate));
-        $("#" + idTextToTranslate).attr(attrText, x_(attrTextToTranslate));
-    });
+    UstadMobile.getInstance().localizePage();
 
 }
-
-
-//This is the runcallback function
-//passed to the
-function runcallback(callbackfunction, arg) {
-    if (callbackfunction != null && typeof callbackfunction === "function") {
-        debugLog("Within the call back function with arg: " + arg );
-        callbackfunction(arg);
-    }
-}
-
-function checkSomethingElse() {
-    test( "1 really is 1", function() {
-        ok( 1 == 1, "1 is 1");
-    });
-}
-
-
-//The CALLBACK
-function testContentCallback(arg){
-    console.log("TESTING 07");
-	
-	if (typeof test === "function" && test != null ){
-		//dummy test:
-		//checkSomethingElse();
-
-		console.log("Deteted Qunit test.");
-    	/*	test("Scan through the content all pages.", function(){
-			ok(arg == "checkContentPageLoad success", "Scan content pages okay.");
-			console.log("TESTING OK 08");
-    		});*/
-	//}else{
-	}
-		console.log("Detected no qunit tests.");
-		if (arg ==  "checkContentPageLoad success" ){
-			console.log("Scan content page okay.");
-			console.log("Success");
-			var path = window.location.pathname;
-			var pathParts = path.split("/");
-			var courseName = pathParts[pathParts.length - 2];
-			console.log("In file: " + pathParts[pathParts.length -1]);
-			console.log("folder: " + courseName );
-			var result = "pass";
-			var runtime = "";
-			var dategroup = "grunt";
-			var courseID = "Course ID: ";
-			//Send test results to server about course test completion.
-		
-			var courseTestOutput = "new|" + courseName + "|" + result + "|" + runtime + "|" + dategroup + "|" + courseID + "|" ;
-
-    			console.log("What the test output looks so far: " + courseTestOutput);
-    			localStorage.setItem('courseTestOutput', courseTestOutput);
-    			console.log("courseTestOutput localStorage: " + localStorage.getItem('courseTestOutput'));
-			sendOutput('courseTestOutput');
-			
-		}
-}
-
-//The XML CALLBACK
-function checkPackageXMLProcessingOK(arg){
-    test("Scan downloaded package xml file and extract file tag information", function(){
-        ok( arg == "xml processing pass", "Package XML Downloaded and Scan okay");
-    });
-}
-
-
-
-function testContent(type, callback){
-    //testContent('pageload', checkContentPageLoadOK);
-    if (type == 'pageload'){
-        //Code for test pageload goes here.
-
-    }else{
-        console.log("Test failed. Type is not recognised. What are you testing again? You gave me: " + type);
-    }
-}
-
-
-//$(document).ready(function(){
-//$(document).onload(function(){
-$(window).load(function(){
-    //console.log("THE CONTENT_MODELS in .load() IS: " + CONTENT_MODELS);
-    if(typeof CONTENT_MODELS !== 'undefined' && CONTENT_MODELS == "test"){
-	console.log("Test mode and current page done.");
-	//exeNextPageOpen();
-	var nextPageHREF = $(".ui-page-active #exeNextPage").attr("href");
-	nextPageHREF = $.trim(nextPageHREF);
-	if (nextPageHREF != null && nextPageHREF != "#"){
-		console.log("Next Page exists..");
-		exeNextPageOpen();
-	}
-    }
-});
-
 
 //Function to handle Previous Page button within eXe content's footer.
 function exePreviousPageOpen(){
     UstadMobileContentZone.getInstance().contentPageGo(UstadMobile.LEFT);
-}
-
-//Function to handle First Next Page button within eXe content's footer. (Is not used)
-function exeFirstNextPageOpen(){   
-    debugLog("Ustad Mobile: in exeFirstNextPageOpen()");
-    var nextPageHREF = $(".ui-page-active #exeNextPage").attr("href");
-    debugLog("Ustad Mobile: CONTENTT: Going to next page in FirstNextPageOpen: " + nextPageHREF);
-    $.mobile.changePage( nextPageHREF, { transition: "none" }, true, true );
 }
 
 //Function to handle Next Page button within eXe content's footer.
@@ -1367,7 +1423,7 @@ function exeMenuPageOpen() {
 
 //Function to handle Menu Page within Book List's footer.
 function booklistMenuPageOpen(){
-	debugLog("Ustad Mobile App: You will go into: exeMenuPage " + exeMenuPage);
+    debugLog("Ustad Mobile App: You will go into: exeMenuPage " + exeMenuPage);
     var exeMenuLink = localStorage.getItem("baseURL") + "/" + exeMenuPage;
     debugLog("Ustad Mobile App: You will go into: exeMenuLink " + exeMenuLink);	
     $.mobile.changePage( exeMenuPage, { transition: "slideup" } );
@@ -1545,17 +1601,6 @@ function openSetLanguagesPage(){
     openMenuLink("ustadmobile_setLanguage.html", "slide");
 }
 
-//Function available to test refreshing a page. Not tested.
-function refreshPage(pageToRefresh)
-{
-	console.log("Refreshing page: " + pageToRefresh);
-    $.mobile.changePage(pageToRefresh, {
-        allowSamePageTransition: true,
-        transition: 'none',
-        reloadPage: true
-    });
-}
-
 //Function to open the About Ustad Mobile page from within the Menu (both from Book List and eXe content).
 function openAboutUM(){
     var	aboutLink = "ustadmobile_aboutus.html"; //Maybe make this a global variable ?..
@@ -1584,7 +1629,9 @@ function openTOCPage(){
 
 /** 
  * Dummy function ONLY for compatibility purposes to avoid something throwing
- * an exception - this is now handled in ustadmobile-contentzone checkTOC
+ * an exception - this is now handled in ustadmobile-contentzone checkTOC.
+ * 
+ * This is required because old HTML content being opened will ask for this.
  */
 function initTableOfContents() {
     

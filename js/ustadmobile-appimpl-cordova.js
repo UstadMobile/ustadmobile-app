@@ -74,37 +74,62 @@ UstadMobileAppImplCordova.getInstance = function() {
     return UstadMobileAppImplCordova.mainInstance;
 };
 
-UstadMobileAppImplCordova.prototype = {
-    checkPaths: function() {
-        document.addEventListener("deviceready",function() {
-                window.resolveLocalFileSystemURL("cdvfile://localhost/sdcard/",
-                    function(baseDirEntry) {                        
+
+
+
+UstadMobileAppImplCordova.prototype = Object.create(
+    UstadMobileAppImplementation.prototype);
+
+/**
+ * Get the device system language using globalization plugin
+ * 
+ * @param function callbackFunction function that will be called passing language
+ * value (e.g. en-US)
+ * 
+ * @method
+ */
+UstadMobileAppImplCordova.prototype.getSystemLang = function(callbackFunction) {
+    navigator.globalization.getPreferredLanguage(
+        //success
+        function(language){
+           debugLog(" Your device's language is: " +  language.value + "\n");
+           callbackFunction(language.value);
+        },//fail
+        function(){
+            callbackFunction(null);
+        }
+    );
+};
+
+UstadMobileAppImplCordova.prototype.checkPaths = function() {
+    document.addEventListener("deviceready",function() {
+        window.resolveLocalFileSystemURL("cdvfile://localhost/sdcard/",
+            function(baseDirEntry) {                        
+                UstadMobile.getInstance().checkAndMakeUstadSubDir(
+                    UstadMobile.CONTENT_DIRECTORY,
+                    baseDirEntry, function(contentDirEntry) {
+                        var contentDirBase = contentDirEntry;
+                        UstadMobile.getInstance().contentDirURI = 
+                                contentDirEntry.toURL();
                         UstadMobile.getInstance().checkAndMakeUstadSubDir(
-                            UstadMobile.CONTENT_DIRECTORY,
-                            baseDirEntry, function(contentDirEntry) {
-                                var contentDirBase = contentDirEntry;
-                                UstadMobile.getInstance().contentDirURI = 
-                                        contentDirEntry.toURL();
-                                UstadMobile.getInstance().checkAndMakeUstadSubDir(
-                                    UstadMobile.DOWNLOAD_SUBDIR, contentDirBase,
-                                    function(downloadDirEntry) {
-                                        UstadMobile.getInstance().downloadDestDirURI
-                                            = downloadDirEntry.toURL();
-                                        UstadMobile.getInstance().
-                                                firePathCreationEvent(true);
-                                    },function(err) {
-                                        UstadMobile.getInstance().
-                                                firePathCreationEvent(false, err);
-                                    });
-                            },
-                            function(err) {
+                            UstadMobile.DOWNLOAD_SUBDIR, contentDirBase,
+                            function(downloadDirEntry) {
+                                UstadMobile.getInstance().downloadDestDirURI
+                                    = downloadDirEntry.toURL();
+                                UstadMobile.getInstance().
+                                        firePathCreationEvent(true);
+                            },function(err) {
                                 UstadMobile.getInstance().
                                         firePathCreationEvent(false, err);
                             });
-                    },function(err) {
-                        UstadMobile.getInstance().firePathCreationEvent(false,
-                            err);
-                });
-            });
-    }
+                    },
+                    function(err) {
+                        UstadMobile.getInstance().
+                                firePathCreationEvent(false, err);
+                    });
+            },function(err) {
+                UstadMobile.getInstance().firePathCreationEvent(false,
+                    err);
+        });
+    });
 };

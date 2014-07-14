@@ -48,6 +48,7 @@ var UstadMobileAppImplNodeWebkit;
  * (as opposed to the app context)
  * 
  * @class UstadMobileAppImplNodeWebkit
+ * @extends UstadMobileAppImplementation
  * @constructor
  */
 UstadMobileAppImplNodeWebkit = function() {
@@ -73,5 +74,27 @@ UstadMobileAppImplNodeWebkit.getInstance = function() {
     return UstadMobileAppImplNodeWebkit.mainInstance;
 };
 
-UstadMobileAppImplNodeWebkit.prototype = {
+UstadMobileAppImplNodeWebkit.prototype = Object.create(
+    UstadMobileAppImplementation.prototype);
+
+/**
+ * Get the actual language of the system for NodeWebKit
+ * 
+ * @method
+ * @param function callbackFunction
+ */
+UstadMobileAppImplNodeWebkit.prototype.getSystemLang = function(callbackFunction) {
+    setTimeout(function() {
+        callbackFunction("en");
+    }, 0);
 };
+
+
+//Set the implementation accordingly on UstadMobile object
+UstadMobile.getInstance().systemImpl = 
+        UstadMobileAppImplNodeWebkit.getInstance();
+
+//There is no waiting for ready with NodeWebKit -just fire this.
+setTimeout(function() {
+            UstadMobile.getInstance().fireImplementationReady();
+        }, 10);

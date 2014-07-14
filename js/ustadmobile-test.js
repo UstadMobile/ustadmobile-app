@@ -75,9 +75,16 @@ console.log ("With Qunit logs in 01");
 
     testLoadScriptOnceOnly();
     
+    testUstadMobileImplementationLoads();
+    
+    
+    
     //Set timeout to 60seconds (download a course)
     QUnit.testTimeout = 60000;
     testUstadMobileCourseDownloadById(5);
+    
+    testPageLocalization(); 
+    
     
     //Set timeout to 10 seconds (scan directories)
     QUnit.testTimeout = 10000;
@@ -93,6 +100,40 @@ console.log ("With Qunit logs in 01");
     testCloseCourseIframe();
     
 }());
+
+function testPageLocalization() {
+    asyncTest("UstadMobile Page Localization", function() {
+        expect(1);
+        $.ajax({
+            url : "ustadmobile_booklist.html",
+            dataType: "html"
+        }).done(function(data, textStatus, jqXHR) {
+            var newPageContentEl = $(data).next(".ustadbooklistpage");
+            debugger;
+            UstadMobile.getInstance().runWhenImplementationReady(function() {
+                UstadMobile.getInstance().localizePage(newPageContentEl);
+                ok(true, "temp: ran localization routine we think...");
+                start();
+            });
+        });
+    });
+}
+
+/**
+ * Test to see if we the implementation in the app - e.g. Cordova or NodeWebKit based
+ * 
+ * @method
+ */
+function testUstadMobileImplementationLoads() {
+    asyncTest("UstadMobileAppImplementation loaded", function() {
+        expect(1);
+        UstadMobile.getInstance().runWhenInitDone(function() {
+            ok(UstadMobile.getInstance().systemImpl instanceof UstadMobileAppImplementation,
+                "Implementation has loaded, instanceof test OK");
+            start();
+        });
+    });
+}
 
 /**
  * 
