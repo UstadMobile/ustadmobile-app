@@ -89,6 +89,19 @@ UstadMobileAppImplNodeWebkit.prototype.getSystemLang = function(callbackFunction
     }, 0);
 };
 
+/**
+ * 
+ * @param string pageName
+ * @returns {undefined}
+ */
+UstadMobileAppImplNodeWebkit.prototype.goPage = function(pageName) {
+    if(pageName === UstadMobile.PAGE_BOOKLIST) {
+        openMenuLink(pageName, "slide");
+    }
+    //window.open("ustadmobile_booklist.html", "_self");
+    
+};
+
 
 //Set the implementation accordingly on UstadMobile object
 UstadMobile.getInstance().systemImpl = 

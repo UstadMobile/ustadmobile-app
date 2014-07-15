@@ -132,6 +132,29 @@ UstadMobileContentZone.prototype = {
     },
     
     /**
+     * Open the page given using UstadMobile.PAGE_name constants
+     * 
+     * @param string pageName UstadMobile.PAGE_name constant for page to open
+     * 
+     */
+    goPage: function(pageName) {
+        if(pageName === UstadMobile.PAGE_BOOKLIST) {
+            if(UstadMobile.getInstance().getRuntimeInfoVal(UstadMobile.RUNTIME_MENUMODE) !== null){
+                $.ajax({
+                   url : UstadMobile.URL_CLOSEIFRAME,
+                   dataType: "text"
+                });
+            }else {
+                if(!isPageOpen("ustadmobile_booklist.html")) {
+                    openPage2("ustadmobile_booklist.html");
+                }else {
+                    UstadMobile.getInstance().closePanel();
+                }
+            }
+        }
+    },
+    
+    /**
      * 
      * 
      * @method
@@ -502,6 +525,29 @@ UstadMobileContentZone.prototype = {
     },
 };
 
+function openTOCPage(){
+    UstadMobile.getInstance().goPage(UstadMobile.PAGE_TOC);
+    /*
+	$.mobile.loading('show', {
+        text: x_('Loading TOC..'),
+        textVisible: true,
+        theme: 'b',
+        html: ""}
+    );
+
+    //console.log("Current location: " + document.URL);
+    //var contentUrl = document.referrer;
+    //console.log("Content / Previous location: " + contentUrl);
+    //alert("Book url: " + currentBookPath);
+	//var tableOfContentsPage = contentUrl + "/exetoc.html";
+	//var tableOfContentsPage = "exetoc.html";
+    var tableOfContentsPage = currentUrl; //Not tested for Windows Phone yet.
+    debugLog("Going to Table of Contents page: " + tableOfContentsPage);
+    $.mobile.changePage( tableOfContentsPage, { transition: "slideup", reverse: true} );	
+    */
+}
+
+
 /*
 This function is used to control show/hide section
 buttons.  Unfortunately JQuery mobile does not like
@@ -525,4 +571,90 @@ function tocTrigger(tocId, toShow) {
     }    
 }
 
+//openPage2 named with a 2 so that doesnt' confuse with other page's openPage() functions, if any.
+//openPage2 is the one that calls window.open (not changePage() of jQuery).
+function openPage2(openFile){
+    var currentOpenFile = $.mobile.activePage.data('url');
+    if(currentOpenFile === openFile) {
+        return;//this is already open, stop!
+    }
+    
+    console.log("Opening page, platform is: " + platform);
+    if(navigator.userAgent.indexOf("Android") !== -1){
+        openFile = localStorage.getItem('baseURL') + "/" + openFile;
+    }else if(navigator.userAgent.indexOf("Windows Phone OS 8.0") !== -1){
+        openFile = "//www/" + openFile;
+    }else if(navigator.userAgent.indexOf("BB10") !== -1){
+        //var baseurl = localStorage.getItem("baseURL");
+        //openFile = "" + openFile;
+        //Do nothing.
+        console.log("Detected your device is Blackberry 10");
+    }
+    console.log("Menu Links: Going to page: " + openFile);
+        
+    $.mobile.changePage(openFile);
+    //$.mobile.pageContainer.change(openFile);
+    
+}
 
+//Function to handle Previous Page button within eXe content's footer.
+function exePreviousPageOpen(){
+    UstadMobileContentZone.getInstance().contentPageGo(UstadMobile.LEFT);
+}
+
+//Function to handle Next Page button within eXe content's footer.
+function exeNextPageOpen(){
+    UstadMobileContentZone.getInstance().contentPageGo(UstadMobile.RIGHT);
+}
+
+
+
+//Function to handle Menu Page within eXe content's footer.
+function exeMenuPageOpen() {
+    //Windows Phone checks.
+    if ($.mobile.path.getLocation("x-wmapp0://www/ustadmobile_menupage_content.html") != "x-wmapp0://www/ustadmobile_menupage_content.html") {
+        debugLog('there is path problem');
+    } else {
+        debugLog('everything is OK with paths');
+    }
+    debugLog("Ustad Mobile Content: You will go into: exeMenuPage " + exeMenuPage2);
+    
+    var exeMenuLink2 = null;
+    
+    if(UstadMobile.getInstance().getRuntimeInfoVal(UstadMobile.RUNTIME_MENUMODE) !== null) {
+        //use the copy that is in our own directory, this was probably copied in by the app
+        var menuLinkMode = UstadMobile.getInstance().runtimeInfo[UstadMobile.RUNTIME_MENUMODE];
+        if(menuLinkMode === UstadMobile.MENUMODE_USECONTENTDIR) {
+            exeMenuLink2 = exeMenuPage2;
+        }
+    }else if (navigator.userAgent.indexOf("Android") !== -1 || UstadMobile.getInstance().isNodeWebkit()) {
+        exeMenuLink2 = localStorage.getItem("baseURL") + "/" + exeMenuPage2;
+        debugLog("Ustad Mobile Content: ANDROID: You will go into: exeMenuLink " + exeMenuLink2);
+    } else if(UstadMobile.getInstance().isNodeWebkit()){
+        exeMenuLink2 = localStorage.getItem("baseURL") + "/" + exeMenuPage2;
+        debugLog("Ustad Mobile Content: NodeWebKit: You will go into: exeMenuLink " + exeMenuLink2);
+    }else if (navigator.userAgent.indexOf("Windows Phone OS 8.0") !== -1) {	//Currently only Windows Phone checks.
+        exeMenuLink2 = "/www/" + exeMenuPage2;
+        debugLog("Ustad Mobile Content: WINDOWS PHONE 8: You will go into: exeMenuLink " + exeMenuLink2);
+    } else if (navigator.userAgent.indexOf("BB10") !== -1) {
+        //Do nothing
+        console.log("Detected your device platform as: Blackberry 10!");
+        exeMenuLink2 = localStorage.getItem("baseURL") + "/" + exeMenuPage2;
+        debugLog("Ustad Mobile Content: Blackberry 10: You will go into: exeMenuLink " + exeMenuLink2);
+        //alert("BB10TEST: Ustad Mobile Content: Blackberry 10: You will go into: exeMenuLink " + exeMenuLink2);
+    } else if (navigator.userAgent.indexOf("iPhone OS") !== -1) {
+        //Do nothing
+        console.log("Detected your device platform as: iOS!");
+        //alert("Detected iOS.");
+        exeMenuLink2 = localStorage.getItem("baseURL") + "/" + exeMenuPage2;
+        debugLog("Ustad Mobile Content: iOS: You will go into: exeMenuLink " + exeMenuLink2);
+        //alert("exeMenuLink: " + exeMenuLink2);
+    } else if(localStorage.getItem("baseURL")) {
+        exeMenuLink2 = localStorage.getItem("baseURL") + "/" + exeMenuPage2;
+    } else {
+        console.log("Unable to detect your device platform. Error.");
+        //alert("Unable to get platform..");
+    }
+    $.mobile.changePage(exeMenuLink2, {transition: "slideup"});
+    
+}

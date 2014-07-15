@@ -166,6 +166,47 @@ UstadMobile.RUNTIME_MENUMODE = "ustad_menumode";
  */
 UstadMobile.URL_CLOSEIFRAME = "/closeiframe";
 
+/**
+ * Constant - Go page for content...
+ * @type string 
+ */
+UstadMobile.PAGE_BOOKLIST = "ustadmobile_booklist.html";
+
+/**
+ * Constant - Go page for course download
+ * 
+ * @type string
+ */
+UstadMobile.PAGE_DOWNLOAD = "ustadmobile_getPackages.html";
+
+/**
+ * Constant - page for settings
+ * @type string
+ */
+UstadMobile.PAGE_SETTINGS = "ustadmobile_setLanguage.html";
+
+/** 
+ * Constant - page for about menu
+ * 
+ * @type String
+ */
+UstadMobile.PAGE_ABOUT = "ustadmobile_aboutus.html";
+
+
+/**
+ * Constant - page for the table of contents
+ * @type String
+ */
+UstadMobile.PAGE_TOC = "exetoc.html";
+
+/**
+ * Constant - page for login
+ * 
+ * @type string
+ */
+UstadMobile.PAGE_LOGIN = "index.html";
+
+
 UstadMobile.prototype = {
     
     /**
@@ -630,7 +671,7 @@ UstadMobile.prototype = {
      */
     getDefaultServer: function() {
         var umServer = new UstadMobileServerSettings("UstadMobile",
-            "http://svr2.ustadmobile.com:8001/xAPI/statements",
+            "http://svr2.ustadmobile.com:8001/xAPI/",
             "http://umcloud1.ustadmobile.com:8010/getcourse/?id=");
         return umServer;
     },
@@ -886,6 +927,30 @@ UstadMobile.prototype = {
         }
     },
     
+    /**
+     * Open the specified page - normally pass to the zone Object
+     * 
+     * @param pageName string name of page to open using UstadMobile.PAGE_ constants
+     * @method 
+     */
+    goPage: function(pageName) {
+        this.getZoneObj().goPage(pageName);
+    },
+    
+    /**
+     * Returns an instance of UstadMobileAppZone or UstadMobileContentZone 
+     * 
+     * @return Object for the zone we are in now
+     */
+    getZoneObj: function() {
+        var curZone = this.getZone();
+        if(curZone === UstadMobile.ZONE_APP) {
+            return UstadMobileAppZone.getInstance();
+        }else if(curZone === UstadMobile.ZONE_CONTENT) {
+            return UstadMobileContentZone.getInstance();
+        }
+    },
+    
     localizePage: function(pgEl) {
         if(typeof pgEl === "undefined" || pgEl === null) {
             pgEl = $(".ui-page-active");
@@ -910,7 +975,23 @@ UstadMobile.prototype = {
             console.log("For the attribute: " + attrText + " and id: " + idTextToTranslate + " of value: " + attrTextToTranslate + ", Translation is: " + x_(attrTextToTranslate));
             $("#" + idTextToTranslate).attr(attrText, x_(attrTextToTranslate));
         });
-    }
+    },
+    
+    /**
+     * Check and see if the page given is actually already open.
+     * 
+     * @returns {boolean} true if page already open, false otherwise.
+     */
+    isPageOpen: function(fileName) {
+       var currentPage = new String(document.location.href);
+       var currentPageFile = currentPage.substr(currentPage.lastIndexOf("/")+1);
+       if(currentPageFile === fileName) {
+           return true;
+       }else {
+           return false;
+       }
+   }
+
     
 };
 
@@ -1026,19 +1107,6 @@ $(document).on("mobileinit", function() {
    UstadMobile.getInstance().init(); 
 });
 
-
-
-//Flag for unit testing
-var unitTestFlag = false;
-
-//For testing content we have a flag. 
-var changePageFlag = true;
-
-var CONTENT_MODE;
-if (typeof CONTENT_MODE !== 'undefined'){
-	console.log("ustadmobile.js: CONTENT_MODE is: " + CONTENT_MODE);
-}
-
 //Set to 1 for Debug mode, otherwise 0 (will silence console.log messages)
 var USTADDEBUGMODE = 1;
 //var USTAD_VERSION = "0.0.86";
@@ -1047,7 +1115,7 @@ var USTADDEBUGMODE = 1;
 Output msg to console.log if in debug mode
 */
 function debugLog(msg) {
-    if(USTADDEBUGMODE == 1) {
+    if(USTADDEBUGMODE === 1) {
         console.log(msg);
     }
 }
@@ -1060,38 +1128,7 @@ var platform="";
 var userAgent=navigator.userAgent; //User agent
 console.log("User agent is: " + userAgent);
 
-//var isNodeWebkit = (typeof process == "object");
 
-if(navigator.userAgent.indexOf("Android") !== -1){
-    platform = "android";
-    console.log("You are using Android on ustadmobile.js.");
-
-}else if(navigator.userAgent.indexOf("iPhone OS") !== -1 ){
-    platform = "ios";
-    debugLog("You are using ios on ustadmobile.js()");
-
-}else if(navigator.userAgent.indexOf("Windows Phone OS 7.0") !== -1){
-    platform = "wp7";
-    debugLog("You are using wp7 on ustadmobile.js()");
-
-}else if(navigator.userAgent.indexOf("Windows Phone OS 7.5") !== -1){
-    platform = "wp7.5";
-    debugLog("You are using wp7.5 on ustadmobile.js()");
-
-}else if(navigator.userAgent.indexOf("Windows Phone OS 8.0") !== -1){
-    debugLog("You are using wp8 on ustadmobile.js()");
-    platform = "wp8";
-
-}else if(navigator.userAgent.indexOf("BB10") !== -1){
-    platform = "bb10";
-
-}else if(navigator.userAgent.indexOf("Firefox") !== -1){
-    platform = "firefox";
-    debugLog("You are using Firefox on ustadmobile.js()"); 
-}else if(navigator.userAgent.indexOf("Chrome") !== -1){
-    platform = "chrome";
-    debugLog("You are using Chrome on ustadmobile.js()"); 
-}
 
 //Cordova device ready event handler
 //document.addEventListener("deviceready", onAppDeviceReady, false);
@@ -1109,6 +1146,7 @@ function setupClozeWidth() {
     $(".ClozeIdevice input[type=text]").css("width", "");
 }
 
+/*
 $(function() {
     $(document).on("pagebeforecreate", function(event, ui) { //pageinit gets triggered when app start.
         console.log("In pagebeforecreate");
@@ -1119,154 +1157,7 @@ $(function() {
         }
     });
 });
-
-
-/*
- Fix issue with JQueryMobile RadioButtons because of a change in how
- accessibility is handled in eXe.  For JQueryMobile purposes - put
- whole answer inside label element, fix up floats/width etc.
 */
-
-/*
- Fix issue with JQueryMobile RadioButtons because of a change in how
- accessibility is handled in eXe.  For JQueryMobile purposes - put
- whole answer inside label element, fix up floats/width etc.
-*/
-
-function callOnLanguageDeviceReady(){
-
-    if(navigator.userAgent.indexOf("Android") !== -1){
-        platform = "android";
-        console.log("You are using Android on callOnLanguageDeviceReady().");
-        onLanguageContentReady();
-    }else if(navigator.userAgent.indexOf("iPhone OS") !== -1 ){
-        platform = "ios";
-        debugLog("You are using ios on callOnLanguageDeviceReady()");
-        onLanguageContentReady();
-    }else if(navigator.userAgent.indexOf("Windows Phone OS 7.0") !== -1){
-        platform = "wp7";
-        debugLog("You are using wp7 on callOnLanguageDeviceReady()");
-        onLanguageContentReady();
-    }else if(navigator.userAgent.indexOf("Windows Phone OS 7.5") !== -1){
-        platform = "wp7.5";
-        debugLog("You are using wp7.5 on callOnLanguageDeviceReady()");
-        onLanguageContentReady();
-    }else if(navigator.userAgent.indexOf("Windows Phone OS 8.0") !== -1){
-        debugLog("You are using wp8 on callOnLanguageDeviceReady()");
-        platform = "wp8";
-        onLanguageContentReady();
-    }else if(navigator.userAgent.indexOf("BB10") !== -1){
-        platform = "bb10";
-        onLanguageContentReady();
-    }else if(navigator.userAgent.indexOf("Firefox") !== -1){
-        console.log("Detected Mozilla Firefox Browser");
-        onLanguageContentReady();
-    }else if(navigator.userAgent.indexOf("Chrome") !== -1){
-        console.log("Detected Chrome/Chromium Browser");
-        onLanguageContentReady();
-    }else{   
-        console.log("Could not verify the platform.");
-        //onLanguageContentReady();
-        // More to add: IE10: MSIE 10, etc.
-    }
-    
-}
-
-/*
-
-function onLanguageContentReady(){
-    console.log("*****************************IN ONLANGUAGECONTENTREADY()!!*******************************");
-    if (typeof ustadlocalelang === 'undefined') {
-        //var ustadlocalelang = "default";
-        ustadlocalelang = "default";
-        //ustadlocalelang = "default";
-    }else{
-        console.log("Already set ustadlocalelang is: " + ustadlocalelang);
-    }
-
-    console.log("App set language is: " + ustadlocalelang );
-    var filetype = "js";
-    //var baseURL;
-    console.log("In ONLANGUAGECONTENTREADY(), platform set in Content is not set. ");
-     if (ustadlocalelang != null && filetype=="js"){ //if filename is a external JavaScript file    
-        
-        if(navigator.userAgent.indexOf("Android") !== -1){
-            console.log("Detected platform as : Android ");
-            var baseURL = "/android_asset/www";
-        }else if(navigator.userAgent.indexOf("Windows Phone OS 8.0") !== -1){
-            console.log("Detected platform as : Windows Phone 8");
-            var baseURL = "/www";
-        }else if(navigator.userAgent.indexOf("iPhone OS") !== -1){
-            console.log("Detected platform as : iOS");
-            var baseURL = localStorage.getItem("baseURL");
-        }else if(navigator.userAgent.indexOf("BB10") !== -1){
-            console.log("Detected platform as : BB10");
-            var baseURL = localStorage.getItem("baseURL");
-            //alert("BB10TEST: baseUrl: " + baseURL);
-        }else if(navigator.userAgent.indexOf("Firefox") !== -1){
-            console.log("Detected Mozilla Firefox Browser");
-            var baseURL = "";
-        }else if(navigator.userAgent.indexOf("Chrome") !== -1){
-            console.log("Detected Chrome/Chromium Browser");
-            var baseURL = "";
-        }else{                      // More to add: IE10: MSIE 10, etc.
-            console.log("Unable to verify your device or platform. Error.");
-            //alert("Your device/platform isn't recgnized by this device. So there will/might be errors. Contact an Ustad Mobile Developer.");
-            var baseURL = localStorage.getItem("baseURL");
-        }
-	
-	console.log("baseURL: " + baseURL);
-	if (baseURL == null || baseURL == ''){
-		baseURL='';
-		//baseURL = baseURL + "/"; 
-		filename = baseURL + "locale/" + ustadlocalelang + ".js";      
-		console.log("Loading language js: " + filename + " in course (dynamically)..");
-		 $('head').append($('<script>').attr('type', 'text/javascript').attr('src', filename));
-	}else{
-            
-            baseURL = baseURL + "/"; 
-			filename = baseURL + "locale/" + ustadlocalelang + ".js";      
-			console.log("Loading language js: " + filename + " in course (dynamically)..");
-			 $('head').append($('<script>').attr('type', 'text/javascript').attr('src', filename));
-        
-		
-	}
-      	
-
-     }
-    console.log(" Content language javascript: " + filename + " Loading done.");
-    localizePage();
-    $.mobile.loading('hide');
-}
-*/
-
-
-
-/*
-Even though the documentation says that this should
-happen apparently it does not
-*/
-$(document).on("pageshow", function(event, ui) {
-    console.log("In pageshow"); //Means nothing. You can delete this.
-    //ui.prevPage.remove(); 
-    //Commented out because it messes with going back from a page (it is removed, so throws error)
- 
-/*   
-    if(typeof CONTENT_MODELS !== 'undefined' && CONTENT_MODELS == "test"){
-        console.log("Test mode and current page done.");
-        //exeNextPageOpen();
-        var nextPageHREF = $(".ui-page-active #exeNextPage").attr("href");
-        nextPageHREF = $.trim(nextPageHREF);
-        if (nextPageHREF != null){
-                console.log("Next Page exists..");
-                exeNextPageOpen();
-        }
-    }
-*/
-
-    
-});
-
 
 /*
     On Pagechange, the logic for touch, swipe and scroll events are executed.
@@ -1356,239 +1247,10 @@ Gets called on page load (e.g. before is shown)
 pageSelector - class or id selector e.g. .ui-page-active
 */
 function localizePage(containerEl) { 
-
-    UstadMobile.getInstance().localizePage();
-
-}
-
-//Function to handle Previous Page button within eXe content's footer.
-function exePreviousPageOpen(){
-    UstadMobileContentZone.getInstance().contentPageGo(UstadMobile.LEFT);
-}
-
-//Function to handle Next Page button within eXe content's footer.
-function exeNextPageOpen(){
-    UstadMobileContentZone.getInstance().contentPageGo(UstadMobile.RIGHT);
-}
-
-//Function to handle Menu Page within eXe content's footer.
-function exeMenuPageOpen() {
-    //Windows Phone checks.
-    if ($.mobile.path.getLocation("x-wmapp0://www/ustadmobile_menupage_content.html") != "x-wmapp0://www/ustadmobile_menupage_content.html") {
-        debugLog('there is path problem');
-    } else {
-        debugLog('everything is OK with paths');
-    }
-    debugLog("Ustad Mobile Content: You will go into: exeMenuPage " + exeMenuPage2);
-    
-    var exeMenuLink2 = null;
-    
-    if(UstadMobile.getInstance().getRuntimeInfoVal(UstadMobile.RUNTIME_MENUMODE) !== null) {
-        //use the copy that is in our own directory, this was probably copied in by the app
-        var menuLinkMode = UstadMobile.getInstance().runtimeInfo[UstadMobile.RUNTIME_MENUMODE];
-        if(menuLinkMode === UstadMobile.MENUMODE_USECONTENTDIR) {
-            exeMenuLink2 = exeMenuPage2;
-        }
-    }else if (navigator.userAgent.indexOf("Android") !== -1 || UstadMobile.getInstance().isNodeWebkit()) {
-        exeMenuLink2 = localStorage.getItem("baseURL") + "/" + exeMenuPage2;
-        debugLog("Ustad Mobile Content: ANDROID: You will go into: exeMenuLink " + exeMenuLink2);
-    } else if(UstadMobile.getInstance().isNodeWebkit()){
-        exeMenuLink2 = localStorage.getItem("baseURL") + "/" + exeMenuPage2;
-        debugLog("Ustad Mobile Content: NodeWebKit: You will go into: exeMenuLink " + exeMenuLink2);
-    }else if (navigator.userAgent.indexOf("Windows Phone OS 8.0") !== -1) {	//Currently only Windows Phone checks.
-        exeMenuLink2 = "/www/" + exeMenuPage2;
-        debugLog("Ustad Mobile Content: WINDOWS PHONE 8: You will go into: exeMenuLink " + exeMenuLink2);
-    } else if (navigator.userAgent.indexOf("BB10") !== -1) {
-        //Do nothing
-        console.log("Detected your device platform as: Blackberry 10!");
-        exeMenuLink2 = localStorage.getItem("baseURL") + "/" + exeMenuPage2;
-        debugLog("Ustad Mobile Content: Blackberry 10: You will go into: exeMenuLink " + exeMenuLink2);
-        //alert("BB10TEST: Ustad Mobile Content: Blackberry 10: You will go into: exeMenuLink " + exeMenuLink2);
-    } else if (navigator.userAgent.indexOf("iPhone OS") !== -1) {
-        //Do nothing
-        console.log("Detected your device platform as: iOS!");
-        //alert("Detected iOS.");
-        exeMenuLink2 = localStorage.getItem("baseURL") + "/" + exeMenuPage2;
-        debugLog("Ustad Mobile Content: iOS: You will go into: exeMenuLink " + exeMenuLink2);
-        //alert("exeMenuLink: " + exeMenuLink2);
-    } else if(localStorage.getItem("baseURL")) {
-        exeMenuLink2 = localStorage.getItem("baseURL") + "/" + exeMenuPage2;
-    } else {
-        console.log("Unable to detect your device platform. Error.");
-        //alert("Unable to get platform..");
-    }
-    $.mobile.changePage(exeMenuLink2, {transition: "slideup"});
-    
-}
-
-//Function to handle Menu Page within Book List's footer.
-function booklistMenuPageOpen(){
-    debugLog("Ustad Mobile App: You will go into: exeMenuPage " + exeMenuPage);
-    var exeMenuLink = localStorage.getItem("baseURL") + "/" + exeMenuPage;
-    debugLog("Ustad Mobile App: You will go into: exeMenuLink " + exeMenuLink);	
-    $.mobile.changePage( exeMenuPage, { transition: "slideup" } );
-}
-
-//Function to open various links in the Menu.
-function openMenuLink(linkToOpen, transitionMode){
-    
-    //check and see if this page is already open
-    if(isPageOpen(linkToOpen) == true) {
-        UstadMobile.getInstance().closePanel();
-        return;
-    }
-    
-	debugLog("Ustad Mobile: In openMenuLink(linkToOpen), About to open: " + linkToOpen);
-    //if(platform == "android"){
-    if(navigator.userAgent.indexOf("Android") !== -1){
-        //Do nothing
-        //linkToOpen = linkToOpen;
-    }else if(navigator.userAgent.indexOf("Windows Phone OS 8.0") !== -1){
-	    //if(device is windows phone){
-		    linkToOpen = "/" + linkToOpen; //x-wmapp0: will be appended.
-	    //}
-    }else if(navigator.userAgent.indexOf("iPhone OS") !== -1 ){
-        console.log("Detected iOS platform.");
-        //Do nothing
-    }else if(navigator.userAgent.indexOf("BB10") !== -1){
-        console.log("Detected Blackberry 10 platform.");
-        //Do nothing
-    }else{
-        console.log("Your platform cannot be detected. Error.");
-    }
-    debugLog("Ustad Mobile: In openMenuLink(linkToOpen), About to open (post wp check): " + linkToOpen);
-    
-    $.mobile.changePage(linkToOpen, { changeHash: true, transition: transitionMode});
-    //$.mobile.pageContainer.change(linkToOpen, {changeHash: true, transition: transitionMode});
-}
-
-//Your last page code goes here (or it goes in: resumeLastBookPage() which ever you call it from ustabmobile_booklist.html.
-function exeLastPageOpen(){
-    console.log("Going to the last page as per eXe..");
-}
-
-/**
- * Check and see if the page given is actually already open.
- * 
- * @returns {boolean} true if page already open, false otherwise.
- */
-function isPageOpen(fileName) {
-    var currentPage = new String(document.location.href);
-    var currentPageFile = currentPage.substr(currentPage.lastIndexOf("/")+1);
-    if(currentPageFile == fileName) {
-        return true;
-    }else {
-        return false;
-    }
-}
-
-//openPage2 named with a 2 so that doesnt' confuse with other page's openPage() functions, if any.
-//openPage2 is the one that calls window.open (not changePage() of jQuery).
-function openPage2(openFile){
-    
-    var currentOpenFile = $.mobile.activePage.data('url');
-    if(currentOpenFile == openFile) {
-        return;//this is already open, stop!
-    }
-    
-    console.log("Opening page, platform is: " + platform);
-    //if(platform == "android"){
-    if(navigator.userAgent.indexOf("Android") !== -1){
-        openFile = localStorage.getItem('baseURL') + "/" + openFile;
-        //openFile = "/www/" + openFile;
-        //Do nothing, openFile = "ustadmobile_file.html";
-    }else if(navigator.userAgent.indexOf("Windows Phone OS 8.0") !== -1){
-        openFile = "//www/" + openFile;
-    }else if(navigator.userAgent.indexOf("iPhone OS") !== -1 ){
-        //Do nothing.
-        console.log("Detected your device is iOS");
-    }else if(navigator.userAgent.indexOf("BB10") !== -1){
-        //var baseurl = localStorage.getItem("baseURL");
-        //openFile = "" + openFile;
-        //Do nothing.
-        console.log("Detected your device is Blackberry 10");
-    }else{
-        console.log("Unable to detect your device platform. Error.");
-    }
-    console.log("Menu Links: Going to page: " + openFile);
-    //alert("BB10TEST: Menu Links: Going to page: " + openFile);
-	//window.open(openFile).trigger("create");
-    //window.open(openFile);
-    //window.open(openFile, '_self'); //BB10 specific changes so that it loads in current child webview
-	
-        
-    $.mobile.changePage(openFile);
-    //$.mobile.pageContainer.change(openFile);
-    
+    UstadMobile.getInstance().localizePage(containerEl);
 }
 
 
-//function that opens Books. this uses openPage2() because it needs to reload the page.
-function openBookListPage(){    
-    if(UstadMobile.getInstance().isNodeWebkit()) {
-        openMenuLink("ustadmobile_booklist.html", "slide");
-        //window.open("ustadmobile_booklist.html", "_self");
-    }else if(UstadMobile.getInstance().getRuntimeInfoVal(UstadMobile.RUNTIME_MENUMODE) !== null){
-        $.ajax({
-           url : UstadMobile.URL_CLOSEIFRAME,
-           dataType: "text"
-        });
-    }else {
-        if(!isPageOpen("ustadmobile_booklist.html")) {
-            openPage2("ustadmobile_booklist.html");
-        }else {
-            UstadMobile.getInstance().closePanel();
-        }
-    }
-}
-
-//duplicated function for testing purposes..
-function openBookListPage2(){
-	$.mobile.loading('show', {
-        text: x_('Ustad Mobile: Loading..'),
-        textVisible: true,
-        theme: 'b',
-        html: ""}
-    );
-	openPage2("ustadmobile_booklist.html"); // Used to be ../ustadmobile_booklist.html
-    
-}
-//Function to log out and get back to the login page.
-function umMenuLogout(){
-    localStorage.removeItem('username');
-    localStorage.removeItem('password');
-    openPage2("index.html");
-}  
-
-//Function to log out and get back to the login page from the content. This will show a slightly different login page because we want to maintain a constant gui.
-//Does the same as umMenuLogout()..
-function umMenuLogout2(){
-    $.mobile.loading('show', {
-        text: x_('Ustad Mobile:Logging Out..'),
-        textVisible: true,
-        theme: 'b',
-        html: ""}
-    );
-	//Commented because localStoage of app is not accessible on windows phone
-    //localStorage.removeItem('username');
-    //localStorage.removeItem('password');
-    if(!UstadMobile.getInstance().isNodeWebkit()) {
-        openPage2("index.html");
-    }else {
-        window.open("index.html", "_self");
-    }
-}
-
-//This function gets called from the Book List Menu to go back to the Login Page from the Menu.
-function openLoginPage(){
-	$.mobile.loading('show', {
-        text: x_('Ustad Mobile: Loading..'),
-        textVisible: true,
-        theme: 'b',
-        html: ""}
-    );
-	openMenuLink("ustadmobile_login2.html", "slide");
-}
 
 //This function is called from the Book List Meny to go to the download pakcages Page from the Menu.
 //We have decided to not allow user to access the Download Packages page whilist in a book (for reduction in complexity).
@@ -1596,36 +1258,6 @@ function openGetPackagesPage(){
     openMenuLink("ustadmobile_getPackages.html", "slide");
 }
 
-//Function to open Settings and Languages page (Preferences)
-function openSetLanguagesPage(){
-    openMenuLink("ustadmobile_setLanguage.html", "slide");
-}
-
-//Function to open the About Ustad Mobile page from within the Menu (both from Book List and eXe content).
-function openAboutUM(){
-    var	aboutLink = "ustadmobile_aboutus.html"; //Maybe make this a global variable ?..
-    //aboutLink = "/" + aboutLink; 
-    openMenuLink(aboutLink, "slide");
-}
-
-function openTOCPage(){
-	$.mobile.loading('show', {
-        text: x_('Loading TOC..'),
-        textVisible: true,
-        theme: 'b',
-        html: ""}
-    );
-
-    //console.log("Current location: " + document.URL);
-    //var contentUrl = document.referrer;
-    //console.log("Content / Previous location: " + contentUrl);
-    //alert("Book url: " + currentBookPath);
-	//var tableOfContentsPage = contentUrl + "/exetoc.html";
-	//var tableOfContentsPage = "exetoc.html";
-    var tableOfContentsPage = currentUrl; //Not tested for Windows Phone yet.
-    debugLog("Going to Table of Contents page: " + tableOfContentsPage);
-    $.mobile.changePage( tableOfContentsPage, { transition: "slideup", reverse: true} );	
-}
 
 /** 
  * Dummy function ONLY for compatibility purposes to avoid something throwing
@@ -1637,8 +1269,8 @@ function initTableOfContents() {
     
 }
 
-
+//Dummy onload function
+//leave me
 function _onLoadFunction(){
-	console.log("Dummy _onLoadFunction()..");
 }
 

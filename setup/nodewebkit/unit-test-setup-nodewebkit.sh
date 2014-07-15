@@ -52,7 +52,7 @@ fi
 
 cd $TARGETDIR
 
-mv index.html index.html.orig
+mv index.html index.orig.html
 cp ustadmobile_tests.html index.html
 
 

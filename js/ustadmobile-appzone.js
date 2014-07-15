@@ -82,5 +82,45 @@ UstadMobileAppZone.prototype = {
             });
         });
 
+    },
+    
+    /**
+     * Log the user out and return to the login screen
+     * 
+     * @method
+     */
+    menuLogout: function() {
+        localStorage.removeItem('username');
+        localStorage.removeItem('password');
+        
+        this.goPage(UstadMobile.PAGE_LOGIN);
+    },
+    
+    /**
+     * 
+     * @param {type} pageName
+     */
+    goPage: function(pageName) {
+        //Can intercept something that is implementation specific here if needbe...
+        this.openMenuLink(pageName, "slide");
+    },
+    
+    //Function to open various links in the Menu.
+    openMenuLink: function(linkToOpen, transitionMode){
+        //check and see if this page is already open
+        if(UstadMobile.getInstance().isPageOpen(linkToOpen) === true) {
+            UstadMobile.getInstance().closePanel();
+            return;
+        }
+
+        debugLog("Ustad Mobile: In openMenuLink(linkToOpen), About to open: " + linkToOpen);
+        //if(platform == "android"){
+        if(navigator.userAgent.indexOf("Windows Phone OS 8.0") !== -1){
+            linkToOpen = "/" + linkToOpen; //x-wmapp0: will be appended.
+        }
+
+        $.mobile.changePage(linkToOpen, { changeHash: true, transition: transitionMode});
     }
+
+    
 };

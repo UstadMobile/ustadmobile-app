@@ -55,6 +55,9 @@ var CONTENT_MODELS;
 var qunitOutput = "";
 var milliseconds = (new Date).getTime();
 var ustad_version = '';
+
+var testPageChangeWait = 400;
+
 /*
 $.get('ustad_version', function(data){
 	dataline = data.split("\n");
@@ -72,13 +75,22 @@ console.log ("With Qunit logs in 01");
     
     testLoadScript();
     
-
     testLoadScriptOnceOnly();
     
     testUstadMobileImplementationLoads();
     
     
+    testPageLoad(UstadMobile.PAGE_BOOKLIST, "Test loading booklist page");
     
+    testLogin("Test valid user login", validUsername, validPassword, 200);
+    
+    
+    testPageLoad(UstadMobile.PAGE_DOWNLOAD, "Test opening download page");
+    
+    testPageLoad(UstadMobile.PAGE_SETTINGS, "Test opening settings page");
+    
+    testPageLoad(UstadMobile.PAGE_ABOUT, "Test opening about page");
+        
     //Set timeout to 60seconds (download a course)
     QUnit.testTimeout = 60000;
     testUstadMobileCourseDownloadById(5);
@@ -100,6 +112,56 @@ console.log ("With Qunit logs in 01");
     testCloseCourseIframe();
     
 }());
+
+/**
+ * Function used for testing to see if a page change took place, and then
+ * come back to the index page.
+ * 
+ */
+var containerChangeFn = function() {
+    if(containerChangeFn.loaded === false) {
+        ok(true, "Show event comes for loading page");
+        containerChangeFn.loaded = true;
+        //change back to test page
+        setTimeout(function() {
+            $.mobile.changePage("index.html");
+            }, testPageChangeWait);
+    }else {
+        $( ":mobile-pagecontainer" ).off("pagecontainershow", containerChangeFn);
+        start();
+    }
+};
+
+
+function testLogin(testName, username, password, expectedResult) {
+    asyncTest(testName, function() {
+        expect(1);
+        UstadMobileLogin.getInstance().umlogin(username, password, null, function(status) {
+            ok(status === expectedResult, "Got expected result " + expectedResult);
+            start();
+        });
+    });
+}
+
+/**
+ * Test that the booklist page can open and will trigger the jquerymobile
+ * show event
+ * 
+ * @param pageName string Page name to test loading of
+ * 
+ * @param testName string Test name to pass to QUnit
+ * @method
+ */
+function testPageLoad(pageName, testName) {
+    asyncTest(testName, function() {
+        expect(1);
+        containerChangeFn.loaded = false;
+        $( ":mobile-pagecontainer" ).on('pagecontainershow', containerChangeFn);
+        setTimeout(function() {
+            UstadMobile.getInstance().goPage(pageName);
+        }, testPageChangeWait);
+    });
+}
 
 function testPageLocalization() {
     asyncTest("UstadMobile Page Localization", function() {
