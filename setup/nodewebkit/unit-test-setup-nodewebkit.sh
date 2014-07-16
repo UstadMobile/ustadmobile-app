@@ -52,6 +52,7 @@ fi
 
 cd $TARGETDIR
 
+cp -r $SRCDIR/res/test ./res/
 mv index.html index.orig.html
 cp ustadmobile_tests.html index.html
 

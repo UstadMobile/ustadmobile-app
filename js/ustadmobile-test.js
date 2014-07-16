@@ -69,7 +69,8 @@ console.log ("With Qunit logs in 01");
 
 
 (function () {
-    
+    //require('nw.gui').Window.get().showDevTools();
+    //alert("loaded tools");
 
     QUnit.module("UstadMobile");
     
@@ -78,6 +79,23 @@ console.log ("With Qunit logs in 01");
     testLoadScriptOnceOnly();
     
     testUstadMobileImplementationLoads();
+    
+    var audioEl = document.createElement("audio");
+    audioEl.preload = "auto";
+    audioEl.src = "res/test/test-sound.wav";
+    testSoundPlay(audioEl, "Test play sound first time", 0);
+    testSoundPlay(audioEl, "Test sound plays second time", 1500);
+    
+    
+    //TODO: Add a test for this running over the HTTP Server
+    /*
+    var httpSvr = UstadMobileHTTPServer.getInstance();
+    var testURL = "http://" + httpSvr.httpHostname + ":" + httpSvr.httpPort + "/ustadmobileContent/test-sound.wav";
+    var audioEl2 = document.createElement("audio");
+    audioEl2.preload = "auto";
+    audioEl2.src = "http://"
+    */
+    
     
     
     testPageLoad(UstadMobile.PAGE_BOOKLIST, "Test loading booklist page");
@@ -133,6 +151,28 @@ var containerChangeFn = function() {
 };
 
 
+function testSoundPlay(mediaEl, testName, delay) {
+    asyncTest(testName, function() {
+        expect(1);
+        setTimeout(function() {
+            var checkFn = function(success) {
+                ok(success === true, "sound playback callback OK");
+                start();
+            };
+
+            //2 = HAVE_CURRENT_DATA
+            if(mediaEl.readyState < 2) {
+                mediaEl.addEventListener("canplay", function(evt) {
+                    UstadMobileUtils.playMediaElement(mediaEl, checkFn);
+                });
+            }else {
+                UstadMobileUtils.playMediaElement(mediaEl, checkFn);
+            }
+        }, delay);
+    });
+}
+
+
 function testLogin(testName, username, password, expectedResult) {
     asyncTest(testName, function() {
         expect(1);
@@ -171,7 +211,6 @@ function testPageLocalization() {
             dataType: "html"
         }).done(function(data, textStatus, jqXHR) {
             var newPageContentEl = $(data).next(".ustadbooklistpage");
-            debugger;
             UstadMobile.getInstance().runWhenImplementationReady(function() {
                 UstadMobile.getInstance().localizePage(newPageContentEl);
                 ok(true, "temp: ran localization routine we think...");

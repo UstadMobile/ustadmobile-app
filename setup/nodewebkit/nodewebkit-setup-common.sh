@@ -7,7 +7,7 @@
 THEMEFILE="$2"
 
 TARGETDIR=""
-SRCDIR="../../"
+SRCDIR="$(pwd)/../../"
 
 WORKINGDIR=$(pwd)
 TARGETDIR="$(pwd)/build"

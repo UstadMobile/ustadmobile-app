@@ -95,9 +95,7 @@ UstadMobileAppImplNodeWebkit.prototype.getSystemLang = function(callbackFunction
  * @returns {undefined}
  */
 UstadMobileAppImplNodeWebkit.prototype.goPage = function(pageName) {
-    if(pageName === UstadMobile.PAGE_BOOKLIST) {
-        openMenuLink(pageName, "slide");
-    }
+    
     //window.open("ustadmobile_booklist.html", "_self");
     
 };

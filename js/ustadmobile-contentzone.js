@@ -289,6 +289,41 @@ UstadMobileContentZone.prototype = {
     },
     
     /**
+     * Process content that is loaded via AJAX before it goes into DOM.  
+     * Remove inline scripts and the like.
+     * 
+     * @param jQuery pageEl The element that contains the
+     */
+    preProcessPage: function(pageEl) {
+        this.removeInlineScripts(pageEl);
+        
+        return pageEl;
+    },
+    
+    /**
+     * Things to run when the page is actually displayed for the user
+     * 
+     * @param {type} pageEl
+     * @returns number number of elements played
+     */
+    pageShow: function(pageEl) {
+        var mediaToPlay = pageEl.find("audio[data-autoplay]");
+        var numToPlay = mediaToPlay.length;
+        for(var i = 0; i < numToPlay; i++) {
+            UstadMobileUtils.playMediaElement(mediaToPlay.get(i));
+        }
+        
+        return numToPlay;
+    },
+    
+    /**
+     * Things to do when hte page is hidden from the user
+     */
+    pageHide: function(pageEl) {
+        
+    },
+    
+    /**
      * 
      * @param {String} pageURL URL of page to be loaded
      * @param {Number} position UstadMobile.LEFT or UstadMobile.RIGHT
@@ -302,14 +337,25 @@ UstadMobileContentZone.prototype = {
             url: pageURL,
             dataType: "html"
         }).done(function(data, textStatus, jqXHR) {
+            data = UstadMobileContentZone.getInstance().preProcessMediaTags(data);
+            
             var newPageContentEl = $(data).find(".ustadcontent");
+            
+            
+            /*
+            debugger;
+            
+            */
+           
             if(newPageContentEl.length === 0) {
                 //try old #content selector
                 newPageContentEl = $(data).find("#content");
             }
+                        
             console.log("Attempting to preload into DOM:" + this.url);
             
-            UstadMobileContentZone.getInstance().removeInlineScripts(newPageContentEl);
+            newPageContentEl = UstadMobileContentZone.getInstance().preProcessPage(
+                    newPageContentEl);
             
             newPageContentEl.attr("data-url", this.url);
             
@@ -399,6 +445,10 @@ UstadMobileContentZone.prototype = {
             
             window.scrollTo(0,0);
             
+            
+            
+            UstadMobileContentZone.getInstance().pageShow(nextPage);
+            
             if(dirArg === UstadMobile.RIGHT) {
                 //delete the current page on the left from DOM
                 if(umObj.contentPages[UstadMobile.LEFT] !== null) {
@@ -406,11 +456,10 @@ UstadMobileContentZone.prototype = {
                 }
                 
                 umObj.contentPages[UstadMobile.LEFT] = currentPage;
-                //umObj.contentPages[UstadMobile.LEFT].css("position", "absolute");
-                //umObj.contentPages[UstadMobile.LEFT].css("visibility", "hidden");
                 
                 var nextLink = nextPage.attr("data-content-next");
                 if(nextLink !== "#") {
+                    debugger;
                     umObj.preloadPage(nextPage.attr("data-content-next"),
                         UstadMobile.RIGHT);
                 }else {
@@ -422,8 +471,6 @@ UstadMobileContentZone.prototype = {
                 }
                 
                 umObj.contentPages[UstadMobile.RIGHT] = currentPage;
-                //umObj.contentPages[UstadMobile.RIGHT].css("position", "absolute");
-                //umObj.contentPages[UstadMobile.RIGHT].css("visibility", "hidden");
                 
                 var prevLink = nextPage.attr("data-content-prev");
                 if(prevLink !== "#") {
@@ -453,10 +500,12 @@ UstadMobileContentZone.prototype = {
             url: pageURL,
             dataType: "html"
         }).done(function(data, textStatus, jqXHR) {
-            debugger;
             
             //for some reason - jQuery Selector will not here find the 
             //data-role=page div... re-assemble it... assume only one page
+            data = UstadMobileContentZone.getInstance().preProcessMediaTags(data);
+            debugger;
+            
             
             var pgEl = $("<div data-role='page' id='" + newPageId +"'></div>");
             var header = $(data).find("[data-role='header']").first();
@@ -464,7 +513,8 @@ UstadMobileContentZone.prototype = {
                 pgEl.append(header);
             }
             var pageContent = $(data).find('.ui-content').first();
-            UstadMobileContentZone.getInstance().removeInlineScripts(pageContent);
+            
+            UstadMobileContentZone.getInstance().preProcessPage(pageContent);
             pgEl.append(pageContent);
             
             var footer = $(data).find("[data-role='footer']").first();
@@ -473,6 +523,14 @@ UstadMobileContentZone.prototype = {
             }
             
             $.mobile.pageContainer.append(pgEl);
+            
+            var containerShowFn = function() {
+                UstadMobileContentZone.getInstance().pageShow(pgEl);
+                $( ":mobile-pagecontainer" ).off("pagecontainershow",
+                    containerShowFn);
+            };
+            $( ":mobile-pagecontainer" ).on("pagecontainershow",containerShowFn);
+            
             $( ":mobile-pagecontainer" ).pagecontainer( "change", "#" + newPageId);
         });
     },
@@ -494,6 +552,23 @@ UstadMobileContentZone.prototype = {
                $(this).remove();
            }
         });
+    },
+    
+    /**
+     * Will remove audio/video autoplay and replace with data-ustad-autoplay
+     * which can then be triggered when we actually show the content
+     * 
+     * Strangely this does not work if we do this using dom manipulation etc.
+     * 
+     * @param String pageHTML to process
+     */
+    preProcessMediaTags: function(pageHTML) {
+        debugger;
+        pageHTML = pageHTML.replace(/autoplay(=\"autoplay\")/, function(match, $1) {
+            return "data-autoplay" +$1;
+        });
+        
+        return pageHTML;
     },
     
     /**

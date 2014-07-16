@@ -1060,6 +1060,51 @@ UstadMobileUtils.runOrWait = function(runNow, fn, args, thisObj, waitingList) {
 }
 
 /**
+ * 
+ * @param Node mediaEl - DOM node representing an audio or video tag
+ * @param function onPlayCallback function to call once the item has played
+ * 
+ * @returns {Boolean}
+ */
+UstadMobileUtils.playMediaElement = function(mediaEl, onPlayCallback) {
+    var played = false;
+    if(mediaEl.paused === true && mediaEl.currentTime === 0) {
+        try {
+            mediaEl.play();
+            UstadMobileUtils.runCallback(onPlayCallback, [true], mediaEl);
+        }catch(err) {
+            UstadMobileUtils.runCallback(onPlayCallback, [false], mediaEl);
+        }
+    }else if(mediaEl.seekable.length > 0){
+        try {
+            mediaEl.pause();
+            mediaEl.addEventListener("seeked", 
+                function() { 
+                    mediaEl.play(); 
+                    UstadMobileUtils.runCallback(onPlayCallback, [true], mediaEl);
+                }, 
+                true); 
+            
+            mediaEl.currentTime = 0; 
+            mediaEl.play();
+        }catch(err2) {
+            UstadMobileUtils.runCallback(onPlayCallback, [false], mediaEl);
+        }
+    }else {
+        var playItFunction = function(evt) {
+            var myMediaEl = evt.target;
+            myMediaEl.play();
+            myMediaEl.removeEventListener("canplay", playItFunction, true);
+            UstadMobileUtils.runCallback(onPlayCallback, [true], mediaEl);
+        };
+        mediaEl.addEventListener("canplay", playItFunction);
+        mediaEl.load();
+    }
+    
+    return played;
+}
+
+/**
  * Abstract class that defines what an implementation of the app needs to be 
  * able to do - e.g. get the default language of the system, file system scans, 
  * etc.  There will be an implementation for Cordova and NodeWebKit

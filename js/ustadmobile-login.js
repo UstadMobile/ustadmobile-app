@@ -197,7 +197,6 @@ UstadMobileLogin.prototype = {
     This function logs the user to the specified server and credentials. Initially, server being UmCloud(Toughra). This uses Ajax to authenticate.
     */
     umlogin: function(username, password, url, callback) {
-        debugger;
         if(typeof url === "undefined" || url === null) {
            url = UstadMobile.getInstance().getDefaultServer().xapiBaseURL 
             + "statements?limit=1"
