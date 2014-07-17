@@ -400,6 +400,32 @@ UstadMobile.prototype = {
             this.pendingRunAfterInitListeners);
     },
     
+    /**
+     * Programmatically load a list of scripts in order sequentially
+     * 
+     * @param scriptList Array array of scripts to load sequentially
+     * @param completionCallback function Callback to run when done attempting to load all
+     * 
+     */
+    loadScriptsInOrder: function(scriptList, completionCallback) { 
+        var currentScriptIndex = 0;
+        var totalLoaded = 0;
+        var loadScriptFn = function() {
+            UstadMobile.getInstance().loadUMScript(
+                scriptList[currentScriptIndex], function() {
+                    if(currentScriptIndex < (scriptList.length-1)) {
+                        currentScriptIndex++;
+                        loadScriptFn();
+                    }else {
+                        UstadMobileUtils.runCallback(completionCallback,
+                            [true], this);
+                    }
+            });
+        };
+        
+        loadScriptFn();
+    },
+    
     
     /**
      * Function to load all init scripts required depending on the environment
@@ -556,7 +582,7 @@ UstadMobile.prototype = {
     
     /**
      * 
-     * @param {type} scriptURL
+     * @param function scriptURL
      * @param {type} callback
      * @returns {undefined}
      */
@@ -565,9 +591,7 @@ UstadMobile.prototype = {
         for(var i = 0; i < scriptEls.length; i++) {
             if(scriptEls[i].getAttribute("src") === scriptURL) {
                 //this script already loaded; return
-                if(typeof callback !== "undefined" && callback !== null) {
-                    callback();
-                }
+                UstadMobileUtils.runCallback(callback, [true], scriptEls[i]);
                 return;
             }
         }
@@ -957,7 +981,6 @@ UstadMobile.prototype = {
         }
         
         console.log("[setlocalisation][ustadmobile] In localizePage()");
-        debugger;
         pgEl.find(".exeTranslated").each(function(index, value) {
             var textToTranslate = $(this).attr("data-exe-translation");
             //var attrTextToTranslate = $(this).attr("data-exe-translation-attr");

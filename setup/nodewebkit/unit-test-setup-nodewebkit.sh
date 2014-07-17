@@ -10,6 +10,9 @@ NODEJSCMD=$(which nodejs)
 WORKINGDIR=$(pwd)
 JSCOVERJAR=$WORKINGDIR/../testing-files-downloads/jscover/target/dist/JSCover-all.jar
 
+#Time after which we will kill processes and assume failure (seconds)
+TIMEOUT=180
+
 #copied this to our server - curl does not like sf.net redirects - windows does not like wget
 JSCOVERURL='http://www.ustadmobile.com/JSCover-1.0.13.zip'
 
@@ -87,7 +90,7 @@ NWPID=$!
 
 #Wait for the test result to come
 WAITTIME=0
-while [[ ! -f result ]] && [[ $WAITTIME -le 90 ]]; do
+while [[ ! -f result ]] && [[ $WAITTIME -le $TIMEOUT ]]; do
   sleep 2
   WAITTIME=$(( $WAITTIME+2 ))
 done

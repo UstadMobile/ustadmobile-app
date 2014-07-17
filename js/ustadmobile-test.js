@@ -69,14 +69,18 @@ console.log ("With Qunit logs in 01");
 
 
 (function () {
-    //require('nw.gui').Window.get().showDevTools();
-    //alert("loaded tools");
+    
+    require('nw.gui').Window.get().showDevTools();
+    
+    alert("loaded tools");
 
     QUnit.module("UstadMobile");
     
     testLoadScript();
     
     testLoadScriptOnceOnly();
+    
+    testSequentialScriptLoad();
     
     testUstadMobileImplementationLoads();
     
@@ -130,6 +134,21 @@ console.log ("With Qunit logs in 01");
     testCloseCourseIframe();
     
 }());
+
+function testSequentialScriptLoad() {
+    asyncTest("Test sequential script load", function() {
+        expect(1);
+        
+        //in the first script the variable sequentialLoadVal is defined as foo
+        // and then appended by bar
+        var loadScriptList = ['js/ustadmobile-test-loadme1.js', 
+            'js/ustadmobile-test-loadme2.js'];
+        UstadMobile.getInstance().loadScriptsInOrder(loadScriptList, function() {
+            ok(sequentialLoadVal === "foobar", "Scripts loaded in correct order");
+            start();
+        });
+    });
+}
 
 /**
  * Function used for testing to see if a page change took place, and then

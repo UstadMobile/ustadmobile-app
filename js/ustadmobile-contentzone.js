@@ -313,6 +313,14 @@ UstadMobileContentZone.prototype = {
             UstadMobileUtils.playMediaElement(mediaToPlay.get(i));
         }
         
+        pageEl.find(".iDevice_wrapper").each(function() {
+            var evt = $.Event("ideviceshow", {
+                target : this
+            });
+            
+            $(this).trigger(evt);
+        });
+        
         return numToPlay;
     },
     
@@ -543,15 +551,18 @@ UstadMobileContentZone.prototype = {
      * @param {jQuery} el
      */
     removeInlineScripts: function(el) {
+        var scriptList = [];
         el.find("script").each(function() {
            var scriptSrc = $(this).attr('src');
            if(typeof scriptSrc !== "undefined") {
-               UstadMobile.getInstance().loadUMScript(scriptSrc, function() {
-
-               });
+               scriptList.push(scriptSrc);
                $(this).remove();
            }
         });
+        
+        if(scriptList.length > 0) {
+            UstadMobile.getInstance().loadScriptsInOrder(scriptList);
+        }
     },
     
     /**
@@ -563,7 +574,6 @@ UstadMobileContentZone.prototype = {
      * @param String pageHTML to process
      */
     preProcessMediaTags: function(pageHTML) {
-        debugger;
         pageHTML = pageHTML.replace(/autoplay(=\"autoplay\")/, function(match, $1) {
             return "data-autoplay" +$1;
         });
