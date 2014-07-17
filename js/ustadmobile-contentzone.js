@@ -47,6 +47,15 @@ var UstadMobileContentZone;
  * Object that handles logic and functions that work within the content context
  * (as opposed to the app context)
  * 
+ * Content Zone will trigger the following events on document:
+ * 
+ *  execontentpageshow everytime a new div of content is put up on screen
+ *   evt.target = containing page div
+ *  
+ * Content Zone will trigger the following events on every item with the 
+ * iDevice_wrapper class
+ *   ideviceshow
+ * 
  * @class UstadMobileContentZone
  * @constructor
  */
@@ -307,12 +316,6 @@ UstadMobileContentZone.prototype = {
      * @returns number number of elements played
      */
     pageShow: function(pageEl) {
-        var mediaToPlay = pageEl.find("audio[data-autoplay]");
-        var numToPlay = mediaToPlay.length;
-        for(var i = 0; i < numToPlay; i++) {
-            UstadMobileUtils.playMediaElement(mediaToPlay.get(i));
-        }
-        
         pageEl.find(".iDevice_wrapper").each(function() {
             var evt = $.Event("ideviceshow", {
                 target : this
@@ -321,14 +324,33 @@ UstadMobileContentZone.prototype = {
             $(this).trigger(evt);
         });
         
+        var docEvt = $.Event("execontentpageshow", {
+            target: pageEl
+        });
+        $(document).trigger(docEvt);
+        
+        var mediaToPlay = pageEl.find("audio[data-autoplay]");
+        var numToPlay = mediaToPlay.length;
+        for(var i = 0; i < numToPlay; i++) {
+            UstadMobileUtils.playMediaElement(mediaToPlay.get(i));
+        }
+        
+        
+        
         return numToPlay;
     },
     
     /**
-     * Things to do when hte page is hidden from the user
+     * Things to do when the page is hidden from the user - e.g. stop sounds
      */
     pageHide: function(pageEl) {
-        
+        var mediaToStopArr = pageEl.find("audio");
+        for(var i = 0; i < mediaToStopArr.length; i++) {
+            var mediaToStop = mediaToStopArr.get(i);
+            if(mediaToStop.readyState >= 2 && mediaToStop.currentTime !== 0 && mediaToStop.ended === false) {
+                mediaToStop.pause();
+            }
+        }
     },
     
     /**
@@ -350,11 +372,6 @@ UstadMobileContentZone.prototype = {
             var newPageContentEl = $(data).find(".ustadcontent");
             
             
-            /*
-            debugger;
-            
-            */
-           
             if(newPageContentEl.length === 0) {
                 //try old #content selector
                 newPageContentEl = $(data).find("#content");
@@ -436,6 +453,9 @@ UstadMobileContentZone.prototype = {
         
         var viewWidth = $(window).width();
         
+        //stop what is going on this page now...
+        this.pageHide(currentPage);
+        
         currentPage.css("transform", "translateX(" 
                     + (movementDir * viewWidth)+ "px)");
         nextPage.css("transform", "translateX(0px)");
@@ -467,7 +487,6 @@ UstadMobileContentZone.prototype = {
                 
                 var nextLink = nextPage.attr("data-content-next");
                 if(nextLink !== "#") {
-                    debugger;
                     umObj.preloadPage(nextPage.attr("data-content-next"),
                         UstadMobile.RIGHT);
                 }else {
@@ -511,9 +530,7 @@ UstadMobileContentZone.prototype = {
             
             //for some reason - jQuery Selector will not here find the 
             //data-role=page div... re-assemble it... assume only one page
-            data = UstadMobileContentZone.getInstance().preProcessMediaTags(data);
-            debugger;
-            
+            data = UstadMobileContentZone.getInstance().preProcessMediaTags(data);            
             
             var pgEl = $("<div data-role='page' id='" + newPageId +"'></div>");
             var header = $(data).find("[data-role='header']").first();

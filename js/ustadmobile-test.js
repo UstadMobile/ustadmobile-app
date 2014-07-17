@@ -70,9 +70,8 @@ console.log ("With Qunit logs in 01");
 
 (function () {
     
-    require('nw.gui').Window.get().showDevTools();
-    
-    alert("loaded tools");
+    //require('nw.gui').Window.get().showDevTools();
+    //alert("loaded tools");
 
     QUnit.module("UstadMobile");
     
@@ -439,12 +438,10 @@ function sendTestOutputSimple(params) {
                     debugLog("Ajax call completed to server. Status: " + jqxhr.status);
                 },
         error: function (jqxhr,b,c){
-                    alert("Couldn't connect to server. Status Code:" + jqxhr.status);
                     debugLog("Couldn't connect to server. Status Code:" + jqxhr.status);
                 },
         statusCode: {
             200: function(){
-                    //alert("Login success on the server!");
                     debugLog("Connection to server a success with statusCode 200.");
                     },
             0: function(){
