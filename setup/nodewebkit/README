@@ -12,6 +12,9 @@ To Run Tests:
 2. If running Windows: make sure 7zip 7z is in the path
 3. Make sure that the package ttf-mscorefonts-installer (requires cabextract)
    is installed ... otherwise NodeWebKit will crash
+4. Copy js/ustad-test-credentials.sample.js to ustad-test-credentials.js
+   and enter a username/password from the UMCloud server for the login 
+   test
 
 ./unit-test-setup-nodewebkit.sh
 

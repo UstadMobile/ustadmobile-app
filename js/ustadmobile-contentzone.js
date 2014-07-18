@@ -160,6 +160,9 @@ UstadMobileContentZone.prototype = {
                     UstadMobile.getInstance().closePanel();
                 }
             }
+        }else if(pageName === UstadMobile.PAGE_TOC) {
+            $( ":mobile-pagecontainer" ).pagecontainer( "change", 
+                UstadMobile.PAGE_TOC);
         }
     },
     
@@ -334,8 +337,6 @@ UstadMobileContentZone.prototype = {
         for(var i = 0; i < numToPlay; i++) {
             UstadMobileUtils.playMediaElement(mediaToPlay.get(i));
         }
-        
-        
         
         return numToPlay;
     },

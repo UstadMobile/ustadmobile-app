@@ -80,7 +80,7 @@ If you need a commercial license to remove these restrictions please contact us 
             <div data-role="header" data-position="fixed" data-tap-toggle="false" data-theme="b">
                 <a href="#mypanel" data-role='button' data-inline='true' class="ustad_panel_href"><i class='lIcon fa fa-bars'></i></a>
                 
-                <h3><span id="coursestitletext" class="exeTranslated" data-exe-translation="Courses">CoursesF</span></h3>
+                <h3><span id="coursestitletext" class="exeTranslated" data-exe-translation="Courses">Courses</span></h3>
             </div>
             
             <div data-role="content" class="ui-content">
@@ -88,7 +88,7 @@ If you need a commercial license to remove these restrictions please contact us 
                     <img src="res/umres/aboutlogo.png" alt="Ustad Mobile: Mobilizing Education for Everyone"/>
                 </div>
                 
-                <input onclick='openGetPackagesPage()' type="button" id="downloadcourses"  name="downloadcourses" class="exeTranslated2" data-exe-translation-attr = "value" value="Download Courses"/>
+                <input onclick='UstadMobile.getInstance().goPage(UstadMobile.PAGE_DOWNLOAD)' type="button" id="downloadcourses"  name="downloadcourses" class="exeTranslated2" data-exe-translation-attr = "value" value="Download Courses"/>
                 <br></br>
                 <div id="Explorer" style="float:left"></div>
                 <ul data-role="listview" data-inset="true" data-filter="true" id="UMBookList">
