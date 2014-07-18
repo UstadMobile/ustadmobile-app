@@ -290,12 +290,16 @@ UstadMobileContentZone.prototype = {
             $(".ui-page-active #exePreviousPage").attr("href"),
             $(".ui-page-active #exeNextPage").attr("href")
         ];
+        
+        var linkIds = ["umBack", "umForward"];
 
         // This works because next pos 0 = UstadMobile.LEFT
         // 1 = UstadMobile.RIGHT
         for(var i = 0; i < hrefs.length; i++) {
             if(typeof hrefs[i] !== "undefined" && hrefs[i] !== "#") {
                 this.preloadPage(hrefs[i], i);
+            }else {
+                $("#" + linkIds[i]).css("visibility", "hidden");
             }
         }
     },
@@ -363,6 +367,12 @@ UstadMobileContentZone.prototype = {
      */
     preloadPage: function(pageURL, position) {
         //make a container, local context copy of variable
+        if(position === UstadMobile.LEFT) {
+            $("#umBack").css("visibility", "visible");
+        }else {
+            $("#umForward").css("visibility", "visible");
+        }
+        
         var pgPos = position;
         $.ajax({
             url: pageURL,
@@ -492,6 +502,7 @@ UstadMobileContentZone.prototype = {
                         UstadMobile.RIGHT);
                 }else {
                     umObj.contentPages[UstadMobile.RIGHT] = null;
+                    $("#umForward").css("visibility", "hidden");
                 }
             }else if(dirArg === UstadMobile.LEFT) {
                 if(umObj.contentPages[UstadMobile.RIGHT] !== null) {
@@ -506,6 +517,7 @@ UstadMobileContentZone.prototype = {
                         UstadMobile.LEFT);
                 }else {
                     umObj.contentPages[UstadMobile.LEFT] = null;
+                    $("#umBack").css("visibility", "hidden");
                 }
             }
             

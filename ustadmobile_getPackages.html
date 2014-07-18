@@ -28,14 +28,13 @@
         <div data-role="page"  data-theme="b">
             <div data-role="header" data-position="fixed" data-tap-toggle="false" data-theme="b">
                 <a href="#mypanel" data-role='button' data-inline='true' class="ustad_panel_href"><i class='lIcon fa fa-bars'></i></a>
-                <h3><span id="getcoursestitletext" class="exeTranslated" data-exe-translation="Get Courses">Get Courses</span></h3>
+                <h3><span id="getcoursestitletext" class="exeTranslated" data-exe-translation="Download Courses">Download Courses</span></h3>
             </div>
             
             <div role="content" data-theme="b">
                 <form>
-                    <i><p>Get course by ID<p></i>
-                    <label for="courseid"><span id="courseidinputtext" class="exeTranslated" data-exe-translation="Course ID:">Course ID:</span></label>
-                    <input type="text" name="courseid" id="courseid" value="" />
+                    <i><b>&#160;<br/>Get course by ID</b></i>
+                    <input type="text" name="courseid" id="courseid" value="" placeholder="Course ID"/>
                     <input 
                         onclick='UstadMobileDownloader.getInstance().startCourseDownloadById()' 
                         type="button" id="courseiddownload"  name="courseiddownload" 
@@ -67,7 +66,7 @@
             
             
             <div data-role="footer" data-position="fixed" style="text-align: center;" data-tap-toggle="false"  data-theme="b"> 
-                <a style="text-align: center;" onclick="openBookListPage()" data-direction="reverse" data-icon="ui-btn-left" ><span id="gobackfootertext" class="exeTranslated" data-exe-translation="Go back">Go backF</span></a>
+                <a style="text-align: center;" onclick="openBookListPage()" data-direction="reverse" data-icon="ui-btn-left" ><span id="gobackfootertext" class="exeTranslated" data-exe-translation="Go back">Go back</span></a>
 
             </div>
         </div>
