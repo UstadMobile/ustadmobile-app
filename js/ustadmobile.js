@@ -48,6 +48,9 @@ This javascript creates the header and footer of ustad mobile content in package
 
 */
 
+//require('nw.gui').Window.get().showDevTools();
+//alert("loaded tools");
+
 var UstadMobile;
 
 var ustadMobileInstance = null;
@@ -410,17 +413,29 @@ UstadMobile.prototype = {
     loadScriptsInOrder: function(scriptList, completionCallback) { 
         var currentScriptIndex = 0;
         var totalLoaded = 0;
+        
+        var goNextScript = function() {
+            if(currentScriptIndex < (scriptList.length-1)) {
+                currentScriptIndex++;
+                loadScriptFn();
+            }else {
+                UstadMobileUtils.runCallback(completionCallback,
+                            [totalLoaded], this);
+            }
+        };
+        
         var loadScriptFn = function() {
             UstadMobile.getInstance().loadUMScript(
-                scriptList[currentScriptIndex], function() {
-                    if(currentScriptIndex < (scriptList.length-1)) {
-                        currentScriptIndex++;
-                        loadScriptFn();
-                    }else {
-                        UstadMobileUtils.runCallback(completionCallback,
-                            [true], this);
-                    }
-            });
+                scriptList[currentScriptIndex], 
+                function() {
+                    //success callback
+                    console.log("Loaded script: " + scriptList[currentScriptIndex]);
+                    totalLoaded++;
+                    goNextScript();
+                }, function() {
+                    console.log("Failed to load: " + scriptList[currentScriptIndex]);
+                    goNextScript();
+                });
         };
         
         loadScriptFn();
@@ -437,11 +452,15 @@ UstadMobile.prototype = {
      */
     loadInitScripts: function(successCallback, failCallback) {
         var umObj = UstadMobile.getInstance();
+        
+        
         if(umObj.getZone() === UstadMobile.ZONE_CONTENT) {
-            umObj.initScriptsToLoad.push("ustadmobile-localization.js")
+            umObj.initScriptsToLoad.push("ustadmobile-localization.js");
             umObj.initScriptsToLoad.push("ustadmobile-contentzone.js");
         }else {
-            umObj.initScriptsToLoad.push("js/ustadmobile-localization.js")
+            umObj.initScriptsToLoad.push("js/ustadmobile-getpackages.js");
+            umObj.initScriptsToLoad.push("js/ustadmobile-http-server.js");
+            umObj.initScriptsToLoad.push("js/ustadmobile-localization.js");
             umObj.initScriptsToLoad.push("js/ustadmobile-appzone.js");
             var implName = umObj.isNodeWebkit() ? "nodewebkit" : (window.cordova ?
                 "cordova" : null);
@@ -581,17 +600,20 @@ UstadMobile.prototype = {
     },
     
     /**
+     * Loads a script by dynamically inserting a script tag in the head element.
+     * If the script is already in the head - it will do nothing and run the success
+     * callback with just one parameter (true).
      * 
-     * @param function scriptURL
-     * @param {type} callback
-     * @returns {undefined}
+     * @param scriptURL string script to load
+     * @param successCallback function Function to run on successful completion (optional)
+     * @param failCallback function Function to run on failure (optional)
      */
-    loadUMScript: function(scriptURL, callback) {
+    loadUMScript: function(scriptURL, successCallback, failCallback) {
         var scriptEls = document.getElementsByTagName("script");
         for(var i = 0; i < scriptEls.length; i++) {
             if(scriptEls[i].getAttribute("src") === scriptURL) {
                 //this script already loaded; return
-                UstadMobileUtils.runCallback(callback, [true], scriptEls[i]);
+                UstadMobileUtils.runCallback(successCallback, [true], scriptEls[i]);
                 return;
             }
         }
@@ -599,27 +621,16 @@ UstadMobile.prototype = {
         var fileref=document.createElement('script');
         fileref.setAttribute("type","text/javascript");
         fileref.setAttribute("src", scriptURL);
-        if(typeof callback !== "undefined" && callback !== null) {
-            fileref.onload = callback;
+        if(typeof successCallback !== "undefined" && successCallback !== null) {
+            fileref.onload = successCallback;
+        }
+        if(typeof failCallback !== "undefined" && failCallback !== null) {
+            fileref.onerror = failCallback;
         }
         
         document.getElementsByTagName("head")[0].appendChild(fileref);
     },
-    
-    /**
-     * Load scripts needed for UstadMobile to function
-     * 
-     * @method loadScripts
-     */
-    loadScripts: function() {
-        //if(this.getZone() === UstadMobile.ZONE_APP) {
-            this.loadUMScript("js/ustadmobile-getpackages.js");
-            this.loadUMScript("js/ustadmobile-http-server.js", function() {
-                UstadMobileHTTPServer.getInstance().start(3000);
-            });     
-        //}
-    },
-    
+   
     /**
      * Load ustad_runtime.json if it exists to acquire hints (e.g. path back
      * to the app directory etc.
@@ -899,6 +910,12 @@ UstadMobile.prototype = {
         }else {
             pgEl = $.mobile.activePage;
         }
+        
+        if(typeof pgEl === "undefined" || pgEl === null) {
+            //has not yet really loaded
+            return;
+        }
+        
         if(UstadMobile.getInstance().panelHTML === null) {
             UstadMobile.getInstance().loadPanel();
             return;
@@ -1044,7 +1061,7 @@ UstadMobileUtils = function() {
  * @method
  * @param Array arr Array holding function objects - MUST be an array
  * @param thisObj Object that will be 'this' inside function when called
- * @param mixed args to send (optional)
+ * @param Array args to send (optional)
  * 
  */
 UstadMobileUtils.runAllFunctions = function(arr, args, thisObj) {
@@ -1149,6 +1166,42 @@ UstadMobileAppImplementation.prototype = {
     implementationReady: false,
     
     /**
+     * The HTTP Port that the internal server is running on
+     * @type string 
+     */
+    _httpPort: -1,
+    
+    /**
+     * Host or IP for local access (e.g. localhost)
+     * @type string
+     */
+    _httpInternalHost : null,
+    
+    /**
+     * Host o
+     * @type type
+     */
+    _httpExternalHost : null,
+    
+    /**
+     * Get the port that we are working on - or -1 for no port
+     * 
+     * @returns {Number} Port number to connect to
+     */
+    getHttpPort: function() {
+       return this._httpPort;
+    },
+    
+    /**
+     * Get the internal hostname to use (e.g. localhost) for access by the app
+     * 
+     * @return string Hostname or IP address for internal usage
+     */
+    getHttpInternalHost: function() {
+        return this._httpInternalHost;
+    },
+    
+    /**
      * 
      * @param function callbackFunction Called when the system returns the 
      * language or a failure occurs with arg 
@@ -1164,8 +1217,6 @@ UstadMobileAppImplementation.prototype = {
 // Put this in a central location in case we don't manage to load it
 var messages = [];
 //default lang
-
-UstadMobile.getInstance().loadScripts();
 
 $(function() {
     UstadMobile.getInstance().preInit();

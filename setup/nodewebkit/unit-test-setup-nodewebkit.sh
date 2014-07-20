@@ -20,6 +20,10 @@ if [ ! -e coverage_report ]; then
     mkdir coverage_report
 fi
 
+if [ -e $WORKINGDIR/result ]; then
+    rm $WORKINGDIR/result
+fi
+
 if [ "$NWPATH" == "" ]; then
     echo "Cannot find nw in path - add nodewebkit to path and try again"
     exit 1
@@ -90,9 +94,12 @@ NWPID=$!
 
 #Wait for the test result to come
 WAITTIME=0
-while [[ ! -f result ]] && [[ $WAITTIME -le $TIMEOUT ]]; do
-  sleep 2
-  WAITTIME=$(( $WAITTIME+2 ))
+while [ $WAITTIME -le $TIMEOUT ]; do
+    if [ -e $WORKINGDIR/result ]; then
+        break
+    fi 
+    sleep 2
+    WAITTIME=$(( $WAITTIME+2 ))
 done
 
 

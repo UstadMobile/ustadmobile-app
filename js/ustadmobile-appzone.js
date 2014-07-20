@@ -78,6 +78,9 @@ UstadMobileAppZone.prototype = {
     init: function() {
         //Make sure the implementation (e.g. cordova, NodeWebKit is ready)
         UstadMobile.getInstance().runWhenImplementationReady(function() {
+            var systemImpl = UstadMobile.getInstance().systemImpl;
+            systemImpl.startHTTPServer();
+            
             UstadMobile.getInstance().systemImpl.getSystemLang(function(lang){
             });
         });

@@ -100,6 +100,11 @@ UstadMobileAppImplNodeWebkit.prototype.goPage = function(pageName) {
     
 };
 
+UstadMobileAppImplNodeWebkit.prototype.startHTTPServer = function() {
+    UstadMobileHTTPServer.getInstance().start(3000);
+};
+
+
 
 //Set the implementation accordingly on UstadMobile object
 UstadMobile.getInstance().systemImpl = 
