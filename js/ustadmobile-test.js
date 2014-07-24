@@ -80,7 +80,7 @@ console.log ("With Qunit logs in 01");
     testLoadScriptOnceOnly();
     
     testSequentialScriptLoad();
-    
+        
     testUstadMobileImplementationLoads();
     
     var audioEl = document.createElement("audio");
@@ -88,6 +88,7 @@ console.log ("With Qunit logs in 01");
     audioEl.src = "res/test/test-sound.wav";
     testSoundPlay(audioEl, "Test play sound first time", 0);
     testSoundPlay(audioEl, "Test sound plays second time", 1500);
+    
     
     
     //TODO: Add a test for this running over the HTTP Server
@@ -124,7 +125,9 @@ console.log ("With Qunit logs in 01");
     testUstadMobileCourseLoad();
     
     //make sure internal http server (if any) is working
+    //Must run after looking for courses
     testHTTPServer();
+    
     
     //make sure courses open
     testBookOpen();
@@ -246,7 +249,7 @@ function testPageLocalization() {
 function testUstadMobileImplementationLoads() {
     asyncTest("UstadMobileAppImplementation loaded", function() {
         expect(1);
-        UstadMobile.getInstance().runWhenInitDone(function() {
+        UstadMobile.getInstance().runWhenImplementationReady(function() {
             ok(UstadMobile.getInstance().systemImpl instanceof UstadMobileAppImplementation,
                 "Implementation has loaded, instanceof test OK");
             start();
@@ -363,7 +366,7 @@ function testCloseCourseIframe() {
 var numBooksLoadedCount = 0;
 
 function testHTTPServer() {
-    if(UstadMobile.getInstance().isNodeWebkit()) {
+    if(UstadMobile.getInstance().isNodeWebkit() || UstadMobile.getInstance().isCordova()) {
         asyncTest("HTTP Server starts up", 1 , function() {
             UstadMobile.getInstance().runAfterHTTPReady(function(){
                 ok(true, "HTTP Server fired up");
@@ -374,8 +377,8 @@ function testHTTPServer() {
 
         asyncTest("HTTP Get to HTTP Server with AJAX", 1, function() {
             UstadMobile.getInstance().runAfterHTTPReady(function(){
-                var httpSvr = UstadMobileHTTPServer.getInstance();
-                var testURL = "http://" + httpSvr.httpHostname + ":" + httpSvr.httpPort + "/";
+                var testURL = UstadMobile.getInstance().systemImpl.getHTTPBaseURL();
+                
                 $.ajax({
                     url: testURL,
                     dataType: "text"
@@ -393,19 +396,23 @@ function testHTTPServer() {
         
         var bookList = UstadMobileBookList.getInstance().coursesFound;
         
+        
         asyncTest("Check all courses are available", function() {
             //there will be bookList.length callbacks
             expect(bookList.length);
             
+            alert("About to check all courses via http");
+            debugger;
             UstadMobile.getInstance().runAfterHTTPReady(function(){
-                var httpSvr = UstadMobileHTTPServer.getInstance();
+                var baseURL = UstadMobile.getInstance().systemImpl.getHTTPBaseURL();
+                
                 for(var i = 0; i < bookList.length; i++) {
                     var courseEntry = bookList[i];
                     var folderName = courseEntry.relativeURI;
-                    var urlToLoad = "http://" + httpSvr.httpHostname + ":" 
-                            + httpSvr.httpPort + "/" + UstadMobile.CONTENT_DIRECTORY +
+                    var urlToLoad = baseURL + UstadMobile.CONTENT_DIRECTORY +
                             "/" + folderName + "/index.html";
                     var thisCourseURL = urlToLoad;
+                    console.log("Test load : " + urlToLoad);
                     $.ajax({
                         url: urlToLoad,
                         dataType: "html"
@@ -420,6 +427,7 @@ function testHTTPServer() {
                 }
             });
         });
+        
     }
 }
 

@@ -558,62 +558,50 @@ UstadMobileBookList.prototype = {
     * @param {String} contentDir content directory to copy to
     * @param {function} callbackFn callback to run when done
     */
-   copyAppFilesToContent: function(contentDir, callbackFn) {
+    copyAppFilesToContent: function(contentDir, callbackFn) {
        
-   },
-   
-   /**
-    * Opens the course provided by courseIndex (index in coursesFound)
-    * 
-    * @param courseIndex {Number} index of coursoe in this.coursesFound
-    * @param callback {function} callback to run when course show happens - will provide param with display object (e.g. iframe)
-    * @param show {Boolean} true to show immediately, false otherwise
-    * @param onloadCallback {function} (Optional) callback to run when new content has loaded
-    */
-   openBLCourse: function(courseIndex, callback, show, onloadCallback) {
-       var umBookListObj = UstadMobileBookList.getInstance();
-       var courseObj = umBookListObj.coursesFound[courseIndex];
-       
-       if(UstadMobile.getInstance().isNodeWebkit()) {
-           var destDirectory = courseObj.coursePath.substring(0, 
-               courseObj.coursePath.lastIndexOf("/"));
-           destDirectory = UstadMobile.getInstance().removeFileProtoFromURL(
-                   destDirectory);
-           
-           var httpURL = UstadMobileHTTPServer.getInstance().getURLForCourseEntry(
-                   courseObj);
-           var copyJob = new UstadMobileAppToContentCopyJob(this.appFilesToCopyToContent, 
-               destDirectory, function() {
-                   //make an iframe with the content in it
-                   var iframeEl = $("<iframe src='" + httpURL + "' nwdisable nwfaketop></iframe>");
-                   iframeEl.css("border-width", "0px");
-                   iframeEl.css("position", "absolute");
-                   iframeEl.css("width", "100%");
-                   iframeEl.css("height", "100%");
-                   iframeEl.css("z-index", "50000");
-                   //so it can be found to close it
-                   iframeEl.addClass(UstadMobileBookList.IRAME_CLASSNAME);
-                   if(show === false) {
-                       iframeEl.css("display", "none");
-                   }
-                   if(typeof onloadCallback !== "undefined" && onloadCallback != null) {
-                       iframeEl.load(onloadCallback);
-                   }
-                   
-                   $(".ustadbooklistpage").css("display", "none");
-                   $("BODY").prepend(iframeEl);
-                   callback(iframeEl);
-           });
-           copyJob.copyNextFile();
-       }
-   },
-   
-   /**
-    * Close any iframes that are being used to display content
-    * 
-    * @return {Number} number of iframes closed
-    */
-   closeBlCourseIframe: function() {
+    },
+      
+    /**
+     * Show a course in an iframe 
+     * 
+     * @param string httpURL URL of the course - e.g. that running on the http server
+     * @param function onshowCallback run when the course element is on screen 
+     * @param boolean show whether or not to actually show (if false set display: none css
+     * @param function onloadCallback function to run when iframe has loaded
+     * @param function onerrorCallback function to run if an error occurs with iframe load
+     */
+    showCourseIframe: function(httpURL, onshowCallback, show, onloadCallback, onerrorCallback) {
+        var iframeEl = $("<iframe src='" + httpURL + "' nwdisable nwfaketop></iframe>");
+        iframeEl.css("border-width", "0px");
+        iframeEl.css("position", "absolute");
+        iframeEl.css("width", "100%");
+        iframeEl.css("height", "100%");
+        iframeEl.css("z-index", "50000");
+        //so it can be found to close it
+        iframeEl.addClass(UstadMobileBookList.IRAME_CLASSNAME);
+        if(show === false) {
+            iframeEl.css("display", "none");
+        }
+        if(typeof onloadCallback !== "undefined" && onloadCallback !== null) {
+            iframeEl.load(onloadCallback);
+        }
+        
+        if(typeof onerrorCallback !== "undefined" && onerrorCallback !== null) {
+            iframeEl.error(onerrorCallback);
+        }
+
+        $(".ustadbooklistpage").css("display", "none");
+        $("BODY").prepend(iframeEl);
+        onshowCallback(iframeEl);
+    },
+      
+    /**
+     * Close any iframes that are being used to display content
+     * 
+     * @return {Number} number of iframes closed
+     */
+    closeBlCourseIframe: function() {
        var elResult = $("." + UstadMobileBookList.IRAME_CLASSNAME);
        $(".ustadbooklistpage").css("display", "inherit");
        
@@ -622,66 +610,61 @@ UstadMobileBookList.prototype = {
        
        
        return numRemoved;
-   },
+    },
    
-   /**
-    * Open the given booklist page
-    * @param courseIndex {Number} Index of the course object in UstadMobileBookList.coursesFound
-    */
-   openBLPage: function(courseIndex, mode) {
-       var umBookListObj = UstadMobileBookList.getInstance();
-       var courseObj = umBookListObj.coursesFound[courseIndex];
-       var openFile = courseObj.coursePath;
-       
-       umBookListObj.currentBookPath = openFile;
-       var bookpath = umBookListObj.currentBookPath.substring(0, 
+    /**
+     * Open the given booklist page
+     * @param courseIndex {Number} Index of the course object in UstadMobileBookList.coursesFound
+     */
+    openBLPage: function(courseIndex, mode) {
+        var umBookListObj = UstadMobileBookList.getInstance();
+        var courseObj = umBookListObj.coursesFound[courseIndex];
+        var openFile = courseObj.coursePath;
+
+        umBookListObj.currentBookPath = openFile;
+        var bookpath = umBookListObj.currentBookPath.substring(0,
                 umBookListObj.currentBookPath.lastIndexOf("/"));
-       
-       
-       if (mode == "test") {
-           CONTENT_MODE = mode;
-           console.log("booklist: The CONTENT_MODE is: " + CONTENT_MODE);
-       } else { //openBLPage will set mode to "normal" by default
-           CONTENT_MODE = mode;
-           console.log("booklist: The CONTENT_MODE is normal: " + CONTENT_MODE);
-       }
-       jsLoaded = false;
-       if(UstadMobile.getInstance().isNodeWebkit()) {
-           //use the open course handler
-           umBookListObj.openBLCourse(courseIndex, function() {}, true);
-           return;
-       }else {
-           $.mobile.loading('show', {
+
+
+        jsLoaded = false;
+        if (UstadMobile.getInstance().isNodeWebkit() || window.cordova) {
+            //use the open course handler
+            var courseObj = umBookListObj.coursesFound[courseIndex];
+            UstadMobile.getInstance().systemImpl.showCourse(courseObj,
+                function(){}, true);
+            return;
+        } else {
+            $.mobile.loading('show', {
                 text: x_('Ustad Mobile: Loading..'),
                 textVisible: true,
                 theme: 'b',
                 html: ""}
-           );
-       
-           console.log("Mobile Device detected. Continuing..");
-           
-           console.log("Book URL that UM is going to is: " 
-                   + umBookListObj.currentBookPath);
-           //1. We need to create a file: ustadmobile-settings.js
-           //2. We need to put that file in that directory
-           //3. We need to open the file.
-           
-           console.log("The bookpath is: " + bookpath);
-       }
+            );
 
-       var userSetLanguage = localStorage.getItem('language');
-       console.log("The user selected language is : " + userSetLanguage + " and the current Book Path is: " + bookpath);
-       if (mode == "test") {
-           userSetLanguageString = "var ustadlocalelang = \"" + userSetLanguage + "\"; console.log(\"DAFT PUNK GET LUCKY: \" + ustadlocalelang); var CONTENT_MODELS = \"test\"; console.log(\"CONTEN_MODELS is: \" + CONTENT_MODELS);"
-           console.log("booklist: CONTENT_MODELS is set to test mode. ");
-       } else {
-           userSetLanguageString = "var ustadlocalelang = \"" + userSetLanguage + "\"; console.log(\"DAFT PUNK GET LUCKY: \" + ustadlocalelang);";
-           console.log("booklist: CONTENT_MODELS is not set, You are in normal mode.");
-       }
-       localStorage.setItem('ustadmobile-settings.js', userSetLanguageString);
-       localStorageToFile(bookpath, "ustadmobile-settings.js", openFile);  //Also is the function that opens the book.
+            console.log("Mobile Device detected. Continuing..");
 
-   }
+            console.log("Book URL that UM is going to is: "
+                    + umBookListObj.currentBookPath);
+            //1. We need to create a file: ustadmobile-settings.js
+            //2. We need to put that file in that directory
+            //3. We need to open the file.
+
+            console.log("The bookpath is: " + bookpath);
+        }
+
+        var userSetLanguage = localStorage.getItem('language');
+        console.log("The user selected language is : " + userSetLanguage + " and the current Book Path is: " + bookpath);
+        if (mode == "test") {
+            userSetLanguageString = "var ustadlocalelang = \"" + userSetLanguage + "\"; console.log(\"DAFT PUNK GET LUCKY: \" + ustadlocalelang); var CONTENT_MODELS = \"test\"; console.log(\"CONTEN_MODELS is: \" + CONTENT_MODELS);"
+            console.log("booklist: CONTENT_MODELS is set to test mode. ");
+        } else {
+            userSetLanguageString = "var ustadlocalelang = \"" + userSetLanguage + "\"; console.log(\"DAFT PUNK GET LUCKY: \" + ustadlocalelang);";
+            console.log("booklist: CONTENT_MODELS is not set, You are in normal mode.");
+        }
+        localStorage.setItem('ustadmobile-settings.js', userSetLanguageString);
+        localStorageToFile(bookpath, "ustadmobile-settings.js", openFile);  //Also is the function that opens the book.
+
+    }
 
    
 };

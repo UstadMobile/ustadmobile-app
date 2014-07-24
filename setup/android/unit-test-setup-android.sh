@@ -22,7 +22,7 @@ NODEPORT=8620
 IPADDR=$(/sbin/ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1' | head -n 1)
 
 #The timeout to wait for the unit test result to appear before assuming failure
-TESTTIMEOUT=60
+TESTTIMEOUT=180
 
 #Virtual device to use for testing
 AVDNAME=AVD44

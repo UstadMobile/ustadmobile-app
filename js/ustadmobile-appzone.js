@@ -81,8 +81,8 @@ UstadMobileAppZone.prototype = {
             var systemImpl = UstadMobile.getInstance().systemImpl;
             systemImpl.startHTTPServer();
             
-            UstadMobile.getInstance().systemImpl.getSystemLang(function(lang){
-            });
+            //UstadMobile.getInstance().systemImpl.getSystemLang(function(lang){
+            //});
         });
 
     },

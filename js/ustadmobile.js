@@ -344,16 +344,20 @@ UstadMobile.prototype = {
         console.log("Mobileinit changes set for jQuery mobile for PhoneGap");
         
         //Load the scripts appropriate to the implementation and context
-        this.loadInitScripts(function() {            
+        this.loadInitScripts(function() {        
+            console.log("main ustad mobile init running - scripts loaded");
             UstadMobile.getInstance().checkPaths();
             
             $(document).on( "pagecontainershow", function( event, ui ) {
                 UstadMobile.getInstance().pageInit(event, ui);
             });
+            
+            console.log("Zone detect: " + UstadMobile.getInstance().getZone());
 
             if(UstadMobile.getInstance().getZone() === UstadMobile.ZONE_CONTENT) {
                 UstadMobileContentZone.getInstance().init();
             }else {
+                console.log("init app zone f fffff sake");
                 UstadMobileAppZone.getInstance().init();
             }
             
@@ -459,7 +463,10 @@ UstadMobile.prototype = {
             umObj.initScriptsToLoad.push("ustadmobile-contentzone.js");
         }else {
             umObj.initScriptsToLoad.push("js/ustadmobile-getpackages.js");
-            umObj.initScriptsToLoad.push("js/ustadmobile-http-server.js");
+            if(UstadMobile.getInstance().isNodeWebkit()) {
+                umObj.initScriptsToLoad.push("js/ustadmobile-http-server.js");
+            }
+            
             umObj.initScriptsToLoad.push("js/ustadmobile-localization.js");
             umObj.initScriptsToLoad.push("js/ustadmobile-appzone.js");
             var implName = umObj.isNodeWebkit() ? "nodewebkit" : (window.cordova ?
@@ -550,9 +557,12 @@ UstadMobile.prototype = {
      */
     preInit: function() {
         //required to make sure exe created pages show correctly
+        console.log("UstadMobile: Running Pre-Init");
         $("body").addClass("js");
         this.loadPanel();
-        this.loadRuntimeInfo();
+        if(UstadMobile.getInstance().getZone() === UstadMobile.ZONE_CONTENT) {
+            this.loadRuntimeInfo();
+        }
     },
     
     /**
@@ -573,6 +583,18 @@ UstadMobile.prototype = {
      */
     isNodeWebkit: function() {
         if(typeof require !== "undefined") {
+            return true;
+        }else {
+            return false;
+        }
+    },
+    
+    /**
+     * Detect if we are running cordova
+     * @return boolean true if running in cordova, false otherwise
+     */
+    isCordova: function() {
+        if(window.cordova) {
             return true;
         }else {
             return false;
@@ -1210,7 +1232,21 @@ UstadMobileAppImplementation.prototype = {
      */
     getSystemLang: function(callbackFunction) {
         
-    }
+    },
+    
+    /**
+     * Shows the course represented by the UstadMobileCourseEntry object
+     * courseObj in the correct way for this implementation
+     * 
+     * @param courseObj {UstadMobileCourseEntry} CourseEntry to be shown
+     * @param onshowCallback function to run when the course element (eg iframe) is out
+     * @param show boolean whether or not to make the course itself visible
+     * @param onloadCallback function to run when the course has loaded/displayed
+     * @parma onerrorCallback function to run when the course has failed to load
+     */
+    showCourse: function(courseObj, onshowCallback, show, onloadCallback, onerrorCallback) {
+       
+    },
 };
 
 
@@ -1219,11 +1255,12 @@ var messages = [];
 //default lang
 
 $(function() {
-    UstadMobile.getInstance().preInit();
+    UstadMobile.getInstance().preInit();    
 });
 
 $(document).on("mobileinit", function() {
-   UstadMobile.getInstance().init(); 
+    console.log("App doing main init");
+    UstadMobile.getInstance().init(); 
 });
 
 //Set to 1 for Debug mode, otherwise 0 (will silence console.log messages)

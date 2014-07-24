@@ -104,6 +104,42 @@ UstadMobileAppImplNodeWebkit.prototype.startHTTPServer = function() {
     UstadMobileHTTPServer.getInstance().start(3000);
 };
 
+UstadMobileAppImplNodeWebkit.prototype.getHTTPBaseURL = function() {
+    var httpSvr = UstadMobileHTTPServer.getInstance();
+    var rootURL = "http://" + httpSvr.httpHostname + ":" + httpSvr.httpPort + "/";
+    return rootURL;
+};
+
+/**
+ * Shows the course represented by the UstadMobileCourseEntry object
+ * courseObj in the correct way for this implementation.  Shows an iframe.
+ * 
+ * @param courseObj {UstadMobileCourseEntry} CourseEntry to be shown
+ * @param onshowCallback function to run when course is on screen
+ * @param show boolean whether or not to make the course itself visible
+ * @param onloadCallback function to run when the course has loaded/displayed
+ * @param onerrorCallback function to run when the course has failed to load
+ */
+UstadMobileAppImplNodeWebkit.prototype.showCourse = function(courseObj, 
+    onshowCallback, show, onloadCallback, onerrorCallback) {
+    
+    var destDirectory = courseObj.coursePath.substring(0, 
+        courseObj.coursePath.lastIndexOf("/"));
+    destDirectory = UstadMobile.getInstance().removeFileProtoFromURL(
+            destDirectory);
+
+    var httpURL = UstadMobileHTTPServer.getInstance().getURLForCourseEntry(
+        courseObj);
+    var filesToCopy = UstadMobileBookList.getInstance().appFilesToCopyToContent;
+    
+    var copyJob = new UstadMobileAppToContentCopyJob(filesToCopy, 
+        destDirectory, function() {
+            //make an iframe with the content in it
+            UstadMobileBookList.getInstance().showCourseIframe(httpURL,
+                onshowCallback, show, onloadCallback, onerrorCallback);
+    });
+    copyJob.copyNextFile();
+},
 
 
 //Set the implementation accordingly on UstadMobile object

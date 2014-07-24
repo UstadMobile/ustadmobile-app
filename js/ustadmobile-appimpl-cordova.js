@@ -81,6 +81,12 @@ UstadMobileAppImplCordova.prototype = Object.create(
     UstadMobileAppImplementation.prototype);
 
 /**
+ * Reference to the CordovaHTTP server
+ * @type Object
+ */
+UstadMobileAppImplCordova.prototype.cordovaHttpd = null;
+
+/**
  * Get the device system language using globalization plugin
  * 
  * @param function callbackFunction function that will be called passing language
@@ -101,6 +107,13 @@ UstadMobileAppImplCordova.prototype.getSystemLang = function(callbackFunction) {
     );
 };
 
+/**
+ * Check paths that are required by the app; if the paths are not already
+ * created - make them.
+ * 
+ * When done use UstadMobile.firePathCreationEvent
+ * @method
+ */
 UstadMobileAppImplCordova.prototype.checkPaths = function() {
     document.addEventListener("deviceready",function() {
         window.resolveLocalFileSystemURL("cdvfile://localhost/sdcard/",
@@ -133,3 +146,74 @@ UstadMobileAppImplCordova.prototype.checkPaths = function() {
         });
     });
 };
+
+/**
+ * Start the HTTP server
+ */
+UstadMobileAppImplCordova.prototype.startHTTPServer = function(successCallback, errorCallback) {
+    this.cordovaHttpd = ( cordova && cordova.plugins && cordova.plugins.CorHttpd ) ? cordova.plugins.CorHttpd : null;
+    this.cordovaHTTPURL = "";
+    this.cordovaHttpd.startServer({
+        'www_root': "/mnt/sdcard/ustadmobileContent",
+        'port' : 3000
+    }, function(url) {
+        console.log("HTTP Server running on " + url);
+        
+        //make sure it ends with /
+        if(url.charAt(url.length-1) !== '/') {
+            url += '/';
+        }
+        
+        UstadMobile.getInstance().systemImpl.cordovaHTTPURL = url;
+        UstadMobile.getInstance().systemImpl.cordovaHttpd.mountDir(
+            "/" + UstadMobile.CONTENT_DIRECTORY, "/mnt/sdcard/ustadmobileContent", 
+            function() {
+                //now notify everyone that the HTTP server is ready
+                setTimeout(function() {
+                    debugger;
+                    UstadMobile.getInstance().fireHTTPReady();
+                }, 0);
+            }, function(err) {
+                console.log("error mounting /ustadmobileContent"+err);
+            })
+        console.log("Started HTTP Server OK on " + url);
+    }, function(err) {
+        console.log("Error starting HTTP server");
+    });
+};
+
+/**
+ * Get the HTTP Server base URL 
+ * @returns {String} baseURL of server - with trailing /
+ */
+UstadMobileAppImplCordova.prototype.getHTTPBaseURL = function() {
+    return this.cordovaHTTPURL;
+};
+
+/**
+ * Shows the course represented by the UstadMobileCourseEntry object
+ * courseObj in the correct way for this implementation.  Shows an iframe.
+ * 
+ * @param courseObj {UstadMobileCourseEntry} CourseEntry to be shown
+ * @param onshowCallback function to run when course is on screen
+ * @param show boolean whether or not to make the course itself visible
+ * @param onloadCallback function to run when the course has loaded/displayed
+ * @param onerrorCallback function to run when the course has failed to load
+ */
+UstadMobileAppImplCordova.prototype.showCourse = function(courseObj, 
+    onshowCallback, show, onloadCallback, onerrorCallback) {
+    
+    var httpURL = this.cordovaHTTPURL + "/" + UstadMobile.CONTENT_DIRECTORY + 
+            "/" + courseObj.getHttpURI();
+    UstadMobileBookList.getInstance().showCourseIframe(httpURL, onshowCallback,
+        show, onloadCallback, onerrorCallback);
+};
+
+
+//Set the implementation accordingly on UstadMobile object
+UstadMobile.getInstance().systemImpl = 
+        UstadMobileAppImplCordova.getInstance();
+
+document.addEventListener("deviceready", function() {
+    UstadMobile.getInstance().fireImplementationReady();
+}, false);
