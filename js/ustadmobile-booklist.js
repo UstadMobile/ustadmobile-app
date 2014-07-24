@@ -170,7 +170,7 @@ UstadMobileBookList.prototype = {
         "jqm/jquery.mobile.icons.min.css" : "jquery.mobile.icons.min.css",
         "js/ustadmobile-contentzone.js" : "ustadmobile-contentzone.js",
         "js/ustadmobile-localization.js" : "ustadmobile-localization.js",
-        "ustadmobile_menupage_content.html" : "ustadmobile_menupage_content.html"
+        "js/ustadmobile_menupage_content.html" : "ustadmobile_menupage_content.html"
     },
     
     /** 
@@ -759,6 +759,27 @@ UstadMobileAppToContentCopyJob.prototype = {
             }else {
                 this.completeCallback();
             }
+        }else if(UstadMobile.getInstance().isCordova()) {
+            var copyJob = this;
+            //we will use filetransfer against our own http server
+            var ft = new FileTransfer();
+            var srcFile = this.fileList[this.currentFileIndex];
+            var srcURL = UstadMobile.getInstance(
+                    ).systemImpl.getHTTPURLForAppFile(srcFile);
+            var destFileName = this.fileDestMap[srcFile];
+            var destPath = this.destDir + "/" + destFileName;
+            ft.download(encodeURI(srcURL),
+                destPath, function(entry) {
+                    console.log("Copy job copied to : " + entry);
+                    if(copyJob.currentFileIndex < (copyJob.fileList.length - 1)) {
+                        copyJob.currentFileIndex++;
+                        copyJob.copyNextFile();
+                    }else {
+                        copyJob.completeCallback();
+                    }
+                }, function(err) {
+                    console.log("Error downloading " + srcURL);
+                });
         }
     }
     

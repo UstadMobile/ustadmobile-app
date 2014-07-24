@@ -62,6 +62,8 @@ UstadMobileAppImplCordova = function() {
  */
 UstadMobileAppImplCordova.mainInstance = null;
 
+UstadMobileAppImplCordova.URL_PREFIX_APPFILES = "appfiles/";
+
 /**
  * Gets an instance of UstadMobileAppImplCordova
  * 
@@ -165,12 +167,29 @@ UstadMobileAppImplCordova.prototype.startHTTPServer = function(successCallback, 
         }
         
         UstadMobile.getInstance().systemImpl.cordovaHTTPURL = url;
+        
+        var mountOKFunction = function(url) {
+            console.log("Mounted " + url + " ok");
+        };
+        
+        var mountFailFunction = function(err) {
+            console.log("ERROR: Could not mount : " + err);
+        }
+        
+        var subDirsToMount = ["js", "jqm"];
+        for(var i = 0; i < subDirsToMount.length; i++) {
+            UstadMobile.getInstance().systemImpl.cordovaHttpd.mountDir(
+                "/" + UstadMobileAppImplCordova.URL_PREFIX_APPFILES 
+                + subDirsToMount[i],
+                subDirsToMount[i], mountOKFunction, mountFailFunction);
+        }
+        
+        
         UstadMobile.getInstance().systemImpl.cordovaHttpd.mountDir(
             "/" + UstadMobile.CONTENT_DIRECTORY, "/mnt/sdcard/ustadmobileContent", 
             function() {
                 //now notify everyone that the HTTP server is ready
                 setTimeout(function() {
-                    debugger;
                     UstadMobile.getInstance().fireHTTPReady();
                 }, 0);
             }, function(err) {
@@ -191,6 +210,18 @@ UstadMobileAppImplCordova.prototype.getHTTPBaseURL = function() {
 };
 
 /**
+ * Get an HTTP URL for an app file
+ * 
+ * @param {String} appFileName file to get e.g. js/ustadmobile.js
+ * @returns {String} HTTP URL that this file can be accessed on
+ */
+UstadMobileAppImplCordova.prototype.getHTTPURLForAppFile = function(appFileName) {
+    //both baseURL and PREFIX_APPFILES have trailing /
+    return this.getHTTPBaseURL() + UstadMobileAppImplCordova.URL_PREFIX_APPFILES
+        + appFileName;
+};
+
+/**
  * Shows the course represented by the UstadMobileCourseEntry object
  * courseObj in the correct way for this implementation.  Shows an iframe.
  * 
@@ -203,10 +234,24 @@ UstadMobileAppImplCordova.prototype.getHTTPBaseURL = function() {
 UstadMobileAppImplCordova.prototype.showCourse = function(courseObj, 
     onshowCallback, show, onloadCallback, onerrorCallback) {
     
-    var httpURL = this.cordovaHTTPURL + "/" + UstadMobile.CONTENT_DIRECTORY + 
+    var httpURL = this.cordovaHTTPURL + UstadMobile.CONTENT_DIRECTORY + 
             "/" + courseObj.getHttpURI();
-    UstadMobileBookList.getInstance().showCourseIframe(httpURL, onshowCallback,
-        show, onloadCallback, onerrorCallback);
+    
+    //lets get a file entry 
+    debugger;
+    //var fileURI = cordova.file.applicationDirectory + "js/ustadmobile.js";
+    
+    var destURI = UstadMobile.getInstance().contentDirURI + courseObj.relativeURI;
+    var filesToCopy = UstadMobileBookList.getInstance().appFilesToCopyToContent;
+    
+    var copyJob = new UstadMobileAppToContentCopyJob(filesToCopy, 
+        destURI, function() {
+            UstadMobileBookList.getInstance().showCourseIframe(httpURL, onshowCallback,
+                show, onloadCallback, onerrorCallback);
+        });
+        
+    copyJob.copyNextFile();
+    
 };
 
 

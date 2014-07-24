@@ -743,8 +743,10 @@ function exeMenuPageOpen() {
             exeMenuLink2 = exeMenuPage2;
         }
     }else if (navigator.userAgent.indexOf("Android") !== -1 || UstadMobile.getInstance().isNodeWebkit()) {
-        exeMenuLink2 = localStorage.getItem("baseURL") + "/" + exeMenuPage2;
-        debugLog("Ustad Mobile Content: ANDROID: You will go into: exeMenuLink " + exeMenuLink2);
+        exeMenuLink2 = exeMenuPage2;
+        //now running over http
+        //exeMenuLink2 = localStorage.getItem("baseURL") + "/" + exeMenuPage2;
+        //debugLog("Ustad Mobile Content: ANDROID: You will go into: exeMenuLink " + exeMenuLink2);
     } else if(UstadMobile.getInstance().isNodeWebkit()){
         exeMenuLink2 = localStorage.getItem("baseURL") + "/" + exeMenuPage2;
         debugLog("Ustad Mobile Content: NodeWebKit: You will go into: exeMenuLink " + exeMenuLink2);
