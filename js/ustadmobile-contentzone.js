@@ -339,7 +339,10 @@ UstadMobileContentZone.prototype = {
         var mediaToPlay = pageEl.find("audio[data-autoplay]");
         var numToPlay = mediaToPlay.length;
         for(var i = 0; i < numToPlay; i++) {
-            UstadMobileUtils.playMediaElement(mediaToPlay.get(i));
+            var playMediaEl = mediaToPlay.get(i);
+            UstadMobileUtils.playMediaElement(playMediaEl);
+
+            //playAndReset(mediaToPlay.get(i));
         }
         
         return numToPlay;

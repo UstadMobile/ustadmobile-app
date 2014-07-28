@@ -1096,7 +1096,7 @@ UstadMobileUtils.runAllFunctions = function(arr, args, thisObj) {
 /**
  * Utility method that can be used to run optional callback functions
  * 
- * @param function fn - function to run - can be null or undefined
+ * @param function fn - function to run - can be null or undefined in which case this function does nothing
  * @param mixed args - arguments array to pass function
  * @param {Object} thisObj what to use for this in function 
  * 
@@ -1130,14 +1130,16 @@ UstadMobileUtils.runOrWait = function(runNow, fn, args, thisObj, waitingList) {
  */
 UstadMobileUtils.playMediaElement = function(mediaEl, onPlayCallback) {
     var played = false;
-    if(mediaEl.paused === true && mediaEl.currentTime === 0) {
+    console.log("UMMedia: UstadMobileUtils playing audio element " + mediaEl.src);
+    
+    if(mediaEl.paused === true && mediaEl.currentTime === 0 && mediaEl.readyState >= 2) {
         try {
             mediaEl.play();
             UstadMobileUtils.runCallback(onPlayCallback, [true], mediaEl);
         }catch(err) {
             UstadMobileUtils.runCallback(onPlayCallback, [false], mediaEl);
         }
-    }else if(mediaEl.seekable.length > 0){
+    }else if(mediaEl.seekable.length > 0 && mediaEl.readyState >= 2){
         try {
             mediaEl.pause();
             mediaEl.addEventListener("seeked", 
@@ -1155,7 +1157,13 @@ UstadMobileUtils.playMediaElement = function(mediaEl, onPlayCallback) {
     }else {
         var playItFunction = function(evt) {
             var myMediaEl = evt.target;
-            myMediaEl.play();
+            try {
+                myMediaEl.play();
+            }catch(err3) {
+                console.log("Exception attempting to play " + myMediaEl.src
+                        + ":" + err3);
+            }
+            
             myMediaEl.removeEventListener("canplay", playItFunction, true);
             UstadMobileUtils.runCallback(onPlayCallback, [true], mediaEl);
         };
@@ -1165,6 +1173,7 @@ UstadMobileUtils.playMediaElement = function(mediaEl, onPlayCallback) {
     
     return played;
 }
+
 
 /**
  * Abstract class that defines what an implementation of the app needs to be 

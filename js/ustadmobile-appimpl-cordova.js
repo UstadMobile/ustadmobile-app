@@ -277,5 +277,15 @@ UstadMobile.getInstance().systemImpl =
         UstadMobileAppImplCordova.getInstance();
 
 document.addEventListener("deviceready", function() {
+    debugger;
+    var mediaSanity = ( cordova && cordova.plugins && cordova.plugins.MediaSanity ) 
+        ? cordova.plugins.MediaSanity : null;
+        
+    //prevent requirement for a gesture to play media
+    mediaSanity.setMediaGestureRequired(false, function() {
+        console.log("MEDIA: Set media gesture required to false OK")
+    }, function(err) {
+        console.log("Media: set media gesture required FAIL : " + err);
+    });
     UstadMobile.getInstance().fireImplementationReady();
 }, false);

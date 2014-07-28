@@ -67,9 +67,29 @@ $.get('ustad_version', function(data){
 console.log ("With Qunit logs in 01");
 */
 
+/**
+ * Function used for testing to see if a page change took place, and then
+ * come back to the index page.
+ * 
+ */
+var containerChangeFn = function() {
+    if(containerChangeFn.loaded === false) {
+        ok(true, "Show event comes for loading page");
+        containerChangeFn.loaded = true;
+        //change back to test page
+        setTimeout(function() {
+            $.mobile.changePage("index.html");
+            }, testPageChangeWait);
+    }else {
+        $( ":mobile-pagecontainer" ).off("pagecontainershow", containerChangeFn);
+        start();
+    }
+};
+
 
 (function () {
     
+    //Uncomment if you need NodeWebKit tools to load before actually running
     //require('nw.gui').Window.get().showDevTools();
     //alert("loaded tools");
 
@@ -152,24 +172,6 @@ function testSequentialScriptLoad() {
     });
 }
 
-/**
- * Function used for testing to see if a page change took place, and then
- * come back to the index page.
- * 
- */
-var containerChangeFn = function() {
-    if(containerChangeFn.loaded === false) {
-        ok(true, "Show event comes for loading page");
-        containerChangeFn.loaded = true;
-        //change back to test page
-        setTimeout(function() {
-            $.mobile.changePage("index.html");
-            }, testPageChangeWait);
-    }else {
-        $( ":mobile-pagecontainer" ).off("pagecontainershow", containerChangeFn);
-        start();
-    }
-};
 
 
 function testSoundPlay(mediaEl, testName, delay) {
@@ -320,10 +322,10 @@ function testBookOpen() {
         asyncTest("Check book open triggers onload event for content page", function() {
             expect(1);
             var bookList = UstadMobileBookList.getInstance().coursesFound;
-
+            
             UstadMobile.getInstance().runAfterHTTPReady(function(){
                 for(var i = 0; i < bookList.length; i++) {
-                    UstadMobileBookList.getInstance().openBLCourse(i,function() {
+                    UstadMobileBookList.getInstance().openBLPage(i,function() {
                         console.log("course display created");
                     }, false, function(frameEl) {
                         console.log("Loaded  " + $(frameEl).attr('src'));
@@ -347,7 +349,7 @@ function testCloseCourseIframe() {
         asyncTest("Check can close content iframe", function() {
             expect(1);
             UstadMobile.getInstance().runAfterHTTPReady(function(){
-                UstadMobileBookList.getInstance().openBLCourse(0,function() {
+                UstadMobileBookList.getInstance().openBLPage(0,function() {
                         console.log("course display created - lets close it");
                     }, false, function(frameEl) {
                         //close it
@@ -401,8 +403,6 @@ function testHTTPServer() {
             //there will be bookList.length callbacks
             expect(bookList.length);
             
-            alert("About to check all courses via http");
-            debugger;
             UstadMobile.getInstance().runAfterHTTPReady(function(){
                 var baseURL = UstadMobile.getInstance().systemImpl.getHTTPBaseURL();
                 
@@ -551,20 +551,6 @@ function checkPackageXMLProcessingOK(arg){
         ok( arg == "xml processing pass", "Package XML Downloaded and Scan okay");
     });
 }
-
-//function checkPackageXMLDownloadOK(arg){
-//    test("Download a Package XML file via FileTransfer", function(){
-//        ok( arg == "passed" , "Package XML Download okay");
-//        ok( arg == "downloadpassed", "Files from package download okay");
-//        ok( arg == "xml processing pass", "Package XML Scan okay");
-//    });
-//}
-
-//function checkPackageFileDownloadOK(){
-//    test("Download all files from Package XML", function(){
-//        ok( arg == "downloadpassed" , "Files from package download okay");
-//    });
-//}
 
 function checkBase64ToFileConversionOK(arg){
     test("Check Base64 to file conversion post package download", function(){

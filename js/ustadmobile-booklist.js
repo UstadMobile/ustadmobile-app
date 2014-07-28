@@ -87,7 +87,7 @@ var UstadMobileBookList;
 /**
  * Stored instance of booklist object
  */
-var ustadMobileBookListInstance;
+var ustadMobileBookListInstance = null;
 
 /**
  * @class UstadMobileBookList
@@ -138,7 +138,7 @@ function UstadMobileBookList() {
 }
 
 UstadMobileBookList.getInstance = function() {
-    if(ustadMobileBookListInstance == null) {
+    if(ustadMobileBookListInstance === null) {
         ustadMobileBookListInstance = new UstadMobileBookList();
     }
     
@@ -195,7 +195,7 @@ UstadMobileBookList.prototype = {
      */
     scanCourses: function(callback) {
         var umBookListObj = UstadMobileBookList.getInstance();
-        if(typeof callback !== "undefined" && callback != null) {
+        if(typeof callback !== "undefined" && callback !== null) {
             umBookListObj.allBookFoundCallback = callback;
         }
         
@@ -211,7 +211,7 @@ UstadMobileBookList.prototype = {
                 "/ustadmobileContent/umPackages/", "/ustadmobileContent/", 
                 bbumfolder];
         } else if (UstadMobile.getInstance().isNodeWebkit()) {
-            umBookListObj.foldersToScan = [UstadMobile.getInstance().contentDirURI]
+            umBookListObj.foldersToScan = [UstadMobile.getInstance().contentDirURI];
         }else {
             umBookListObj.foldersToScan = [
                 "file:///sdcard/ustadmobileContent",
@@ -224,7 +224,7 @@ UstadMobileBookList.prototype = {
 
         var usern = localStorage.getItem('username');
         var logome = '';
-        if (usern != null)
+        if (usern !== null)
         {
             logome = x_('Logout');
         }
@@ -285,7 +285,7 @@ UstadMobileBookList.prototype = {
                    "No more folders to scan for ustad mobile packages.");
            $.mobile.loading('hide');
            $("#UMBookList").append("<p><i>Click on Download Courses to get more courses from the online library</i></p>").trigger("create");
-           if (umBookListObj.allBookFoundCallback != null) {
+           if (umBookListObj.allBookFoundCallback !== null) {
                if (typeof umBookListObj.allBookFoundCallback === "function") {
                    umBookListObj.allBookFoundCallback();
                }
@@ -386,7 +386,7 @@ UstadMobileBookList.prototype = {
             //On Windows we need to change \ (invalid escape) to / for paths
             var fileEntryEsc = fileEntry;
             var nodeWebKitOS = UstadMobile.getInstance().getNodeWebKitOS();
-            if(nodeWebKitOS == UstadMobile.OS_WINDOWS) {
+            if(nodeWebKitOS === UstadMobile.OS_WINDOWS) {
                 fileEntryEsc = fileEntry.replace(/\\/g, "/");
             }
                 
@@ -404,7 +404,7 @@ UstadMobileBookList.prototype = {
             $("#UMBookList").append(
                         "<a onclick='UstadMobileBookList.getInstance().openBLPage(\"" 
                         + courseIndex
-                        + "\", \"normal\" )' href=\"#\" data-role=\"button\" "
+                        + "\")' href=\"#\" data-role=\"button\" "
                         + "data-icon=\"star\" data-ajax=\"false\">" + folderName 
                         + "</a>").trigger("create");
         }else {
@@ -423,7 +423,7 @@ UstadMobileBookList.prototype = {
                 $("#UMBookList").append(
                         "<a onclick='UstadMobileBookList.getInstance().openBLPage(\"" 
                         + courseIndex 
-                        + "\", \"normal\" )' href=\"#\" data-role=\"button\" "
+                        + "\")' href=\"#\" data-role=\"button\" "
                         + "data-icon=\"star\" data-ajax=\"false\">" + folderName 
                         + "</a>").trigger("create");
             }, function(error) {
@@ -593,7 +593,7 @@ UstadMobileBookList.prototype = {
 
         $(".ustadbooklistpage").css("display", "none");
         $("BODY").prepend(iframeEl);
-        onshowCallback(iframeEl);
+        UstadMobileUtils.runCallback(onshowCallback, [iframeEl], this);
     },
       
     /**
@@ -616,7 +616,7 @@ UstadMobileBookList.prototype = {
      * Open the given booklist page
      * @param courseIndex {Number} Index of the course object in UstadMobileBookList.coursesFound
      */
-    openBLPage: function(courseIndex, mode) {
+    openBLPage: function(courseIndex, onshowCallback, show, onloadCallback, onerrorCallback) {
         var umBookListObj = UstadMobileBookList.getInstance();
         var courseObj = umBookListObj.coursesFound[courseIndex];
         var openFile = courseObj.coursePath;
@@ -631,9 +631,13 @@ UstadMobileBookList.prototype = {
             //use the open course handler
             var courseObj = umBookListObj.coursesFound[courseIndex];
             UstadMobile.getInstance().systemImpl.showCourse(courseObj,
-                function(){}, true);
+                onshowCallback, show, onloadCallback, onerrorCallback);
             return;
-        } else {
+        } 
+        
+        /* Before we had the HTTP server we were directly opening it and using
+         * base64tofile 
+         * else {
             $.mobile.loading('show', {
                 text: x_('Ustad Mobile: Loading..'),
                 textVisible: true,
@@ -651,22 +655,9 @@ UstadMobileBookList.prototype = {
 
             console.log("The bookpath is: " + bookpath);
         }
-
-        var userSetLanguage = localStorage.getItem('language');
-        console.log("The user selected language is : " + userSetLanguage + " and the current Book Path is: " + bookpath);
-        if (mode == "test") {
-            userSetLanguageString = "var ustadlocalelang = \"" + userSetLanguage + "\"; console.log(\"DAFT PUNK GET LUCKY: \" + ustadlocalelang); var CONTENT_MODELS = \"test\"; console.log(\"CONTEN_MODELS is: \" + CONTENT_MODELS);"
-            console.log("booklist: CONTENT_MODELS is set to test mode. ");
-        } else {
-            userSetLanguageString = "var ustadlocalelang = \"" + userSetLanguage + "\"; console.log(\"DAFT PUNK GET LUCKY: \" + ustadlocalelang);";
-            console.log("booklist: CONTENT_MODELS is not set, You are in normal mode.");
-        }
-        localStorage.setItem('ustadmobile-settings.js', userSetLanguageString);
-        localStorageToFile(bookpath, "ustadmobile-settings.js", openFile);  //Also is the function that opens the book.
-
+        */
+        
     }
-
-   
 };
 
 /**

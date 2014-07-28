@@ -118,6 +118,12 @@ if [ -f result ]; then
     fi
 fi
 
+if [ "$RESULTCODE" != "0" ]; then
+    echo "UNIT TEST FAIL"
+    read
+    #sleep 60
+fi
+
 kill $NWPID
 kill $NODEPID
 rm result

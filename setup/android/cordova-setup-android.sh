@@ -20,7 +20,7 @@ cd $TARGETDIR
 cordova create ustadmobile com.toughra.ustadmobile UstadMobile
 cd ustadmobile
 cordova platform add android
-PLUGINLIST="org.apache.cordova.device org.apache.cordova.network-information org.apache.cordova.file org.apache.cordova.file-transfer org.apache.cordova.globalization org.apache.cordova.console org.apache.cordova.inappbrowser https://github.com/mikedawson/cordova-httpd.git"
+PLUGINLIST="org.apache.cordova.device org.apache.cordova.network-information org.apache.cordova.file org.apache.cordova.file-transfer org.apache.cordova.globalization org.apache.cordova.console org.apache.cordova.inappbrowser https://github.com/mikedawson/cordova-httpd.git https://github.com/mikedawson/CordovaMediaSanitize.git"
 
 #For splash screen, need to add splashscreen plugin: org.apache.cordova.splashscreen
 
