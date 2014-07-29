@@ -89,9 +89,6 @@ if [ "$1" == "emulate" ]; then
         echo "Waiting for device..."
         sleep 2
         adb wait-for-device
-        echo "Unlock screen"
-        sleep 2
-        adb shell input keyevent 82
         STATUS=$(adb get-state)
     done
 
@@ -101,6 +98,11 @@ if [ "$1" == "emulate" ]; then
         echo "Waiting for android boot: status : '${BOOTSTATUS:0:7}'"
         sleep 5
     done
+
+    echo "Unlock screen"
+    sleep 2
+    adb shell input keyevent 82
+
 
     echo "continue ... now ask cordova to get going"
     cordova emulate
