@@ -1122,6 +1122,40 @@ UstadMobileUtils.runOrWait = function(runNow, fn, args, thisObj, waitingList) {
 }
 
 /**
+ * Joins an array of Strings together with one and only one seperator between
+ * them
+ * 
+ * @param {Array} pathArr Array of strings, each a path
+ * @param string seperator (optional by default '/' )
+ * @returns string Path components joined into one string
+ */
+UstadMobileUtils.joinPath = function(pathArr, seperator) {
+    if(typeof seperator === "undefined" || seperator === null) {
+        seperator = "/";
+    }
+    
+    if(pathArr.length === 1) {
+        return pathArr[1];
+    }
+    
+    var retVal = pathArr[0];
+    for(var i = 1; i < pathArr.length; i++) {
+        if(retVal.charAt(retVal.length-1) === seperator) {
+            retVal = retVal.substring(0, retVal.length-1);
+        }
+        
+        var nextSection = pathArr[i];
+        if(nextSection.charAt(0) !== seperator) {
+            nextSection = '/' + nextSection;
+        }
+        
+        retVal += nextSection;
+    }
+    
+    return retVal;
+}
+
+/**
  * 
  * @param Node mediaEl - DOM node representing an audio or video tag
  * @param function onPlayCallback function to call once the item has played

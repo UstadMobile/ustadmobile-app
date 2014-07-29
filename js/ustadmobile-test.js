@@ -90,8 +90,8 @@ var containerChangeFn = function() {
 (function () {
     
     //Uncomment if you need NodeWebKit tools to load before actually running
-    //require('nw.gui').Window.get().showDevTools();
-    //alert("loaded tools");
+    require('nw.gui').Window.get().showDevTools();
+    alert("load tools");
 
     QUnit.module("UstadMobile");
     
@@ -103,23 +103,14 @@ var containerChangeFn = function() {
         
     testUstadMobileImplementationLoads();
     
+    
     var audioEl = document.createElement("audio");
     audioEl.preload = "auto";
-    audioEl.src = "res/test/test-sound.wav";
-    testSoundPlay(audioEl, "Test play sound first time", 0);
-    testSoundPlay(audioEl, "Test sound plays second time", 1500);
     
+    testSoundPlay(audioEl, "Test play sound first time", 0,true);
     
-    
-    //TODO: Add a test for this running over the HTTP Server
-    /*
-    var httpSvr = UstadMobileHTTPServer.getInstance();
-    var testURL = "http://" + httpSvr.httpHostname + ":" + httpSvr.httpPort + "/ustadmobileContent/test-sound.wav";
-    var audioEl2 = document.createElement("audio");
-    audioEl2.preload = "auto";
-    audioEl2.src = "http://"
-    */
-    
+    //TODO: Run test that sound plays twice
+    //testSoundPlay(audioEl, "Test sound plays second time", 1500, false);
     
     
     testPageLoad(UstadMobile.PAGE_BOOKLIST, "Test loading booklist page");
@@ -174,23 +165,27 @@ function testSequentialScriptLoad() {
 
 
 
-function testSoundPlay(mediaEl, testName, delay) {
+function testSoundPlay(mediaEl, testName, delay, setSrc) {
     asyncTest(testName, function() {
+        debugger;
         expect(1);
+        if(setSrc === true) {
+            if(window.cordova) {
+                mediaEl.src = UstadMobile.getInstance().systemImpl.getHTTPBaseURL() + 
+                    "appfiles/res/test/test-sound.wav";
+            }else {
+                mediaEl.src = "res/test/test-sound.wav";
+            }
+        }
+        
         setTimeout(function() {
             var checkFn = function(success) {
                 ok(success === true, "sound playback callback OK");
                 start();
             };
 
-            //2 = HAVE_CURRENT_DATA
-            if(mediaEl.readyState < 2) {
-                mediaEl.addEventListener("canplay", function(evt) {
-                    UstadMobileUtils.playMediaElement(mediaEl, checkFn);
-                });
-            }else {
-                UstadMobileUtils.playMediaElement(mediaEl, checkFn);
-            }
+            UstadMobileUtils.playMediaElement(mediaEl, checkFn);
+            
         }, delay);
     });
 }
@@ -264,12 +259,21 @@ function testUstadMobileImplementationLoads() {
  * @param id - Id of course to test downloading
  */
 function testUstadMobileCourseDownloadById(id) {
-    asyncTest("Can Download course by ID : course " + id, 1, function() {
-       UstadMobileDownloader.getInstance().downloadByID(id,
-            function() {
+    asyncTest("Can Download course by ID : course " + id,  function() {
+        expect(2);
+        UstadMobileDownloader.getInstance().downloadByID(id,
+            function(downloadObj) {
                 //success call back - seems good
                 ok(true, "Download success callback hit");
-                start();
+                downloadObj.moveCompletedDownload(function(movedEntry) {
+                    console.log("moved download OK");
+                    ok(movedEntry !== null, "Download moved OK");
+                    start();
+                }, function(err) {
+                    console.log("Failure callback on download move: " + err);
+                    ok(false, "Download move failure");
+                    start();
+                });
             },function() {
                 //fail call back - not so good
                 ok(false, "Download fail callback hit");

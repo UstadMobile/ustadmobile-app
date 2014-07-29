@@ -59,6 +59,7 @@ fi
 echo "Zip $TARGETDIR/UstadMobile.nw on $(pwd)"
 
 npm install mime
+npm install fs-extra
 
 FILELIST="*.html img css js jqm res locale ustad_version package.json node_modules"
 if [ "$ZIPMODE" == "normal" ]; then

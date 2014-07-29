@@ -166,15 +166,25 @@ UstadMobileDownloadJob.prototype = {
     downloadJobId: "",
     
     /**
-     * Parent directory where the new download will be saved 
+     * Parent directory where the new downloads will be saved 
+     * e.g. ustadmobileContent/inprogress
+     * 
      * @type String
      */
     downloadDestParentDir : "",
     
     /**
-     * The actual download destination to be used
+     * The actual download destination to be used - 
+     * e.g. ustadmobileContent/inprogress/CourseID/
      */
     downloadDestDir : "",
+    
+    /**
+     * Directory Entry object for downloadDestDir
+     * 
+     * @type {DirectoryEntry}
+     */
+    inProgressDirEntry : null,
     
     /**
      * The base URL from which to download
@@ -293,6 +303,7 @@ UstadMobileDownloadJob.prototype = {
                             dirEntry.getDirectory(subDirName, 
                                 {create: true, exclusive: false},
                                 function(subDirEntry) {
+                                    dlJobForSubDir.inProgressDirEntry = subDirEntry;
                                     dlJobForSubDir.downloadDestDir = 
                                             subDirEntry.toURL();
                                     dlJobForSubDir.downloadAllFilesFromXMLDoc(
@@ -463,8 +474,40 @@ UstadMobileDownloadJob.prototype = {
      * @method moveCompletedDownload
      */
     moveCompletedDownload: function(successCallback, failCallback) {
+        var thisDlJob = this;
         if(window.cordova) {
+            var contentDirEntry = 
+                UstadMobile.getInstance().systemImpl.contentDirEntry;
             
+            //check and see if this directory already exists
+            var newPath = UstadMobileUtils.joinPath([contentDirEntry.toURL(),
+                thisDlJob.inProgressDirEntry.name]);
+            
+            var moveDownloadFn = function() {
+                thisDlJob.inProgressDirEntry.moveTo(contentDirEntry,
+                    thisDlJob.inProgressDirEntry.name, function(successEntry) {
+                        console.log("Moved download to :"+
+                                successEntry.toURL());
+                        UstadMobileUtils.runCallback(successCallback, 
+                            [successEntry], thisDlJob);
+                    }, function(err2) {
+                        UstadMobileUtils.runCallback(failCallback, 
+                            [err2], thisDlJob);
+                    });
+            };
+            
+            window.resolveLocalFileSystemURL(newPath, function(existingDir){
+                existingDir.removeRecursively(function() {
+                    moveDownloadFn();
+                }, function(fileErr) {
+                    console.log("Exception removing current directory");
+                    UstadMobileUtils.runCallback(failCallback, 
+                            [fileErr], thisDlJob);
+                });
+            }, function(doesNotExist) {
+                moveDownloadFn();
+            });
+                
         }else if(UstadMobile.getInstance().isNodeWebkit()) {
             var path = require("path");
             var fs = require("fs");
@@ -474,14 +517,28 @@ UstadMobileDownloadJob.prototype = {
                 downloadedContentBaseName);
             
             var downloadJobObj = this;
-            fs.rename(this.downloadDestDir, destPath, function(err) {
-                if(err) {
-                    console.log("Exception in rename");
-                    failCallback(downloadJobObj);
-                }else {
-                    successCallback(downloadJobObj);
-                }
-            });
+            var moveThisDirFn = function() {
+                fs.rename(downloadJobObj.downloadDestDir, destPath, function(err) {
+                    if(err) {
+                        console.log("Exception in rename");
+                        failCallback(downloadJobObj);
+                    }else {
+                        successCallback(downloadJobObj);
+                    }
+                });
+            };
+            
+            if(fs.existsSync(destPath)) {
+                var fse = require("fs-extra");
+                fse.remove(destPath, function(err) {
+                    if(err) {
+                        failCallback(downloadObj);
+                    }
+                    moveThisDirFn();
+                }); 
+            }else {
+                moveThisDirFn();
+            }
         }
     },
     

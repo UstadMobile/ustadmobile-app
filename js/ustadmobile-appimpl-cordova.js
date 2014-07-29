@@ -88,6 +88,13 @@ UstadMobileAppImplCordova.prototype = Object.create(
  */
 UstadMobileAppImplCordova.prototype.cordovaHttpd = null;
 
+/** 
+ * DirectoryEntry object reference for the content directory (e.g. ustadmobileContent/)
+ * 
+ * @type {DirectoryEntry}
+ */
+UstadMobileAppImplCordova.prototype.contentDirEntry = null;
+
 /**
  * Get the device system language using globalization plugin
  * 
@@ -124,6 +131,8 @@ UstadMobileAppImplCordova.prototype.checkPaths = function() {
                     UstadMobile.CONTENT_DIRECTORY,
                     baseDirEntry, function(contentDirEntry) {
                         var contentDirBase = contentDirEntry;
+                        UstadMobile.getInstance().systemImpl.contentDirEntry = 
+                            contentDirEntry;
                         UstadMobile.getInstance().contentDirURI = 
                                 contentDirEntry.toURL();
                         UstadMobile.getInstance().checkAndMakeUstadSubDir(
@@ -176,8 +185,9 @@ UstadMobileAppImplCordova.prototype.startHTTPServer = function(successCallback, 
             console.log("ERROR: Could not mount : " + err);
         }
         
-        var subDirsToMount = ["js", "jqm"];
+        var subDirsToMount = ["js", "jqm", "res"];
         for(var i = 0; i < subDirsToMount.length; i++) {
+            console.log("Request to mount : " + subDirsToMount[i]);
             UstadMobile.getInstance().systemImpl.cordovaHttpd.mountDir(
                 "/" + UstadMobileAppImplCordova.URL_PREFIX_APPFILES 
                 + subDirsToMount[i],
@@ -253,11 +263,7 @@ UstadMobileAppImplCordova.prototype.showCourse = function(courseObj,
     
     var httpURL = this.cordovaHTTPURL + UstadMobile.CONTENT_DIRECTORY + 
             "/" + courseObj.getHttpURI();
-    
-    //lets get a file entry 
-    debugger;
-    //var fileURI = cordova.file.applicationDirectory + "js/ustadmobile.js";
-    
+        
     var destURI = UstadMobile.getInstance().contentDirURI + courseObj.relativeURI;
     var filesToCopy = UstadMobileBookList.getInstance().appFilesToCopyToContent;
     
@@ -277,7 +283,6 @@ UstadMobile.getInstance().systemImpl =
         UstadMobileAppImplCordova.getInstance();
 
 document.addEventListener("deviceready", function() {
-    debugger;
     var mediaSanity = ( cordova && cordova.plugins && cordova.plugins.MediaSanity ) 
         ? cordova.plugins.MediaSanity : null;
         
