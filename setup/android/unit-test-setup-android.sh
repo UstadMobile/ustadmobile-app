@@ -95,6 +95,13 @@ if [ "$1" == "emulate" ]; then
         STATUS=$(adb get-state)
     done
 
+    BOOTSTATUS="running"
+    while [ "${BOOTSTATUS:0:7}" != "stopped" ]; do
+        BOOTSTATUS=$(adb shell getprop init.svc.bootanim)
+        echo "Waiting for android boot: status : '${BOOTSTATUS:0:7}'"
+        sleep 5
+    done
+
     echo "continue ... now ask cordova to get going"
     cordova emulate
 fi
