@@ -17,6 +17,8 @@ TARGETDIR="./build"
 
 FASTMODE=1
 
+TIMEOUT=240
+
 #Port to use to run node server to receive test results
 NODEPORT=8620
 
@@ -80,12 +82,19 @@ if [ "$1" == "emulate" ]; then
     
     /opt/adt/sdk/tools/emulator-x86 -avd $AVDNAME -qemu -m 2047 $ENABLEKVMARG & 
     EMULATEPID=$!
-    echo "Waiting $EMULATEBOOTWAIT seconds for emulator to bootup"
-    sleep 2
-    adb wait-for-device
-    echo "Unlock screen"
-    sleep 2
-    adb shell input keyevent 82
+
+    STATUS="unknown"
+    
+    while [ "$STATUS" != "device" ]; do
+        echo "Waiting for device..."
+        sleep 2
+        adb wait-for-device
+        echo "Unlock screen"
+        sleep 2
+        adb shell input keyevent 82
+        STATUS=$(adb get-state)
+    done
+
     echo "continue ... now ask cordova to get going"
     cordova emulate
 fi
@@ -94,7 +103,7 @@ cd $WORKINGDIR
 
 #Wait for the test result to come
 WAITTIME=0
-while [[ ! -f result ]] && [[ $WAITTIME -le 60 ]]; do
+while [[ ! -f $WORKINGDIR/result ]] && [[ $WAITTIME -le $TIMEOUT ]]; do
   sleep 2
   WAITTIME=$(( $WAITTIME + 2 ))
 done
