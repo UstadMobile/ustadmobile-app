@@ -282,15 +282,24 @@ UstadMobileAppImplCordova.prototype.showCourse = function(courseObj,
 UstadMobile.getInstance().systemImpl = 
         UstadMobileAppImplCordova.getInstance();
 
-document.addEventListener("deviceready", function() {
-    var mediaSanity = ( cordova && cordova.plugins && cordova.plugins.MediaSanity ) 
-        ? cordova.plugins.MediaSanity : null;
-        
-    //prevent requirement for a gesture to play media
-    mediaSanity.setMediaGestureRequired(false, function() {
-        console.log("MEDIA: Set media gesture required to false OK")
-    }, function(err) {
-        console.log("Media: set media gesture required FAIL : " + err);
-    });
-    UstadMobile.getInstance().fireImplementationReady();
-}, false);
+
+function ustadAppImplCordovaDeviceReady() {
+    //check and see if cordova really loaded
+    if(window.cordova && window.cordova.plugins) {
+        var mediaSanity = ( cordova && cordova.plugins && cordova.plugins.MediaSanity ) 
+            ? cordova.plugins.MediaSanity : null;
+
+        //prevent requirement for a gesture to play media
+        mediaSanity.setMediaGestureRequired(false, function() {
+            console.log("MEDIA: Set media gesture required to false OK")
+        }, function(err) {
+            console.log("Media: set media gesture required FAIL : " + err);
+        });
+        UstadMobile.getInstance().fireImplementationReady();
+    }else {
+        console.log("Deviceready fired, but not actually really ready.... - try and wait again...");
+        setTimeout(ustadAppImplCordovaDeviceReady, 1000);
+    }   
+}
+
+document.addEventListener("deviceready", ustadAppImplCordovaDeviceReady, false);
