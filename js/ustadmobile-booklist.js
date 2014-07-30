@@ -722,16 +722,19 @@ UstadMobileAppToContentCopyJob.prototype = {
             
             var appWorkingDir = process.cwd();
             
-            var runtimeInfo = { 
-                "baseURL": appWorkingDir,
-            };
+            if(this.currentFileIndex === 0) {
+                var runtimeInfo = { 
+                    "baseURL": appWorkingDir,
+                };
+
+                runtimeInfo[UstadMobile.RUNTIME_MENUMODE] 
+                        = UstadMobile.MENUMODE_USECONTENTDIR;
+                runtimeInfo['FixAttachmentLinks'] = true;
+
+                fs.writeFileSync(path.join(this.destDir, "ustad_runtime.json"), 
+                    JSON.stringify(runtimeInfo));
+            }
             
-            runtimeInfo[UstadMobile.RUNTIME_MENUMODE] 
-                    = UstadMobile.MENUMODE_USECONTENTDIR;
-            runtimeInfo['FixAttachmentLinks'] = true;
-            
-            fs.writeFileSync(path.join(this.destDir, "ustad_runtime.json"), 
-                JSON.stringify(runtimeInfo));
             
             if(this.currentFileIndex < this.fileList.length) {
                 var srcFile = this.fileList[this.currentFileIndex];
