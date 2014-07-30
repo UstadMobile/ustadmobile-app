@@ -167,7 +167,7 @@ function testSequentialScriptLoad() {
 
 function testSoundPlay(mediaEl, testName, delay, setSrc) {
     asyncTest(testName, function() {
-        debugger;
+        //debugger;
         expect(1);
         if(setSrc === true) {
             if(window.cordova) {
@@ -327,11 +327,15 @@ function testBookOpen() {
             expect(1);
             var bookList = UstadMobileBookList.getInstance().coursesFound;
             
+            
+            //debugger;
             UstadMobile.getInstance().runAfterHTTPReady(function(){
                 for(var i = 0; i < bookList.length; i++) {
                     UstadMobileBookList.getInstance().openBLPage(i,function() {
                         console.log("course display created");
-                    }, false, function(frameEl) {
+                    }, false, function(evt) {
+                        //debugger;
+                        var frameEl = evt.target;
                         console.log("Loaded  " + $(frameEl).attr('src'));
                         $(frameEl).remove();
                         numBooksOpened++;
@@ -400,16 +404,18 @@ function testHTTPServer() {
 
 
         
-        var bookList = UstadMobileBookList.getInstance().coursesFound;
+        
         
         
         asyncTest("Check all courses are available", function() {
             //there will be bookList.length callbacks
-            expect(bookList.length);
+            expect(UstadMobileBookList.getInstance().coursesFound.length);
             
             UstadMobile.getInstance().runAfterHTTPReady(function(){
                 var baseURL = UstadMobile.getInstance().systemImpl.getHTTPBaseURL();
+                var bookList = UstadMobileBookList.getInstance().coursesFound;
                 
+                //debugger;
                 for(var i = 0; i < bookList.length; i++) {
                     var courseEntry = bookList[i];
                     var folderName = courseEntry.relativeURI;

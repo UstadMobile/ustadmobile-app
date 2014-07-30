@@ -195,6 +195,9 @@ UstadMobileBookList.prototype = {
      */
     scanCourses: function(callback) {
         var umBookListObj = UstadMobileBookList.getInstance();
+        
+        //Reset so we don't list multiple courses.
+        umBookListObj.coursesFound = [];
         if(typeof callback !== "undefined" && callback !== null) {
             umBookListObj.allBookFoundCallback = callback;
         }
@@ -284,7 +287,6 @@ UstadMobileBookList.prototype = {
            console.log("populateNextDir: pos: " + umBookListObj.currentFolderIndex + 
                    "No more folders to scan for ustad mobile packages.");
            $.mobile.loading('hide');
-           $("#UMBookList").append("<p><i>Click on Download Courses to get more courses from the online library</i></p>").trigger("create");
            if (umBookListObj.allBookFoundCallback !== null) {
                if (typeof umBookListObj.allBookFoundCallback === "function") {
                    umBookListObj.allBookFoundCallback();
