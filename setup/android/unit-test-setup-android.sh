@@ -154,6 +154,7 @@ if [ "$EMULATEPID" != "0" ]; then
     kill $EMULATEPID
 fi
 
+echo "Generate Coverage Report"
 source source ../jscover-makereport.sh
 
 rm result
