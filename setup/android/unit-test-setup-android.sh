@@ -55,7 +55,7 @@ source ../jscover-get.sh
 echo "Instrumenting files for test"
 java -jar $JSCOVERJAR -fs --no-instrument-reg='(jquery\.min\.js|qunit-.*\.js)' $WORKINGDIR/../../js $TARGETDIR/ustadmobile/www/js
 echo "Completed JS instrumentation"
-read
+
 
 echo "var testResultServer = 'http://$IPADDR:$NODEPORT/';" > $TARGETDIR/ustadmobile/www/js/ustadmobile-test-settings.js
 
@@ -153,6 +153,8 @@ if [ "$EMULATEPID" != "0" ]; then
     sleep 10
     kill $EMULATEPID
 fi
+
+source source ../jscover-makereport.sh
 
 rm result
 
