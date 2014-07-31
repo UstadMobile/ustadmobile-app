@@ -4,6 +4,8 @@
 # Build UstadMobile and run unit tests in Cordova Emulator or on a device
 #
 # Usage: unit-test-setup-android.sh run|emulate 
+# 
+# For arguments to Android emulator set ANDROID_EMU_ARGS variable
 #
 # If all tests succeed ERRORLEVEL on exit is 0, if any fail, will set error 
 # level to 1
@@ -80,7 +82,7 @@ if [ "$1" == "emulate" ]; then
         ENABLEKVMARG=" -enable-kvm "
     fi
     
-    /opt/adt/sdk/tools/emulator-x86 -avd $AVDNAME -qemu -m 2047 $ENABLEKVMARG & 
+    /opt/adt/sdk/tools/emulator-x86 -avd $AVDNAME $ANDROID_EMU_ARGS -qemu -m 2047 $ENABLEKVMARG & 
     EMULATEPID=$!
 
     STATUS="unknown"
