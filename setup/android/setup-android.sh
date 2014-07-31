@@ -8,11 +8,10 @@
 #
 THEMEFILE="$2"
 
-TARGETDIR=""
-SRCDIR="../../"
+SRCDIR="$(pwd)/../../"
 
 WORKINGDIR=$(pwd)
-TARGETDIR="./build"
+TARGETDIR="$(pwd)/build"
 
 #check we have android in path
 ANDROIDCMD=$(which android)
@@ -36,4 +35,6 @@ fi
 if [ "$1" == "emulate" ]; then
     cordova emulate
 fi
+
+#$WORKINGDIR/clean-plugman.sh
 

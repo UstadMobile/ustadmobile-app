@@ -42,7 +42,7 @@ echo "Made a cordova project in $TARGETDIR/ustadmobile"
 cd $WORKINGDIR
 cd $SRCDIR
 
-FILEDEST=$WORKINGDIR/$TARGETDIR/ustadmobile/www
+FILEDEST=$TARGETDIR/ustadmobile/www
 
 # we don't want this file - will confuse cordova
 if [ -e spec.html ]; then
@@ -59,10 +59,13 @@ if [ "$THEMEFILE" != "" ]; then
     $WORKINGDIR/../apply-theme.sh $THEMEFILE $FILEDEST
 fi
 
-cd $FILEDEST/res/icon
-ls | grep -v "android" | xargs rm -r
-cd ../screen
-ls | grep -v "android" | xargs rm -r
+#cd $FILEDEST/res/icon
+#echo "Now at $(pwd) to delete shit???"
+#read
+
+#ls | grep -v "android" | xargs rm -r
+#cd ../screen
+#ls | grep -v "android" | xargs rm -r
 
 #make the base64 versions of javascript files that get copied into directories
 cd $WORKINGDIR

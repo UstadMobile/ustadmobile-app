@@ -11,11 +11,10 @@
 # level to 1
 #
 
-TARGETDIR=""
-SRCDIR="../../"
+SRCDIR=$(pwd)/../../
 
 WORKINGDIR=$(pwd)
-TARGETDIR="./build"
+TARGETDIR=$(pwd)/build
 
 FASTMODE=1
 
@@ -46,17 +45,27 @@ fi
 
 cp $FILEDEST/index.html $FILEDEST/index.html.original
 cp $FILEDEST/ustadmobile_tests.html $FILEDEST/index.html
-echo "var testResultServer = 'http://$IPADDR:$NODEPORT/';" > $FILEDEST/js/ustadmobile-test-settings.js
-echo set test server in $FILEDEST/js/ustadmobile-test-settings.js
 
 cd $WORKINGDIR
+
+#instrument javascript files needed
+echo "getting jscover"
+source ../jscover-get.sh
+
+echo "Instrumenting files for test"
+java -jar $JSCOVERJAR -fs --no-instrument-reg='(jquery\.min\.js|qunit-.*\.js)' $WORKINGDIR/../../js $TARGETDIR/ustadmobile/www/js
+echo "Completed JS instrumentation"
+read
+
+echo "var testResultServer = 'http://$IPADDR:$NODEPORT/';" > $TARGETDIR/ustadmobile/www/js/ustadmobile-test-settings.js
+
 cd $TARGETDIR/ustadmobile
 
 # Only as needed...  does not really effect unit testing
-if [ "$FASTMODE" != "1" ]; then
+#if [ "$FASTMODE" != "1" ]; then
     cordova build
-    sed -i.backup -e 's/hardwareAccelerated=\"true\"/hardwareAccelerated=\"false\"/' $WORKINGDIR/build-test/ustadmobile/platforms/android/AndroidManifest.xml
-fi
+#    sed -i.backup -e 's/hardwareAccelerated=\"true\"/hardwareAccelerated=\"false\"/' $WORKINGDIR/build-test/ustadmobile/platforms/android/AndroidManifest.xml
+#fi
 
 #sed -i.backup -e '\|</widget>| i\\    <preference name=\"splashscreen\" value=\"umsplash\" />' $WORKINGDIR/ustadmobile/www/config.xml 
 #sed -i.backup -e '\|</widget>| i\\    <preference name=\"splashScreenDelay\" value=\"3000\" />' $WORKINGDIR/ustadmobile/www/config.xml 
@@ -82,7 +91,7 @@ if [ "$1" == "emulate" ]; then
         ENABLEKVMARG=" -enable-kvm "
     fi
     
-    /opt/adt/sdk/tools/emulator-x86 -avd $AVDNAME $ANDROID_EMU_ARGS -qemu -m 2047 $ENABLEKVMARG & 
+    /opt/adt/sdk/tools/emulator-x86 -avd $AVDNAME $ANDROID_EMU_ARGS -qemu  $ENABLEKVMARG & 
     EMULATEPID=$!
 
     STATUS="unknown"
@@ -105,9 +114,13 @@ if [ "$1" == "emulate" ]; then
     sleep 2
     adb shell input keyevent 82
 
+    echo "Wait for emulator to settle down a bit"
+    sleep 20
+    
+
 
     echo "continue ... now ask cordova to get going"
-    cordova emulate
+    cordova run
 fi
 
 cd $WORKINGDIR
@@ -142,5 +155,7 @@ if [ "$EMULATEPID" != "0" ]; then
 fi
 
 rm result
+
+$WORKINGDIR/clean-plugman.sh
 
 exit $RESULTCODE
