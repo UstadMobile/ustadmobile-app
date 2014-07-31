@@ -510,7 +510,7 @@ UstadMobileDownloadJob.prototype = {
                 
         }else if(UstadMobile.getInstance().isNodeWebkit()) {
             var path = require("path");
-            var fs = require("fs");
+            var fs = require("fs-extra");
             
             var downloadedContentBaseName = path.basename(this.downloadDestDir);
             var destPath = path.join(UstadMobile.getInstance().contentDirURI,
@@ -528,17 +528,20 @@ UstadMobileDownloadJob.prototype = {
                 });
             };
             
-            if(fs.existsSync(destPath)) {
-                var fse = require("fs-extra");
-                fse.remove(destPath, function(err) {
-                    if(err) {
-                        failCallback(downloadObj);
-                    }
-                    moveThisDirFn();
-                }); 
-            }else {
-                moveThisDirFn();
-            }
+            fs.copy(downloadJobObj.downloadDestDir, destPath, function(err) {
+                if(err) {
+                    console.log("Exception copying and overwriting: " + err);
+                    failCallback(downloadJobObj);
+                }else {
+                    fs.remove(downloadJobObj.downloadDestDir, function(err) {
+                        if(err) {
+                            failCallback(downloadJobObj);
+                        }else {
+                            successCallback(downloadJobObj);
+                        }
+                    });
+                }
+            });
         }
     },
     
