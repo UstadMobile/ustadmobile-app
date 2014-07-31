@@ -8,13 +8,12 @@ NODEPORT=7079
 NWPATH=$(which nw)
 NODEJSCMD=$(which nodejs)
 WORKINGDIR=$(pwd)
-JSCOVERJAR=$WORKINGDIR/../testing-files-downloads/jscover/target/dist/JSCover-all.jar
+
 
 #Time after which we will kill processes and assume failure (seconds)
 TIMEOUT=180
 
-#copied this to our server - curl does not like sf.net redirects - windows does not like wget
-JSCOVERURL='http://www.ustadmobile.com/JSCover-1.0.13.zip'
+
 
 if [ ! -e coverage_report ]; then
     mkdir coverage_report
@@ -43,18 +42,7 @@ fi
 
 . ./nodewebkit-setup-common.sh $1 $2
 
-if [ ! -e ../testing-files-downloads/JSCover-1.0.13.zip ]; then
-    if [ ! -d ../testing-files-downlodas ]; then
-        mkdir ../testing-files-downloads
-    fi
-
-    cd ../testing-files-downloads
-    echo "Downloading JSCover from $JSCOVERURL"
-    curl -O "$JSCOVERURL"
-    mkdir jscover
-    cd jscover
-    unzip -q ../JSCover-1.0.13.zip
-fi
+source ../jscover-get.sh
 
 
 cd $TARGETDIR
@@ -77,11 +65,6 @@ if [ "$ZIPMODE" == "normal" ]; then
 else
     7z a -tzip -r $TARGETDIR/UstadMobile-TESTS.nw $FILELIST
 fi
-
-
-
-
-
 
 cd $WORKINGDIR
 $NODEJSCMD $WORKINGDIR/../node-qunit-server/node-qunit-server.js $NODEPORT &
@@ -128,20 +111,7 @@ kill $NWPID
 kill $NODEPID
 rm result
 
-if [ -e coverage_report/jscoverage.json ]; then
-    java -cp $JSCOVERJAR jscover.report.Main --format=LCOV ./coverage_report/ $SRCDIR/js/
-    cd coverage_report
-    genhtml jscover.lcov
-    cd ..
-    #Update documentation
-    jsdoc -d=./jsdoc_output $SRCDIR/js
-
-else
-    echo "Coverage results NOT found"
-    #does not work on Windows - be more forgiving
-    #exit 2
-fi
-
+source ../jscover-makereport.sh
 
 
 exit $RESULTCODE
