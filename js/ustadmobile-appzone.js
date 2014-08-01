@@ -123,6 +123,37 @@ UstadMobileAppZone.prototype = {
         }
 
         $.mobile.changePage(linkToOpen, { changeHash: true, transition: transitionMode});
+    },
+    
+    jsonInfo2HTML: function(obj) {
+        var text = "";
+        for(var key in obj) {
+            if(obj.hasOwnProperty(key)) {
+                text += "<b>" + key + "</b>:";
+                text += obj[key] + "<br/>";
+            }
+        }
+        
+        return text;
+    },
+    
+    aboutPageShowInfo: function() {
+        $("#ustadmobile_about_page").on("pageshow", function(event, ui) {
+            $.ajax({
+                url: "build_info.json",
+                dataType: "json"
+            }).done(function(data, textStatus, jqXHR) {
+                $("#build_info").html(
+                        UstadMobileAppZone.getInstance().jsonInfo2HTML(data));
+            }).fail(function(data, textStatus, jqXHR){
+                $("#build_info").html("Build info unavailable");
+            });
+            
+            UstadMobile.getInstance().systemImpl.getSystemInfo(function(infoObj) {
+                $("#techinfocontainer").html(
+                        UstadMobileAppZone.getInstance().jsonInfo2HTML(infoObj));
+            });
+        });
     }
 
     

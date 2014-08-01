@@ -278,6 +278,25 @@ UstadMobileAppImplCordova.prototype.showCourse = function(courseObj,
 };
 
 
+/**
+ * Return a JSON string with system information - e.g. for reporting with
+ * bug reports etc.
+ * 
+ * @param function callback which will receive one JSON arg - the result
+ */
+UstadMobileAppImplCordova.prototype.getSystemInfo = function(callback) {
+    var retVal = {};
+    retVal['contentDirectory'] = UstadMobile.getInstance().contentDirURI;
+    
+    retVal['device.cordova'] = device.cordova;
+    retVal['device.model'] = device.model;
+    retVal['device.name'] = device.name;
+    retVal['device.platform'] = device.platform;
+    retVal['device.version'] = device.version;
+    
+    UstadMobileUtils.runCallback(callback, [retVal], this);
+};
+
 //Set the implementation accordingly on UstadMobile object
 UstadMobile.getInstance().systemImpl = 
         UstadMobileAppImplCordova.getInstance();

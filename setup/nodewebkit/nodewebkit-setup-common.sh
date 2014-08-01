@@ -44,6 +44,7 @@ cd $SRCDIR
 
 cp -r *.html img css js jqm res locale ustad_version $TARGETDIR
 cp $WORKINGDIR/package.json $TARGETDIR
+. $WORKINGDIR/../mkbuildinfo.sh > $TARGETDIR/build_info.json
 
 cd $TARGETDIR
 
@@ -61,7 +62,7 @@ echo "Zip $TARGETDIR/UstadMobile.nw on $(pwd)"
 npm install mime
 npm install fs-extra
 
-FILELIST="*.html img css js jqm res locale ustad_version package.json node_modules"
+FILELIST="*.html img css js jqm res locale ustad_version package.json node_modules build_info.json"
 if [ "$ZIPMODE" == "normal" ]; then
     zip -r $TARGETDIR/UstadMobile.nw $FILELIST
 else

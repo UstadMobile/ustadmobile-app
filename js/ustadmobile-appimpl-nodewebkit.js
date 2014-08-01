@@ -77,6 +77,14 @@ UstadMobileAppImplNodeWebkit.getInstance = function() {
 UstadMobileAppImplNodeWebkit.prototype = Object.create(
     UstadMobileAppImplementation.prototype);
 
+
+/**
+ * For debug purposes: cache the output when getting my documents folder info
+ * 
+ * @type String
+ */
+UstadMobileAppImplNodeWebkit.prototype.winMyDocOutput = "";
+
 /**
  * Get the actual language of the system for NodeWebKit
  * 
@@ -139,7 +147,76 @@ UstadMobileAppImplNodeWebkit.prototype.showCourse = function(courseObj,
                 onshowCallback, show, onloadCallback, onerrorCallback);
     });
     copyJob.copyNextFile();
-},
+};
+
+/**
+ * Check that the required paths are created for content and inprogress 
+ * downloads
+ */
+UstadMobileAppImplNodeWebkit.prototype.checkPaths = function() {
+    var fs= require("fs");
+    var path = require("path");
+    
+    //see http://stackoverflow.com/questions/9080085/node-js-find-home-directory-in-platform-agnostic-way
+    //Note for windows reg key
+    //$ Reg Query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders"
+    var userHomeDir = process.env[(process.platform === 'win32') ? 'USERPROFILE' : 'HOME'];
+
+    var nodeSetupHomeDirFunction = function(userBaseDir) {
+        var contentDirectory = path.join(userBaseDir, 
+        UstadMobile.CONTENT_DIRECTORY);
+        console.log("UstadMobile NodeWebKit HomeDirectory: " 
+                + contentDirectory);
+
+        if(!fs.existsSync(contentDirectory)) {
+            fs.mkdirSync(contentDirectory);
+        }
+        UstadMobile.getInstance().contentDirURI = contentDirectory;
+
+        var contentDownloadDir = path.join(contentDirectory, 
+            UstadMobile.DOWNLOAD_SUBDIR);
+
+        if(!fs.existsSync(contentDownloadDir)) {
+            fs.mkdirSync(contentDownloadDir);
+        }
+        UstadMobile.getInstance().downloadDestDirURI = 
+            contentDownloadDir;
+        UstadMobile.getInstance().firePathCreationEvent(true);
+    };
+
+    if(UstadMobile.getInstance().getNodeWebKitOS() ===
+        UstadMobile.OS_WINDOWS) {
+        var exec = require('child_process').exec;
+        console.log("checking windows object");
+        var regKeyName = "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders";
+        var regQueryCmd = "Reg Query \""+ regKeyName +"\" /v Personal";
+        exec(regQueryCmd, function(error, stdout, stderr) {
+            UstadMobileAppImplNodeWebkit.getInstance().winMyDocOutput = stdout;
+            var myDocPath = stdout.substring(stdout.indexOf("REG_SZ")+6);
+            myDocPath = myDocPath.trim();
+            nodeSetupHomeDirFunction(myDocPath);
+        });
+    }else {
+        nodeSetupHomeDirFunction(userHomeDir);
+    }
+};
+
+/**
+ * Return a JSON string with system information - e.g. for reporting with
+ * bug reports etc.
+ * 
+ * @param function callback which will receive one JSON arg - the result
+ */
+UstadMobileAppImplNodeWebkit.prototype.getSystemInfo = function(callback) {
+    var retVal = {};
+    var os = require("os");
+    retVal['process.platform'] = process.platform;
+    retVal['contentDirectory'] = UstadMobile.getInstance().contentDirURI;
+    retVal['os.release'] = os.release();
+    retVal['windows.mydocinfo'] = this.winMyDocOutput;
+    
+    UstadMobileUtils.runCallback(callback, [retVal], this);
+}
 
 
 //Set the implementation accordingly on UstadMobile object
