@@ -2,7 +2,15 @@
 #
 # Common file to hold cordova setup for Android UstadMobile
 #
-
+# For offline building (cached cordova plugins)
+#
+# When online:
+# ./offline-plugin-setup (will copy plugins into plugins-offline dir)
+#
+# Before build (when offline)
+#
+# export BUILDOFFLINE=1
+#
 
 #clean
 if [ -d $TARGETDIR ]; then
@@ -24,15 +32,24 @@ PLUGINLIST="org.apache.cordova.device org.apache.cordova.network-information org
 
 #For splash screen, need to add splashscreen plugin: org.apache.cordova.splashscreen
 
-#For some reason on windows this is liable to fail and timeout even on decent connections
-for plugin in $PLUGINLIST; do
-	RETSTATUS=1
-	until [ "$RETSTATUS" == "0" ]; do
-        echo "Attempting to add plugin $plugin"
-		cordova plugin add $plugin
-		RETSTATUS=$?
-	done
-done
+if [ "$BUILDOFFLINE" == "1" ]; then
+    echo "OFFLINE: Copying plugins from $WORKINGDIR/plugins-offline/ to $TARGETDIR/ustadmobile/plugins/"
+    
+    for PLUGINDIR in $(ls $WORKINGDIR/plugins-offline); do
+        cordova plugin add $WORKINGDIR/plugins-offline/$PLUGINDIR
+    done
+else
+    #For some reason on windows this is liable to fail and timeout even on decent connections
+    for plugin in $PLUGINLIST; do
+	    RETSTATUS=1
+	    until [ "$RETSTATUS" == "0" ]; do
+            echo "Attempting to add plugin $plugin"
+		    cordova plugin add $plugin
+		    RETSTATUS=$?
+	    done
+    done
+fi
+
 
 #now set the version in config.xml
 sed -i s/version=\"0.0.1\"/version=\"$VERSION\"/g www/config.xml

@@ -1,0 +1,18 @@
+#!/bin/bash
+
+if [ ! -e plugins-offline ]; then
+    mkdir plugins-offline
+fi
+
+cd plugins-offline
+
+PLUGINCLONELIST="https://git-wip-us.apache.org/repos/asf/cordova-plugin-device.git https://git-wip-us.apache.org/repos/asf/cordova-plugin-console.git https://git-wip-us.apache.org/repos/asf/cordova-plugin-network-information.git https://git-wip-us.apache.org/repos/asf/cordova-plugin-file.git https://git-wip-us.apache.org/repos/asf/cordova-plugin-file-transfer.git https://git-wip-us.apache.org/repos/asf/cordova-plugin-globalization.git https://git-wip-us.apache.org/repos/asf/cordova-plugin-inappbrowser.git https://github.com/mikedawson/cordova-httpd.git https://github.com/mikedawson/CordovaMediaSanitize.git"
+
+for PLUGINURL in $PLUGINCLONELIST; do
+    git clone $PLUGINURL
+done
+
+echo "Cloned all plugins into plugins-offline OK"
+echo "When neeeding to build offline run"
+echo "export BUILDOFFLINE=1"
+echo ""

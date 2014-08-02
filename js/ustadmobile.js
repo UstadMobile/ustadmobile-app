@@ -346,7 +346,9 @@ UstadMobile.prototype = {
         //Load the scripts appropriate to the implementation and context
         this.loadInitScripts(function() {        
             console.log("main ustad mobile init running - scripts loaded");
-            UstadMobile.getInstance().checkPaths();
+            if(UstadMobile.getInstance().getZone() === UstadMobile.ZONE_APP) {
+                UstadMobile.getInstance().checkPaths();
+            }
             
             $(document).on( "pagecontainershow", function( event, ui ) {
                 UstadMobile.getInstance().pageInit(event, ui);
@@ -357,7 +359,6 @@ UstadMobile.prototype = {
             if(UstadMobile.getInstance().getZone() === UstadMobile.ZONE_CONTENT) {
                 UstadMobileContentZone.getInstance().init();
             }else {
-                console.log("init app zone f fffff sake");
                 UstadMobileAppZone.getInstance().init();
             }
             
