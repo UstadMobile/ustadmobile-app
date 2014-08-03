@@ -526,12 +526,6 @@ UstadMobileBookList.prototype = {
                if(fStat !== null && fStat.isDirectory()) {
                    umBookListObj.currentEntriesToScan.push(entries[i]);
                }
-               
-               try {
-                   fStat.close();
-               }catch(err2) {
-                   console.log("Error attempting to close fs " + err2);
-               }
            }else {
                if (entries[i].isDirectory) {
                     umBookListObj.currentEntriesToScan.push(entries[i]);

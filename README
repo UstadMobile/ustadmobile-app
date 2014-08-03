@@ -1,26 +1,25 @@
 Ustad Mobile HTML5 Cross Platform App
 
-Copyright UstadMobile Ltd 2013-2014.
+Copyright UstadMobile Inc 2013-2014.
+
+UstadMobile can download content created using eXe ( an eLearning authoring
+tool ) to a device and use that content even when offline.
+
+Content is downloaded according to an XML manifest; the app runs an internal
+HTTP server to ensure that content is sandboxed in a different javascript context
+and cannot be used for malicious purposes against the host device.
 
 Supported Platforms:
 
-* Android (Cordova)
-* Win32 (TideSDK)
+* Android (Built using Apache Cordova)
+* Windows 7/8 (Built using NodeWebKit)
 
-Should work:
+Work In Progress:
 
 * iOS (Cordova)
 * Blackberry 10 (Cordova)
 * Windows Phone 8
 
-===Javascript Library Versions===
-
-JQueryMobile: 1.4.2
-JQuery: 1.9.1
-
-
 ===To Build/Run unit tests===
 See setup/<platform-name>
-
-
 

@@ -55,7 +55,7 @@ cp ustadmobile_tests.html index.html
 
 #Instrument Javascript files for coverage testing
 echo "Instrumenting files for test"
-java -jar $JSCOVERJAR -fs --no-instrument-reg='(jquery\.min\.js|qunit-.*\.js)' $WORKINGDIR/../../js $TARGETDIR/js
+java -jar $JSCOVERJAR -fs --no-instrument-reg='(jquery\.min\.js|qunit-.*\.js|sha3.js)' $WORKINGDIR/../../js $TARGETDIR/js
 echo "ran it"
 
 echo "var testResultServer = 'http://127.0.0.1:$NODEPORT/';" > $TARGETDIR/js/ustadmobile-test-settings.js

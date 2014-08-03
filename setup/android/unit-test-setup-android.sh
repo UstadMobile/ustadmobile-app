@@ -53,7 +53,7 @@ echo "getting jscover"
 source ../jscover-get.sh
 
 echo "Instrumenting files for test"
-java -jar $JSCOVERJAR -fs --no-instrument-reg='(jquery\.min\.js|qunit-.*\.js)' $WORKINGDIR/../../js $TARGETDIR/ustadmobile/www/js
+java -jar $JSCOVERJAR -fs --no-instrument-reg='(jquery\.min\.js|qunit-.*\.js|sha3.js)' $WORKINGDIR/../../js $TARGETDIR/ustadmobile/www/js
 echo "Completed JS instrumentation"
 
 

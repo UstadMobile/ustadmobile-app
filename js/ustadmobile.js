@@ -209,6 +209,11 @@ UstadMobile.PAGE_TOC = "exetoc.html";
  */
 UstadMobile.PAGE_LOGIN = "index.html";
 
+/**
+ * 
+ * @type type string
+ */
+UstadMobile.PAGE_CONTENT_MENU = "ustadmobile_menupage_content.html";
 
 UstadMobile.prototype = {
     
@@ -1438,5 +1443,24 @@ function initTableOfContents() {
 //Dummy onload function
 //leave me
 function _onLoadFunction(){
+}
+
+/**
+ * Common debuglog function to log only if debug mode is enabled
+ * 
+ * @param msg string message to log to console if in debug mode
+ */
+function debugLog(msg) {
+    if(USTADDEBUGMODE === 1) {
+        console.log(msg);
+    }
+}
+
+function _(msgid) {
+    if (msgid in messages) {
+        return messages[msgid];
+    }else {
+        return msgid;
+    }
 }
 

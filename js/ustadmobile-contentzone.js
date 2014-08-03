@@ -735,7 +735,8 @@ function exeMenuPageOpen() {
     } else {
         debugLog('everything is OK with paths');
     }
-    debugLog("Ustad Mobile Content: You will go into: exeMenuPage " + exeMenuPage2);
+    debugLog("Ustad Mobile Content: You will go into: exeMenuPage " 
+            + UstadMobile.PAGE_CONTENT_MENU);
     
     var exeMenuLink2 = null;
     
@@ -743,34 +744,31 @@ function exeMenuPageOpen() {
         //use the copy that is in our own directory, this was probably copied in by the app
         var menuLinkMode = UstadMobile.getInstance().runtimeInfo[UstadMobile.RUNTIME_MENUMODE];
         if(menuLinkMode === UstadMobile.MENUMODE_USECONTENTDIR) {
-            exeMenuLink2 = exeMenuPage2;
+            exeMenuLink2 = UstadMobile.PAGE_CONTENT_MENU;
         }
     }else if (navigator.userAgent.indexOf("Android") !== -1 || UstadMobile.getInstance().isNodeWebkit()) {
-        exeMenuLink2 = exeMenuPage2;
-        //now running over http
-        //exeMenuLink2 = localStorage.getItem("baseURL") + "/" + exeMenuPage2;
-        //debugLog("Ustad Mobile Content: ANDROID: You will go into: exeMenuLink " + exeMenuLink2);
+        exeMenuLink2 = UstadMobile.PAGE_CONTENT_MENU;
     } else if(UstadMobile.getInstance().isNodeWebkit()){
-        exeMenuLink2 = localStorage.getItem("baseURL") + "/" + exeMenuPage2;
+        exeMenuLink2 = localStorage.getItem("baseURL") + "/" + UstadMobile.PAGE_CONTENT_MENU;
         debugLog("Ustad Mobile Content: NodeWebKit: You will go into: exeMenuLink " + exeMenuLink2);
     }else if (navigator.userAgent.indexOf("Windows Phone OS 8.0") !== -1) {	//Currently only Windows Phone checks.
-        exeMenuLink2 = "/www/" + exeMenuPage2;
+        exeMenuLink2 = "/www/" + UstadMobile.PAGE_CONTENT_MENU;
         debugLog("Ustad Mobile Content: WINDOWS PHONE 8: You will go into: exeMenuLink " + exeMenuLink2);
     } else if (navigator.userAgent.indexOf("BB10") !== -1) {
         //Do nothing
         console.log("Detected your device platform as: Blackberry 10!");
-        exeMenuLink2 = localStorage.getItem("baseURL") + "/" + exeMenuPage2;
+        exeMenuLink2 = localStorage.getItem("baseURL") + "/" + UstadMobile.PAGE_CONTENT_MENU;
         debugLog("Ustad Mobile Content: Blackberry 10: You will go into: exeMenuLink " + exeMenuLink2);
         //alert("BB10TEST: Ustad Mobile Content: Blackberry 10: You will go into: exeMenuLink " + exeMenuLink2);
     } else if (navigator.userAgent.indexOf("iPhone OS") !== -1) {
         //Do nothing
         console.log("Detected your device platform as: iOS!");
         //alert("Detected iOS.");
-        exeMenuLink2 = localStorage.getItem("baseURL") + "/" + exeMenuPage2;
+        exeMenuLink2 = localStorage.getItem("baseURL") + "/" + UstadMobile.PAGE_CONTENT_MENU;
         debugLog("Ustad Mobile Content: iOS: You will go into: exeMenuLink " + exeMenuLink2);
         //alert("exeMenuLink: " + exeMenuLink2);
     } else if(localStorage.getItem("baseURL")) {
-        exeMenuLink2 = localStorage.getItem("baseURL") + "/" + exeMenuPage2;
+        exeMenuLink2 = localStorage.getItem("baseURL") + "/" + UstadMobile.PAGE_CONTENT_MENU;
     } else {
         console.log("Unable to detect your device platform. Error.");
         //alert("Unable to get platform..");
