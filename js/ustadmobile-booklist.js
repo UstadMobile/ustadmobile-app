@@ -354,67 +354,9 @@ UstadMobileAppToContentCopyJob.prototype = {
     
     currentFileIndex: 0,
     
+    //Needs to be overriden by implementation - access using Impl.makeCopyJob
     copyNextFile: function() {
-        if(UstadMobile.getInstance().isNodeWebkit()) {
-            var path = require("path");
-            var fs = require("fs");
-            var copyJob = this;
-            
-            var appWorkingDir = process.cwd();
-            
-            if(this.currentFileIndex === 0) {
-                var runtimeInfo = { 
-                    "baseURL": appWorkingDir,
-                };
-
-                runtimeInfo[UstadMobile.RUNTIME_MENUMODE] 
-                        = UstadMobile.MENUMODE_USECONTENTDIR;
-                runtimeInfo['FixAttachmentLinks'] = true;
-
-                fs.writeFileSync(path.join(this.destDir, "ustad_runtime.json"), 
-                    JSON.stringify(runtimeInfo));
-            }
-            
-            
-            if(this.currentFileIndex < this.fileList.length) {
-                var srcFile = this.fileList[this.currentFileIndex];
-                var fullSrcPath = path.join(appWorkingDir, srcFile);
-                var destFileName = this.fileDestMap[srcFile];
-                var fullDstPath = path.join(this.destDir, destFileName);
-                var inReadStream = fs.createReadStream(fullSrcPath);
-                var outWriteStream = fs.createWriteStream(fullDstPath);
-
-                outWriteStream.on("close", function() {
-                    copyJob.currentFileIndex++;
-                    copyJob.copyNextFile();
-                });
-
-                inReadStream.pipe(outWriteStream);
-            }else {
-                this.completeCallback();
-            }
-        }else if(UstadMobile.getInstance().isCordova()) {
-            var copyJob = this;
-            //we will use filetransfer against our own http server
-            var ft = new FileTransfer();
-            var srcFile = this.fileList[this.currentFileIndex];
-            var srcURL = UstadMobile.getInstance(
-                    ).systemImpl.getHTTPURLForAppFile(srcFile);
-            var destFileName = this.fileDestMap[srcFile];
-            var destPath = this.destDir + "/" + destFileName;
-            ft.download(encodeURI(srcURL),
-                destPath, function(entry) {
-                    console.log("Copy job copied to : " + entry);
-                    if(copyJob.currentFileIndex < (copyJob.fileList.length - 1)) {
-                        copyJob.currentFileIndex++;
-                        copyJob.copyNextFile();
-                    }else {
-                        copyJob.completeCallback();
-                    }
-                }, function(err) {
-                    console.log("Error downloading " + srcURL);
-                });
-        }
+        
     }
     
 };

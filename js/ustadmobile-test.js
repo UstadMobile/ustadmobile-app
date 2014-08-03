@@ -91,7 +91,7 @@ var containerChangeFn = function() {
     
     //Uncomment if you need NodeWebKit tools to load before actually running
     //require('nw.gui').Window.get().showDevTools();
-    alert("load tools");
+    //alert("load tools");
 
     QUnit.module("UstadMobile");
     

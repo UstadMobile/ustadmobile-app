@@ -140,7 +140,7 @@ UstadMobileAppImplNodeWebkit.prototype.showCourse = function(courseObj,
         courseObj);
     var filesToCopy = UstadMobileBookList.getInstance().appFilesToCopyToContent;
     
-    var copyJob = new UstadMobileAppToContentCopyJob(filesToCopy, 
+    var copyJob = this.makeCopyJob(filesToCopy, 
         destDirectory, function() {
             //make an iframe with the content in it
             UstadMobileBookList.getInstance().showCourseIframe(httpURL,
@@ -275,7 +275,54 @@ UstadMobileAppImplNodeWebkit.prototype.getCourseObjFromDir = function(dirname) {
         fileFullPath, null, folderName);
     
     return courseEntryObj;
-}
+};
+
+UstadMobileAppImplNodeWebkit.prototype.makeCopyJob = function(fileDestMap, destDir, completeCallback) {
+    var newCopyJob = new UstadMobileAppToContentCopyJob(fileDestMap, destDir, 
+        completeCallback);
+        
+    newCopyJob.copyNextFile = function() {
+        var path = require("path");
+        var fs = require("fs");
+        var copyJob = this;
+
+        var appWorkingDir = process.cwd();
+
+        if(this.currentFileIndex === 0) {
+            var runtimeInfo = { 
+                "baseURL": appWorkingDir,
+            };
+
+            runtimeInfo[UstadMobile.RUNTIME_MENUMODE] 
+                    = UstadMobile.MENUMODE_USECONTENTDIR;
+            runtimeInfo['FixAttachmentLinks'] = true;
+
+            fs.writeFileSync(path.join(this.destDir, "ustad_runtime.json"), 
+                JSON.stringify(runtimeInfo));
+        }
+
+
+        if(this.currentFileIndex < this.fileList.length) {
+            var srcFile = this.fileList[this.currentFileIndex];
+            var fullSrcPath = path.join(appWorkingDir, srcFile);
+            var destFileName = this.fileDestMap[srcFile];
+            var fullDstPath = path.join(this.destDir, destFileName);
+            var inReadStream = fs.createReadStream(fullSrcPath);
+            var outWriteStream = fs.createWriteStream(fullDstPath);
+
+            outWriteStream.on("close", function() {
+                copyJob.currentFileIndex++;
+                copyJob.copyNextFile();
+            });
+
+            inReadStream.pipe(outWriteStream);
+        }else {
+            this.completeCallback();
+        }
+    };
+    
+    return newCopyJob;
+};
 
 /**
  * Return a JSON string with system information - e.g. for reporting with

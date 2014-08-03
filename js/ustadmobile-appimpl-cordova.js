@@ -267,7 +267,7 @@ UstadMobileAppImplCordova.prototype.showCourse = function(courseObj,
     var destURI = UstadMobile.getInstance().contentDirURI + courseObj.relativeURI;
     var filesToCopy = UstadMobileBookList.getInstance().appFilesToCopyToContent;
     
-    var copyJob = new UstadMobileAppToContentCopyJob(filesToCopy, 
+    var copyJob = this.makeCopyJob(filesToCopy, 
         destURI, function() {
             UstadMobileBookList.getInstance().showCourseIframe(httpURL, onshowCallback,
                 show, onloadCallback, onerrorCallback);
@@ -305,6 +305,37 @@ UstadMobileAppImplCordova.prototype.getSystemInfo = function(callback) {
 UstadMobileAppImplCordova.prototype.scanCourses = function(callback) {
     UstadMobileCordovaScanner.getInstance().startScan(callback);
 };
+
+UstadMobileAppImplCordova.prototype.makeCopyJob = function(fileDestMap, destDir, completeCallback) {
+    var copyJob = new UstadMobileAppToContentCopyJob(fileDestMap, destDir, 
+        completeCallback);
+        
+    copyJob.copyNextFile = function() {
+        //we will use filetransfer against our own http server
+        var ft = new FileTransfer();
+        var srcFile = this.fileList[this.currentFileIndex];
+        var srcURL = UstadMobile.getInstance(
+                ).systemImpl.getHTTPURLForAppFile(srcFile);
+        var destFileName = this.fileDestMap[srcFile];
+        var destPath = this.destDir + "/" + destFileName;
+        ft.download(encodeURI(srcURL),
+            destPath, function(entry) {
+                console.log("Copy job copied to : " + entry);
+                if(copyJob.currentFileIndex < (copyJob.fileList.length - 1)) {
+                    copyJob.currentFileIndex++;
+                    copyJob.copyNextFile();
+                }else {
+                    copyJob.completeCallback();
+                }
+            }, function(err) {
+                console.log("Error downloading " + srcURL);
+            });
+    };
+    
+    return newCopyJob;
+
+};
+
 //Set the implementation accordingly on UstadMobile object
 UstadMobile.getInstance().systemImpl = 
         UstadMobileAppImplCordova.getInstance();
