@@ -201,6 +201,82 @@ UstadMobileAppImplNodeWebkit.prototype.checkPaths = function() {
     }
 };
 
+
+/**
+ * 
+ * @param {type} callback
+ * @returns {undefined}
+ */
+UstadMobileAppImplNodeWebkit.prototype.scanCourses = function(callback) {
+    var fs = require("fs");
+    var path = require("path");
+    
+    fs.readdir(UstadMobile.getInstance().contentDirURI, function(err, entries) {
+        if(err) {
+            throw err;
+        }
+        
+        for (var i = 0; i < entries.length; i++) {
+            var fullPath = path.join(UstadMobile.getInstance().contentDirURI,
+                entries[i]);
+            var fStat = null;
+            try {
+                var fdObj = fs.openSync(fullPath, 'r');
+                fStat = fs.fstatSync(fdObj);
+            }catch(err) {
+               console.log("Error attempting to stat file : " + err);
+            }
+
+            if(fStat !== null && fStat.isDirectory()) {
+                var courseObj = UstadMobileAppImplNodeWebkit.getInstance(
+                        ).getCourseObjFromDir(fullPath);
+                if(courseObj !== null) {
+                    UstadMobileBookList.getInstance().addCourseToList(courseObj);
+                }
+            }
+        }
+       
+        //Done scanning courses
+        UstadMobileUtils.runCallback(callback, [true], 
+            UstadMobileAppImplNodeWebkit.getInstance());
+    });
+};
+
+
+UstadMobileAppImplNodeWebkit.prototype.getCourseObjFromDir = function(dirname) {
+    var fs = require('fs');
+    var path = require("path");
+    
+    var fileEntry = path.join(dirname, 
+        UstadMobileBookList.getInstance().exeContentFileName);
+    
+    try {
+        fs.statSync(fileEntry);
+    }catch(err) {
+        //no course directory here actually...
+        return null;
+    }
+    
+    debugLog("NodeWebKit finds content in " + fileEntry);
+    var lastSlashPos = fileEntry.lastIndexOf('/');
+    var secondLastSlashPos = fileEntry.lastIndexOf('/', lastSlashPos -1);
+    var folderName = fileEntry.substring(secondLastSlashPos+1, 
+        lastSlashPos);
+
+    //On Windows we need to change \ (invalid escape) to / for paths
+    var fileEntryEsc = fileEntry;
+    var nodeWebKitOS = UstadMobile.getInstance().getNodeWebKitOS();
+    if(nodeWebKitOS === UstadMobile.OS_WINDOWS) {
+        fileEntryEsc = fileEntry.replace(/\\/g, "/");
+    }
+
+    var fileFullPath = "file://" + fileEntryEsc;
+    var courseEntryObj = new UstadMobileCourseEntry(folderName, "", 
+        fileFullPath, null, folderName);
+    
+    return courseEntryObj;
+}
+
 /**
  * Return a JSON string with system information - e.g. for reporting with
  * bug reports etc.

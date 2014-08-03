@@ -297,6 +297,14 @@ UstadMobileAppImplCordova.prototype.getSystemInfo = function(callback) {
     UstadMobileUtils.runCallback(callback, [retVal], this);
 };
 
+/**
+ * 
+ * @param {type} callback
+ * @returns {undefined}
+ */
+UstadMobileAppImplCordova.prototype.scanCourses = function(callback) {
+    UstadMobileCordovaScanner.getInstance().startScan(callback);
+};
 //Set the implementation accordingly on UstadMobile object
 UstadMobile.getInstance().systemImpl = 
         UstadMobileAppImplCordova.getInstance();
@@ -322,3 +330,212 @@ function ustadAppImplCordovaDeviceReady() {
 }
 
 document.addEventListener("deviceready", ustadAppImplCordovaDeviceReady, false);
+
+
+//Helper class for scanning content directories
+
+var UstadMobileCordovaScanner = function() {
+    
+};
+
+UstadMobileCordovaScanner.mainInstance = null;
+
+UstadMobileCordovaScanner.getInstance = function() {
+    if(UstadMobileCordovaScanner.mainInstance === null) {
+        UstadMobileCordovaScanner.mainInstance = new UstadMobileCordovaScanner();
+    }
+    
+    return UstadMobileCordovaScanner.mainInstance;
+};
+
+UstadMobileCordovaScanner.prototype = {
+    
+    /** Index of the item to scan within the current folder */
+    currentEntriesIndex : 0,
+    
+    //the dir entries that we found inside currentFolderIndex
+    currentEntriesToScan : null,
+    
+    /** Index of the folder scan */
+    currentFolderIndex : 0,
+    
+    allBookFoundCallback: null,
+    
+    foldersToScan : [
+        "file:///sdcard/ustadmobileContent",
+        "file:///ext_card/ustadmobile", 
+        "file:///ext_card/ustadmobileContent", 
+        "file:///sdcard/ustadmobile", 
+        "file:///ustadmobileContent/umPackages/", 
+        "file:///ustadmobileContent/"],
+    
+    fileSystemPathWaiting : "",
+    
+    
+    startScan: function(callback) {
+        this.currentFolderIndex = 0;
+        this.currentEntriesIndex = 0;
+        this.allBookFoundCallback = callback;
+        
+        this.populateNextDir();
+    },
+    
+    populateNextDir: function() {
+        var umScanner = UstadMobileCordovaScanner.getInstance();
+        if (umScanner.currentFolderIndex < umScanner.foldersToScan.length) {
+            console.log("In populateNextDir: for " 
+                   + umScanner.currentFolderIndex + " : "
+                   + umScanner.foldersToScan[umScanner.currentFolderIndex]);
+            debugLog("Calling to populate the next folder..");
+            umScanner.populate(
+                   umScanner.foldersToScan[umScanner.currentFolderIndex++]);
+        } else {
+            console.log("populateNextDir: pos: " + umScanner.currentFolderIndex + 
+                   "No more folders to scan for ustad mobile packages.");
+            UstadMobileUtils.runCallback(this.allBookFoundCallback, [true],
+                this);
+        }
+    },
+   
+    populate: function(pathFrom) {
+        debugLog("attempting to populate from: " + pathFrom);
+        var umScanner = UstadMobileCordovaScanner.getInstance();
+        window.resolveLocalFileSystemURL(pathFrom,
+            function(entry){
+                console.log("found" + entry);
+                umScanner.dirReader(entry);
+            },
+            function(evt) {
+                umScanner.failbl(evt);
+            }
+        );
+    },
+    
+    /*
+    We have got a dirEntry from populate - now attempt to read entries...
+    */
+    dirReader: function(dirEntry) {
+        var umScanner = UstadMobileCordovaScanner.getInstance();
+        var directoryReader = dirEntry.createReader();
+        console.log("dirReader OK for: " + dirEntry.fullPath);
+        directoryReader.readEntries(umScanner.successDirectoryReader, 
+            umScanner.failDirectoryReader);
+    },
+    
+    /** 
+    * When root dir reader fails
+    * @param evt Error Object
+    * @method failbl
+    */
+    failbl: function(evt) {
+        //debugLog(evt.target.error.code);
+        var umScanner = UstadMobileCordovaScanner.getInstance();
+        console.log("Failed to read " + umScanner.fileSystemPathWaiting 
+               + " at pos: " + umScanner.currentFolderIndex);
+        //debugLog("Failed "
+        umScanner.populateNextDir();
+    },
+    
+    /*
+     Called when the filemarker is found - fileEntry represents
+     the actual file itself found (e.g. path/exeFileMarker)
+     */
+    findEXEFileMarkerSuccess: function (fileEntry) {
+        var umScanner = UstadMobileCordovaScanner.getInstance();
+        
+        var fileFullPath = fileEntry.toURL();
+        
+        debugLog("Found " + fileFullPath + " is an EXE directory - adding...");
+        var folderName = fileEntry.getParent();
+        fileEntry.getParent(function(parentEntry) {
+            debugLog("Got a parent Book directory name");
+            debugLog("The full path = " + parentEntry.fullPath);
+            folderName = parentEntry.name;
+            
+            var courseEntryObj = new UstadMobileCourseEntry(folderName, "",
+                fileFullPath, null, folderName);
+            UstadMobileBookList.getInstance().addCourseToList(courseEntryObj)
+        }, function(error) {
+            debugLog("failed to get parent directory folderName: " + folderName 
+                    + " with an error: " + error);
+        });
+        debugLog("Before we scan the directory, the number of Books Found is: "
+                + UstadMobileBookList.getInstance().coursesFound.length);
+            
+        umScanner.scanNextDirectoryIndex();
+    },
+    
+    /*
+    exeFileMarker was not found - just go for scanning the next directory
+    */
+    findEXEFileMarkerFail: function(fileEntry) {
+        debugLog("failed to find file marker for " + fileEntry);
+        UstadMobileCordovaScanner.getInstance().scanNextDirectoryIndex();
+    },
+    
+    /*
+    Now we have a directory content reader - for each subdirectory
+    we found go and check if it has exeFileMarker or not
+    */
+    scanNextDirectoryIndex: function() {
+        var umScanner = UstadMobileCordovaScanner.getInstance();
+        console.log("\tscanNextDirectoryIndex: " 
+               + umScanner.currentEntriesIndex);
+        if (umScanner.currentEntriesIndex < umScanner.currentEntriesToScan.length) {
+            var pathToCheck = umScanner.currentEntriesToScan[
+                    umScanner.currentEntriesIndex].toURL() 
+                    + "/" + UstadMobileBookList.getInstance().exeFileMarker;
+            umScanner.currentEntriesIndex++;
+            
+            //remove file:// prefix (needed)
+            //pathToCheck = pathToCheck.replace("file://", "");
+            debugLog("pathtoCheck: " + pathToCheck);
+            //scan and see if this is really an EXE Directory
+
+            window.resolveLocalFileSystemURL(pathToCheck,
+                umScanner.findEXEFileMarkerSuccess, 
+                umScanner.findEXEFileMarkerFail);
+        } else {
+           ///done looking at this directory - go to the next one
+           debugLog("Scan next directory index is done");
+           umScanner.populateNextDir();
+        }
+    },
+    
+    /*
+    We got a direcotry reader - make a list of all sub directories
+    to scan for exeFileMarker and put them currentEntriesToScan
+    
+    Note: in Cordova we entries is an array of objects representing the files
+    In NodeJS its just an array of Strings
+    */
+    successDirectoryReader: function(entries) {
+        var umScanner = UstadMobileCordovaScanner.getInstance();
+        debugLog("In successDirectoryReader path for " 
+               + umScanner.fileSystemPathWaiting 
+               + " entry num " + umScanner.currentFolderIndex);
+
+        umScanner.currentEntriesToScan = new Array();
+        umScanner.currentEntriesIndex = 0;
+
+        for (var i = 0; i < entries.length; i++) {
+            if (entries[i].isDirectory) {
+                 umScanner.currentEntriesToScan.push(entries[i]);
+            }
+        } 
+
+        umScanner.scanNextDirectoryIndex();
+    },
+    
+    /*
+    Could not get a directory reader for this sub dir - go to the next one
+    */
+    failDirectoryReader: function(error) {
+        var umScanner = UstadMobileCordovaScanner.getInstance();
+        debugLog("Failed to list directory contents for " 
+                + umScanner.fileSystemPathWaiting + 
+                " code: " + error.code);
+        umScanner.populateNextDir();
+    },
+    
+};

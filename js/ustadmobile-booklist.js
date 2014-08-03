@@ -94,47 +94,15 @@ var ustadMobileBookListInstance = null;
  * @constructor
  */
 function UstadMobileBookList() {
-    this.exeLastPage = "../";
-    this.exeMenuPage = "ustadmobile_menupage_app.html";
-    this.exeMenuPage2 = "ustadmobile_menupage_content.html";
-    this.globalXMLListFolderName = "all";
-    this.currentBookPath = "";
     this.exeContentFileName = "exetoc.html";
-    this.jsLoaded = "false";
-
-
+    
     //The file that should be present in a directory to indicate this is exe content
     //var exeFileMarker = "index.html";
     this.exeFileMarker = "exetoc.html";
 
-    //not really used
-    this.currentPath = "/ext_card/ustadmobile";
-    this.umCLPlatform = null;
-    this.foldersToScan = null;
-
-    /* Folders that will be scanned */
-    this.foldersToScan = [];
-    
-    //the index of foldersToScan which we are currently going through
-    this.currentFolderIndex = 0;
-
-    //the dir entries that we found inside currentFolderIndex
-    this.currentEntriesToScan = null;
-
-    //the current index number we are working on from currentEntriesToScan
-    this.currentEntriesIndex = 0;
-
-    //Reference to filesystem object
-    this.fileSystem = null;
-
-
     /** Courses found */
     this.coursesFound = [];
 
-    this.allBookFoundCallback = null;
-
-    //track what we are waiting to look at
-    this.fileSystemPathWaiting = null;
 }
 
 UstadMobileBookList.getInstance = function() {
@@ -184,81 +152,27 @@ UstadMobileBookList.prototype = {
       */
     queueScan: function(queueCallback) {
         UstadMobile.getInstance().runAfterPathsCreated(function() {
-            console.log("Checking if device is ready...");
-            UstadMobileBookList.getInstance().scanCourses(queueCallback);
+            UstadMobileBookList.getInstance().coursesFound = [];
+            UstadMobile.getInstance().systemImpl.scanCourses(queueCallback);
         });
     },
     
-    /**
-     * @method scanCourses
-     * @param {function} callback - callback to run when all scanning is done
-     */
-    scanCourses: function(callback) {
-        var umBookListObj = UstadMobileBookList.getInstance();
-        
-        //Reset so we don't list multiple courses.
-        umBookListObj.coursesFound = [];
-        if(typeof callback !== "undefined" && callback !== null) {
-            umBookListObj.allBookFoundCallback = callback;
-        }
-        
-        if (navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1) {
-            umBookListObj.umCLPlatform = "bb10";
-            console.log("Detected Blackberry 10 device in Course List Scan.");
-            blackberry.io.sandbox = false;
-            var bbumfolder = blackberry.io.SDCard + "/ustadmobileContent";
-            console.log("Added: " + bbumfolder + " to UM Course List Folders To Scan.");
-            umBookListObj.foldersToScan = [
-                "/ext_card/ustadmobile", "/ext_card/ustadmobileContent", 
-                "/sdcard/ustadmobile", "/sdcard/ustadmobileContent", 
-                "/ustadmobileContent/umPackages/", "/ustadmobileContent/", 
-                bbumfolder];
-        } else if (UstadMobile.getInstance().isNodeWebkit()) {
-            umBookListObj.foldersToScan = [UstadMobile.getInstance().contentDirURI];
-        }else {
-            umBookListObj.foldersToScan = [
-                "file:///sdcard/ustadmobileContent",
-                "file:///ext_card/ustadmobile", 
-                "file:///ext_card/ustadmobileContent", 
-                "file:///sdcard/ustadmobile", 
-                "file:///ustadmobileContent/umPackages/", 
-                "file:///ustadmobileContent/"];
-        }
-
-        var usern = localStorage.getItem('username');
-        var logome = '';
-        if (usern !== null)
-        {
-            logome = x_('Logout');
-        }
-        else {
-            logome = x_('Home');
-            usern = x_('Guest');
-        }
-
-        $.mobile.loading('show', {
-            text: x_('Loading your books..'),
-            textVisible: true,
-            theme: 'b',
-            html: ""});
-
-        var posOfLastSlash = document.location.href.lastIndexOf("/");
-        var mainPath = document.location.href.substring(0, posOfLastSlash);
-        localStorage.setItem('baseURL', mainPath);
-
-        $("#UMUsername").empty().append();
-        $("#UMUsername").append(usern).trigger("create");
-
-        $("#UMLogout").empty().append();
-        $("#UMLogout").append(logome).trigger("create");
-
-        $("#UMBookList").empty().append();
-        
-        umBookListObj.currentEntriesIndex = 0;
-        umBookListObj.currentFolderIndex = 0;
-        umBookListObj.populateNextDir();
+    addCourseToList: function(courseObj) {
+        var courseIndex = this.coursesFound.length;
+        this.coursesFound.push(courseObj);
+        courseObj.courseIndex = courseIndex;
     },
     
+    
+    updateCourseListDisplay: function() {
+        $("#UMBookList").empty().append();
+        for(var i = 0; i < this.coursesFound.length; i++) {
+            $("#UMBookList").append(this.coursesFound[i].getButtonHTML()
+                    ).trigger("create");
+        }
+    },
+    
+   
     /**
       *Log out function to set localStorage to null (remove) and redirect to 
       *login page from then.
@@ -270,293 +184,6 @@ UstadMobileBookList.prototype = {
        $.mobile.changePage("index.html"); //BB10 specific changes.
    },
    
-   /**
-     *Called once a scan of a directory is done - go and look at
-     *the next entry from foldersToScan if there are more...
-     */
-   populateNextDir: function() {
-       var umBookListObj = UstadMobileBookList.getInstance();
-       if (umBookListObj.currentFolderIndex < umBookListObj.foldersToScan.length) {
-           console.log("In populateNextDir: for " 
-                   + umBookListObj.currentFolderIndex + " : "
-                   + umBookListObj.foldersToScan[umBookListObj.currentFolderIndex]);
-           debugLog("Calling to populate the next folder..");
-           umBookListObj.populate(
-                   umBookListObj.foldersToScan[umBookListObj.currentFolderIndex++]);
-       } else {
-           console.log("populateNextDir: pos: " + umBookListObj.currentFolderIndex + 
-                   "No more folders to scan for ustad mobile packages.");
-           $.mobile.loading('hide');
-           if (umBookListObj.allBookFoundCallback !== null) {
-               if (typeof umBookListObj.allBookFoundCallback === "function") {
-                   umBookListObj.allBookFoundCallback();
-               }
-           }
-       }
-   },
-   
-   /** 
-    * When root dir reader fails
-    * @param evt Error Object
-    * @method failbl
-    */
-   failbl: function(evt) {
-       //debugLog(evt.target.error.code);
-       var umBookListObj = UstadMobileBookList.getInstance();
-       console.log("Failed to read " + umBookListObj.fileSystemPathWaiting 
-               + " at pos: " + umBookListObj.currentFolderIndex);
-       //debugLog("Failed "
-       umBookListObj.populateNextDir();
-   },
-   
-   
-   
-   /*
-    Looks for subdirectories of path that contain exe content - for each
-    sub directory will look for the marker file.
-    */
-   populate: function(pathFrom) {
-       debugLog("attempting to populate from: " + pathFrom);
-       var umBookListObj = UstadMobileBookList.getInstance();
-       try {
-           if (navigator.userAgent.indexOf("Safari") !== -1 && navigator.userAgent.indexOf("BB10") !== -1) { //If blackberry 10 device
-               blackberry.io.sandbox = false;
-               window.webkitRequestFileSystem(window.PERSISTENT, 0, function(fs) {
-                   umBookListObj.fileSystem = fs;
-                   fs.root.getDirectory(pathFrom, {create: false, exclusive: false}, 
-                   umBookListObj.dirReader, umBookListObj.failbl);
-               }, umBookListObj.failbl);
-           } else if(UstadMobile.getInstance().isNodeWebkit()) {
-               console.log("Detected NodeWebkit");
-               var fs = require("fs");
-               console.log("loaded fs");
-               var bookListObjInt = umBookListObj;
-               fs.readdir(pathFrom, function(err, dirEntries) {
-                   if(dirEntries && dirEntries.length > 0) {
-                       bookListObjInt.fileSystemPathWaiting = pathFrom;
-                       UstadMobileBookList.getInstance().successDirectoryReader(
-                               dirEntries);
-                   }else {
-                       UstadMobileBookList.getInstance().failDirectoryReader(err);
-                   }
-               });
-               
-               
-           }else {  //If other platforms apart from blackberry 10
-               window.resolveLocalFileSystemURL(pathFrom,
-                 function(entry){
-                     console.log("found" + entry);
-                     UstadMobileBookList.getInstance().dirReader(entry);
-                 },
-                 function(evt) {
-                     UstadMobileBookList.getInstance().failbl(evt);
-                 }
-               );
-           }
-       } catch (e) {
-           //debugLog("populate exception: catch!: " + dump(e));
-           debugLog("Populate exception." + dump(e));
-           umBookListObj.populateNextDir();
-       }
-   },
-   
-   /*
-    We have got a dirEntry from populate - now attempt to read entries...
-    */
-   dirReader: function(dirEntry) {
-       var umBookListObj = UstadMobileBookList.getInstance();
-       var directoryReader = dirEntry.createReader();
-       console.log("dirReader OK for: " + dirEntry.fullPath);
-       directoryReader.readEntries(umBookListObj.successDirectoryReader, 
-           umBookListObj.failDirectoryReader);
-    },
-
-    
-    /*
-     Called when the filemarker is found - fileEntry represents
-     the actual file itself found (e.g. path/exeFileMarker)
-     */
-    findEXEFileMarkerSuccess: function (fileEntry) {
-        var umBookListObj = UstadMobileBookList.getInstance();
-        if(UstadMobile.getInstance().isNodeWebkit()) {
-            debugLog("NodeWebKit finds content in " + fileEntry);
-            var lastSlashPos = fileEntry.lastIndexOf('/');
-            var secondLastSlashPos = fileEntry.lastIndexOf('/', lastSlashPos -1);
-            var folderName = fileEntry.substring(secondLastSlashPos+1, 
-                lastSlashPos);
-                
-            //On Windows we need to change \ (invalid escape) to / for paths
-            var fileEntryEsc = fileEntry;
-            var nodeWebKitOS = UstadMobile.getInstance().getNodeWebKitOS();
-            if(nodeWebKitOS === UstadMobile.OS_WINDOWS) {
-                fileEntryEsc = fileEntry.replace(/\\/g, "/");
-            }
-                
-            var fileFullPath = "file://" + fileEntryEsc;
-            var courseEntryObj = new UstadMobileCourseEntry(folderName, "", 
-                fileFullPath, null, folderName);
-            
-            var courseIndex = umBookListObj.coursesFound.length;
-            umBookListObj.coursesFound.push(courseEntryObj);
-            
-            
-            var courseHTTPURL = UstadMobileHTTPServer.getInstance().getURLForCourseEntry(
-                            courseEntryObj);
-            
-            $("#UMBookList").append(
-                        "<a onclick='UstadMobileBookList.getInstance().openBLPage(\"" 
-                        + courseIndex
-                        + "\")' href=\"#\" data-role=\"button\" "
-                        + "data-icon=\"star\" data-ajax=\"false\">" + folderName 
-                        + "</a>").trigger("create");
-        }else {
-            var fileFullPath = fileEntry.toURL();
-            debugLog("Found " + fileFullPath + " is an EXE directory - adding...");
-            var folderName = fileEntry.getParent();
-            fileEntry.getParent(function(parentEntry) {
-                debugLog("Got a parent Book directory name");
-                debugLog("The full path = " + parentEntry.fullPath);
-                folderName = parentEntry.name;
-                var courseEntryObj = new UstadMobileCourseEntry(folderName, "",
-                    fileFullPath, null, folderName);
-                var courseIndex = umBookListObj.coursesFound.length;
-                umBookListObj.coursesFound.push(courseEntryObj);
-                
-                $("#UMBookList").append(
-                        "<a onclick='UstadMobileBookList.getInstance().openBLPage(\"" 
-                        + courseIndex 
-                        + "\")' href=\"#\" data-role=\"button\" "
-                        + "data-icon=\"star\" data-ajax=\"false\">" + folderName 
-                        + "</a>").trigger("create");
-            }, function(error) {
-                debugLog("failed to get parent directory folderName: " + folderName 
-                        + " with an error: " + error);
-            }
-            );
-            debugLog("Before we scan the directory, the number of Books Found is: "
-                    + umBookListObj.coursesFound.length);
-            
-        }
-        umBookListObj.scanNextDirectoryIndex();
-    },
-    
-    /*
-    exeFileMarker was not found - just go for scanning the next directory
-    */
-    findEXEFileMarkerFail: function(fileEntry) {
-       debugLog("failed to find file marker for " + fileEntry);
-       UstadMobileBookList.getInstance().scanNextDirectoryIndex();
-    },
-    
-    /*
-    Now we have a directory content reader - for each subdirectory
-    we found go and check if it has exeFileMarker or not
-    */
-   scanNextDirectoryIndex: function() {
-       var umBookListObj = UstadMobileBookList.getInstance();
-       console.log("\tscanNextDirectoryIndex: " 
-               + umBookListObj.currentEntriesIndex);
-       if (umBookListObj.currentEntriesIndex < umBookListObj.currentEntriesToScan.length) {
-           
-           if(UstadMobile.getInstance().isNodeWebkit()) {
-               var fs = require("fs");
-               
-               var pathToCheck = umBookListObj.fileSystemPathWaiting + "/"
-                    + umBookListObj.currentEntriesToScan[umBookListObj.currentEntriesIndex]
-                    + "/" + umBookListObj.exeFileMarker;
-        
-               umBookListObj.currentEntriesIndex++;
-                fs.exists(pathToCheck, function(existsResult) {
-                    if(existsResult) {
-                        UstadMobileBookList.getInstance().findEXEFileMarkerSuccess(pathToCheck);
-                    }else {
-                        UstadMobileBookList.getInstance().findEXEFileMarkerFail();
-                    }
-                });
-           }else {           
-                var pathToCheck = umBookListObj.currentEntriesToScan[umBookListObj.currentEntriesIndex].toURL() 
-                        + "/" + umBookListObj.exeFileMarker;
-                umBookListObj.currentEntriesIndex++;
-                //remove file:// prefix (needed)
-                //pathToCheck = pathToCheck.replace("file://", "");
-                debugLog("pathtoCheck: " + pathToCheck);
-                //scan and see if this is really an EXE Directory
-
-                window.resolveLocalFileSystemURL(pathToCheck,
-                    umBookListObj.findEXEFileMarkerSuccess, 
-                    umBookListObj.findEXEFileMarkerFail);
-           }
-       } else {
-           ///done looking at this directory - go to the next one
-           debugLog("Scan next directory index is done");
-           umBookListObj.populateNextDir();
-       }
-   },
-   
-   /*
-    We got a direcotry reader - make a list of all sub directories
-    to scan for exeFileMarker and put them currentEntriesToScan
-    
-    Note: in Cordova we entries is an array of objects representing the files
-    In NodeJS its just an array of Strings
-    */
-   successDirectoryReader: function(entries) {
-       var i;
-       var umBookListObj = UstadMobileBookList.getInstance();
-       debugLog("In successDirectoryReader path for " 
-               + umBookListObj.fileSystemPathWaiting 
-               + " entry num " + umBookListObj.currentFolderIndex);
-
-       umBookListObj.currentEntriesToScan = new Array();
-       umBookListObj.currentEntriesIndex = 0;
-
-       for (i = 0; i < entries.length; i++) {
-           if(UstadMobile.getInstance().isNodeWebkit()) {
-               var fullPath = umBookListObj.fileSystemPathWaiting + "/" 
-                       + entries[i];
-               var fs = require("fs");
-               var fStat = null;
-               try {
-                   var fdObj = fs.openSync(fullPath, 'r');
-                   fStat = fs.fstatSync(fdObj);
-               }catch(err) {
-                   console.log("Error attempting to stat file : " + err);
-               }
-               
-               if(fStat !== null && fStat.isDirectory()) {
-                   umBookListObj.currentEntriesToScan.push(entries[i]);
-               }
-           }else {
-               if (entries[i].isDirectory) {
-                    umBookListObj.currentEntriesToScan.push(entries[i]);
-               }
-           }
-       }
-
-       umBookListObj.scanNextDirectoryIndex();
-
-   },
-   
-   /*
-    Could not get a directory reader for this sub dir - go to the next one
-    */
-   failDirectoryReader: function(error) {
-       var umBookListObj = UstadMobileBookList.getInstance();
-       debugLog("Failed to list directory contents for " 
-               + umBookListObj.fileSystemPathWaiting + 
-               " code: " + error.code);
-       umBookListObj.populateNextDir();
-   },
-   
-   /**
-    * Copy required app files into the content directory
-    * 
-    * @param {String} contentDir content directory to copy to
-    * @param {function} callbackFn callback to run when done
-    */
-    copyAppFilesToContent: function(contentDir, callbackFn) {
-       
-    },
       
     /**
      * Show a course in an iframe 
@@ -677,6 +304,10 @@ function UstadMobileCourseEntry(courseTitle, courseDesc, coursePath, coverImg, r
     
     /** URI from the UstadMobileContent Dir*/
     this.relativeURI = null;
+    
+    /** The index of this course in the list - used to generate HTML button */
+    this.courseIndex = -1;
+    
     if(typeof relativeURI !== "undefined" && relativeURI != null) {
         this.relativeURI = relativeURI;
     }
@@ -690,6 +321,19 @@ UstadMobileCourseEntry.prototype = {
      */
     getHttpURI : function() {
         return this.relativeURI + "/exetoc.html";
+    },
+    
+    /**
+     * Make the HTML needed for this items button
+     * 
+     * @return string JQueryMobile HTML for a button to open this course
+     */
+    getButtonHTML: function() {
+        return "<a onclick='UstadMobileBookList.getInstance().openBLPage(\"" 
+                + this.courseIndex
+                + "\")' href=\"#\" data-role=\"button\" "
+                + "data-icon=\"star\" data-ajax=\"false\">" + this.courseTitle 
+                + "</a>";
     }
 }
 
