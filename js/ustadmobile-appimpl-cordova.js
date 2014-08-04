@@ -332,7 +332,7 @@ UstadMobileAppImplCordova.prototype.makeCopyJob = function(fileDestMap, destDir,
             });
     };
     
-    return newCopyJob;
+    return copyJob;
 
 };
 

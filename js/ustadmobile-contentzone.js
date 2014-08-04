@@ -148,18 +148,11 @@ UstadMobileContentZone.prototype = {
      */
     goPage: function(pageName) {
         if(pageName === UstadMobile.PAGE_BOOKLIST) {
-            if(UstadMobile.getInstance().getRuntimeInfoVal(UstadMobile.RUNTIME_MENUMODE) !== null){
-                $.ajax({
-                   url : UstadMobile.URL_CLOSEIFRAME,
-                   dataType: "text"
-                });
-            }else {
-                if(!isPageOpen("ustadmobile_booklist.html")) {
-                    openPage2("ustadmobile_booklist.html");
-                }else {
-                    UstadMobile.getInstance().closePanel();
-                }
-            }
+            //send the request to the container content zone to close this
+            $.ajax({
+               url : UstadMobile.URL_CLOSEIFRAME,
+               dataType: "text"
+            });
         }else if(pageName === UstadMobile.PAGE_TOC) {
             $( ":mobile-pagecontainer" ).pagecontainer( "change", 
                 UstadMobile.PAGE_TOC);
