@@ -68,7 +68,7 @@ fi
 
 echo "copying assets";
 cp -r *.html img js jqm res locale ustad_version $FILEDEST
-. ../mkbuildinfo.sh > build_info.json
+. $WORKINGDIR/../mkbuildinfo.sh > $FILEDEST/build_info.json
 
 #TODO: check this with naming convention
 cp css/*.css $FILEDEST/css
