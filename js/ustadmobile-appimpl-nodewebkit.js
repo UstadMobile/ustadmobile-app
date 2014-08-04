@@ -130,11 +130,15 @@ UstadMobileAppImplNodeWebkit.prototype.getHTTPBaseURL = function() {
  */
 UstadMobileAppImplNodeWebkit.prototype.showCourse = function(courseObj, 
     onshowCallback, show, onloadCallback, onerrorCallback) {
+    var path = require("path");
     
-    var destDirectory = courseObj.coursePath.substring(0, 
-        courseObj.coursePath.lastIndexOf("/"));
-    destDirectory = UstadMobile.getInstance().removeFileProtoFromURL(
-            destDirectory);
+    
+    //var destDirectory = courseObj.coursePath.substring(0, 
+    //    courseObj.coursePath.lastIndexOf("/"));
+    var destDirectory = path.dirname(courseObj.coursePath);
+    
+    //destDirectory = UstadMobile.getInstance().removeFileProtoFromURL(
+    //        destDirectory);
 
     var httpURL = UstadMobileHTTPServer.getInstance().getURLForCourseEntry(
         courseObj);
@@ -194,6 +198,7 @@ UstadMobileAppImplNodeWebkit.prototype.checkPaths = function() {
             UstadMobileAppImplNodeWebkit.getInstance().winMyDocOutput = stdout;
             var myDocPath = stdout.substring(stdout.indexOf("REG_SZ")+6);
             myDocPath = myDocPath.trim();
+            
             nodeSetupHomeDirFunction(myDocPath);
         });
     }else {
@@ -242,7 +247,14 @@ UstadMobileAppImplNodeWebkit.prototype.scanCourses = function(callback) {
     });
 };
 
-
+/**
+ * Get a CourseEntryObject for a given directory, or return null if
+ * this directory does not contain a course
+ *
+ * @method getCourseObjFromDir
+ * @param dirname Directory e.g. /path/to/ustadmobileContent/contentDir contains exetoc.html
+ * @return {CourseEntryObject} Representing course in that directory
+ */
 UstadMobileAppImplNodeWebkit.prototype.getCourseObjFromDir = function(dirname) {
     var fs = require('fs');
     var path = require("path");
@@ -258,21 +270,11 @@ UstadMobileAppImplNodeWebkit.prototype.getCourseObjFromDir = function(dirname) {
     }
     
     debugLog("NodeWebKit finds content in " + fileEntry);
-    var lastSlashPos = fileEntry.lastIndexOf('/');
-    var secondLastSlashPos = fileEntry.lastIndexOf('/', lastSlashPos -1);
-    var folderName = fileEntry.substring(secondLastSlashPos+1, 
-        lastSlashPos);
+    
+    var folderName = path.basename(dirname);
 
-    //On Windows we need to change \ (invalid escape) to / for paths
-    var fileEntryEsc = fileEntry;
-    var nodeWebKitOS = UstadMobile.getInstance().getNodeWebKitOS();
-    if(nodeWebKitOS === UstadMobile.OS_WINDOWS) {
-        fileEntryEsc = fileEntry.replace(/\\/g, "/");
-    }
-
-    var fileFullPath = "file://" + fileEntryEsc;
     var courseEntryObj = new UstadMobileCourseEntry(folderName, "", 
-        fileFullPath, null, folderName);
+        fileEntry, null, folderName);
     
     return courseEntryObj;
 };
