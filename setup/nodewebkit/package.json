@@ -4,7 +4,7 @@
   "user-agent" : "Mozilla/5.0 %osinfo NodeWebKit",
   "window" : {
     "frame" : true,
-    "toolbar" : true,
+    "toolbar" : false,
     "width" : 1000,
     "height" : 700
   }
