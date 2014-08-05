@@ -138,7 +138,8 @@ UstadMobileBookList.prototype = {
         "jqm/jquery.mobile.icons.min.css" : "jquery.mobile.icons.min.css",
         "js/ustadmobile-contentzone.js" : "ustadmobile-contentzone.js",
         "js/ustadmobile-localization.js" : "ustadmobile-localization.js",
-        "js/ustadmobile_menupage_content.html" : "ustadmobile_menupage_content.html"
+        "js/ustadmobile_menupage_content.html" : "ustadmobile_menupage_content.html",
+        "js/imagemapidevice.js" : "imagemapidevice.js"
     },
     
     /** 

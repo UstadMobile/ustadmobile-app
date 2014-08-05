@@ -98,6 +98,14 @@ UstadMobileContentZone.prototype = {
      */
     contentPageTransitionTime: 1000,
     
+    /**
+     * Boolean tracker if a transition is already in progress.  If it is - we 
+     * block further pageChanges until it's done
+     * 
+     * @type Boolean
+     */
+    transitionInProgress: false,
+    
     
     /**
      * Run startup routines for the content zone - setup event handlers for making
@@ -109,6 +117,19 @@ UstadMobileContentZone.prototype = {
         $(document).on("pagebeforecreate", function(evt, ui) {
             UstadMobileContentZone.getInstance().checkTOC(evt, ui);
         });
+        
+        $(document).on("pagebeforechange", function(evt, ui) {
+            if(typeof ui.toPage === "string") {
+                console.log("pagebeforechange asking for string: " + ui.toPage);
+                if(ui.toPage === "#") {
+                    //this is a blank image map string or something - prevent it!
+                    evt.preventDefault();
+                }
+            }else {
+                console.log("pagebeforechange asking for object: " + ui.toPage);
+            }
+        });
+        
         
         this.checkTOC();
     },
@@ -327,17 +348,20 @@ UstadMobileContentZone.prototype = {
         var docEvt = $.Event("execontentpageshow", {
             target: pageEl
         });
+        console.assert(pageEl !== null);
+        
         $(document).trigger(docEvt);
+        console.group("Running PageShow Event");
+        UstadMobileUtils.debugLog("Trigger execontentpageshow on document");
         
         var mediaToPlay = pageEl.find("audio[data-autoplay]");
         var numToPlay = mediaToPlay.length;
         for(var i = 0; i < numToPlay; i++) {
             var playMediaEl = mediaToPlay.get(i);
             UstadMobileUtils.playMediaElement(playMediaEl);
-
-            //playAndReset(mediaToPlay.get(i));
         }
         
+        console.groupEnd();
         return numToPlay;
     },
     
@@ -436,12 +460,20 @@ UstadMobileContentZone.prototype = {
      */
     contentPageGo: function(dir) {
         var umObj = UstadMobileContentZone.getInstance();
-        
+        UstadMobileUtils.debugLog("ContentPageGo: " + dir);
         var currentPage = umObj.contentPages[UstadMobile.MIDDLE];
         var nextPage = umObj.contentPages[dir];
         if(nextPage === null) {
             return;
         }
+        
+        if(umObj.transitionInProgress) {
+            UstadMobileUtils.debugLog(
+                    "ContentPageGo: Transition already in progress - abort!");
+            return;
+        }
+        
+        umObj.transitionInProgress = true;
         
         //-1 or 1 for left or right respectively
         var movementDir = 1;
@@ -484,6 +516,33 @@ UstadMobileContentZone.prototype = {
             
             UstadMobileContentZone.getInstance().pageShow(nextPage);
             
+            var otherSide = -1;
+            if(dirArg === UstadMobile.RIGHT) {
+                otherSide = UstadMobile.LEFT;
+            }else {
+                otherSide = UstadMobile.RIGHT;
+            }
+            
+            //delete the current page on the left from DOM
+            /* new method
+            if(umObj.contentPages[otherSide] !== null) {
+                umObj.contentPages[otherSide].remove();
+            }
+
+            umObj.contentPages[otherSide] = currentPage;
+
+            var nextLink = nextPage.attr("data-content-next");
+            if(nextLink !== "#") {
+                umObj.preloadPage(nextPage.attr("data-content-next"),
+                    dir);
+            }else {
+                umObj.contentPages[dir] = null;
+                
+                //TODO: hide the link for directions no longer navigable
+                $("#umForward").css("visibility", "hidden");
+            }*/
+            
+            
             if(dirArg === UstadMobile.RIGHT) {
                 //delete the current page on the left from DOM
                 if(umObj.contentPages[UstadMobile.LEFT] !== null) {
@@ -517,6 +576,8 @@ UstadMobileContentZone.prototype = {
                 }
             }
             
+            umObj.transitionInProgress = false;
+            UstadMobileUtils.debugLog("ChangePage: COMPLETED");
         }, animTime + Math.round(animTime * 0.1));
     },
     

@@ -565,9 +565,11 @@ UstadMobile.prototype = {
         //required to make sure exe created pages show correctly
         console.log("UstadMobile: Running Pre-Init");
         $("body").addClass("js");
-        this.loadPanel();
         if(UstadMobile.getInstance().getZone() === UstadMobile.ZONE_CONTENT) {
             this.loadRuntimeInfo();
+        }else {
+            //App zone - load panel
+            this.loadPanel();
         }
     },
     
@@ -1113,6 +1115,10 @@ UstadMobileUtils.joinPath = function(pathArr, seperator) {
     }
     
     return retVal;
+}
+
+UstadMobileUtils.debugLog = function(msg) {
+    console.log(msg);
 }
 
 /**
