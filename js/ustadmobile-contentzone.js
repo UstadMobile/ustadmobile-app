@@ -410,6 +410,9 @@ UstadMobileContentZone.prototype = {
             }
                         
             console.log("Attempting to preload into DOM:" + this.url);
+            console.log("preloadPage: Check existing pageContentEl - must =1; is " + 
+                    newPageContentEl.length);
+            console.assert(newPageContentEl.length === 1);
             
             newPageContentEl = UstadMobileContentZone.getInstance().preProcessPage(
                     newPageContentEl);
@@ -598,6 +601,20 @@ UstadMobileContentZone.prototype = {
             url: pageURL,
             dataType: "html"
         }).done(function(data, textStatus, jqXHR) {
+            //check and see if there are current pages - those MUST be removed
+            //otherwise we wind up with duplicate objects hanging around
+            
+            //At all times we should have one and only one exe content container
+            var umContentObj = UstadMobileContentZone.getInstance();
+            var middlePage = umContentObj.contentPages[UstadMobile.MIDDLE];
+            if(middlePage !== null) {
+                console.log("safePageLoad: Removing old JQM pages set");
+                var contentJQMPage = middlePage.closest("[data-role='page']");
+                contentJQMPage.remove();
+                middlePage = null;
+                umContentObj.contentPages = [null, null, null];
+            }
+            
             
             //for some reason - jQuery Selector will not here find the 
             //data-role=page div... re-assemble it... assume only one page
