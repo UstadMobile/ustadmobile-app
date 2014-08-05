@@ -118,6 +118,7 @@ UstadMobileContentZone.prototype = {
             UstadMobileContentZone.getInstance().checkTOC(evt, ui);
         });
         
+        //TODO: stop links that with http:// - this will crash JQueryMobile
         $(document).on("pagebeforechange", function(evt, ui) {
             if(typeof ui.toPage === "string") {
                 console.log("pagebeforechange asking for string: " + ui.toPage);
