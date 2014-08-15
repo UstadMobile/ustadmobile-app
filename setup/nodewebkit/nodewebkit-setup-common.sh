@@ -1,7 +1,7 @@
 #!/bin/bash
-
 #
-#
+# To build offline without plugin clean etc. - use 
+# export BUILDOFFLINE=1
 #
 
 THEMEFILE="$2"
@@ -28,13 +28,20 @@ if [ "$ZIPRESULT" == "" ]; then
 fi
 
 #clean
-if [ -d $TARGETDIR ]; then
-    echo "deleting (cleaning) old build dir"
-    rm -rf $TARGETDIR 
-fi
-     
-if [ ! -d $TARGETDIR ]; then
-    mkdir $TARGETDIR
+if [ "$BUILDOFFLINE" != "1" ]; then
+    if [ -d $TARGETDIR ]; then
+        echo "deleting (cleaning) old build dir"
+        rm -rf $TARGETDIR 
+    fi
+
+    if [ ! -d $TARGETDIR ]; then
+        mkdir $TARGETDIR
+    fi
+else
+    if [ ! -e $TARGETDIR ]; then
+        echo "Build offline cannot run if build directory not already present"
+        exit 1
+    fi
 fi
 
 source $SRCDIR/ustad_version
@@ -59,8 +66,10 @@ fi
 
 echo "Zip $TARGETDIR/UstadMobile.nw on $(pwd)"
 
-npm install mime
-npm install fs-extra
+if [ "$BUILDOFFLINE" != "1" ]; then
+    npm install mime
+    npm install fs-extra
+fi
 
 FILELIST="*.html img css js jqm res locale ustad_version package.json node_modules build_info.json"
 if [ "$ZIPMODE" == "normal" ]; then

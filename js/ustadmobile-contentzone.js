@@ -92,6 +92,13 @@ UstadMobileContentZone.prototype = {
     contentPages: [null, null, null],
     
     /**
+     * JQuery selectors for the left (previous), right (next) page and current page
+     * @type Number
+     */
+    contentPageSelectors: [null, null, null],
+    
+    
+    /**
      * Duration to run animations for when changing pages
      * 
      * @type {Number}
@@ -114,9 +121,13 @@ UstadMobileContentZone.prototype = {
      * @method
      */
     init: function() {
+        //put event handlers on buttons
         $(document).on("pagebeforecreate", function(evt, ui) {
             UstadMobileContentZone.getInstance().checkTOC(evt, ui);
         });
+        
+        $( ":mobile-pagecontainer" ).on("pagecontainershow",
+            this.triggerPageShowOnCurrent);
         
         //TODO: stop links that with http:// - this will crash JQueryMobile
         $(document).on("pagebeforechange", function(evt, ui) {
@@ -292,8 +303,15 @@ UstadMobileContentZone.prototype = {
             if(contentPageResult.length > 0) {
                 this.contentPages[UstadMobile.MIDDLE] = contentPageResult;
 
+                var dataURL = document.location.href;
+                if(dataURL.indexOf("#") !== -1) {
+                    dataURL = dataURL.substring(dataURL.indexOf("#")+1);
+                }
+                
                 this.contentPages[UstadMobile.MIDDLE].attr("data-url", 
-                    document.location.href);
+                    dataURL);
+                this.contentPageSelectors[UstadMobile.MIDDLE] = 
+                    ".ustadcontent[data-url='" + dataURL + "']";
             }
         }
 
@@ -332,19 +350,41 @@ UstadMobileContentZone.prototype = {
     },
     
     /**
+     * Trigger an event on every idevice element in the given parentElement
+     * 
+     * @param {jQuery} pageElement JQuery object representing the 
+     * @param string evtName
+     */
+    triggerEventOnPageIdevices: function(parentElement, evtName) {
+        parentElement.find(".iDevice_wrapper").each(function() {
+            var evt = $.Event(evtName, {
+                target : this
+            });
+            
+            var ideviceId = $(this).attr("id");
+            if(ideviceId.indexOf("id") === 0) {
+                ideviceId = ideviceId.substring(2);
+            }
+            
+            evt.ideviceId = ideviceId;
+            
+            $(this).trigger(evt);
+        });
+    },
+    
+    triggerPageShowOnCurrent: function() {
+        UstadMobileContentZone.getInstance().pageshow(
+            UstadMobileContentZone.getInstance().contentPages[UstadMobile.MIDDLE]);
+    },
+    
+    /**
      * Things to run when the page is actually displayed for the user
      * 
      * @param {type} pageEl
      * @returns number number of elements played
      */
     pageShow: function(pageEl) {
-        pageEl.find(".iDevice_wrapper").each(function() {
-            var evt = $.Event("ideviceshow", {
-                target : this
-            });
-            
-            $(this).trigger(evt);
-        });
+        this.triggerEventOnPageIdevices(pageEl, "ideviceshow");
         
         var docEvt = $.Event("execontentpageshow", {
             target: pageEl
@@ -355,15 +395,18 @@ UstadMobileContentZone.prototype = {
         console.group("Running PageShow Event");
         UstadMobileUtils.debugLog("Trigger execontentpageshow on document");
         
+        
         var mediaToPlay = pageEl.find("audio[data-autoplay]");
         var numToPlay = mediaToPlay.length;
         for(var i = 0; i < numToPlay; i++) {
             var playMediaEl = mediaToPlay.get(i);
             UstadMobileUtils.playMediaElement(playMediaEl);
         }
-        
+
         console.groupEnd();
         return numToPlay;
+        
+        return 0;
     },
     
     /**
@@ -399,14 +442,15 @@ UstadMobileContentZone.prototype = {
             url: pageURL,
             dataType: "html"
         }).done(function(data, textStatus, jqXHR) {
-            data = UstadMobileContentZone.getInstance().preProcessMediaTags(data);
+            var procData = UstadMobileContentZone.getInstance().preProcessMediaTags(data);
             
-            var newPageContentEl = $(data).find(".ustadcontent");
+            var newPageContentEl = $(procData).find(".ustadcontent");
             
             
             if(newPageContentEl.length === 0) {
                 //try old #content selector
-                newPageContentEl = $(data).find("#content");
+                newPageContentEl = $(procData).find("#content");
+                newPageContentEl.addClass("ustadcontent");
             }
                         
             console.log("Attempting to preload into DOM:" + this.url);
@@ -426,7 +470,7 @@ UstadMobileContentZone.prototype = {
             
             //dont need data no more
             data = null;
-            
+            procData = null;
             
             var viewWidth = $(window).width();
             newPageContentEl.css("position", "absolute");
@@ -450,6 +494,9 @@ UstadMobileContentZone.prototype = {
             console.log("Preloaded page for position: " + pgPos);
             
             UstadMobileContentZone.getInstance().contentPages[pgPos] = newPageContentEl;
+            UstadMobileContentZone.getInstance().contentPageSelectors[pgPos] =
+                    ".ustadcontent[data-url='"+this.url+"']";
+            debugger;
         });
     },
     
@@ -465,9 +512,8 @@ UstadMobileContentZone.prototype = {
     contentPageGo: function(dir) {
         var umObj = UstadMobileContentZone.getInstance();
         UstadMobileUtils.debugLog("ContentPageGo: " + dir);
-        var currentPage = umObj.contentPages[UstadMobile.MIDDLE];
-        var nextPage = umObj.contentPages[dir];
-        if(nextPage === null) {
+        
+        if(umObj.contentPages[dir] === null) {
             return;
         }
         
@@ -487,31 +533,43 @@ UstadMobileContentZone.prototype = {
         
         var animTime = umObj.contentPageTransitionTime;
         //nextPage.css("visibility", "visible");
-        nextPage = nextPage.detach();
-        nextPage.css("position", "absolute");
-        $.mobile.pageContainer.find(".ui-page-active .ui-content").prepend(nextPage);
+        umObj.contentPages[dir] = umObj.contentPages[dir].detach();
+        umObj.contentPages[dir].css("position", "absolute");
+        console.log("Number of insertions to make: " 
+            + $.mobile.pageContainer.find(".ui-page-active .ui-content").length);
         
-        currentPage.css("transition", "all " + animTime + "ms ease-in-out");
-        nextPage.css("transition", "all " + animTime + "ms ease-in-out");
+        $.mobile.pageContainer.find(".ui-page-active .ui-content").prepend(
+                umObj.contentPages[dir]);
+        
+        umObj.contentPages[UstadMobile.MIDDLE].css("transition", "all " 
+                + animTime + "ms ease-in-out");
+        umObj.contentPages[dir].css("transition", "all " + animTime + "ms ease-in-out");
         
         var viewWidth = $(window).width();
         
         //stop what is going on this page now...
-        this.pageHide(currentPage);
+        umObj.pageHide(umObj.contentPages[UstadMobile.MIDDLE]);
         
-        currentPage.css("transform", "translateX(" 
+        umObj.contentPages[UstadMobile.MIDDLE].css("transform", "translateX(" 
                     + (movementDir * viewWidth)+ "px)");
-        nextPage.css("transform", "translateX(0px)");
+        umObj.contentPages[dir].css("transform", "translateX(0px)");
         
         var dirArg = dir;
         
         setTimeout(function() {
-            currentPage.css("transition", "");
-            nextPage.css("transition", "");
-            
             var umObj = UstadMobileContentZone.getInstance();
+            var currentPage = umObj.contentPages[UstadMobile.MIDDLE];
+            var nextPage = umObj.contentPages[dir];
             
-            umObj.contentPages[UstadMobile.MIDDLE] = nextPage;
+            currentPage.css("transition", "");
+            umObj.contentPages[dir].css("transition", "");
+            
+            
+            
+            umObj.contentPages[UstadMobile.MIDDLE] = umObj.contentPages[dir];
+            umObj.contentPageSelectors[UstadMobile.MIDDLE] = 
+                    umObj.contentPageSelectors[dir];
+            
             umObj.contentPages[UstadMobile.MIDDLE].css("position", "");
             
             window.scrollTo(0,0);
@@ -521,67 +579,41 @@ UstadMobileContentZone.prototype = {
             UstadMobileContentZone.getInstance().pageShow(nextPage);
             
             var otherSide = -1;
+            var pageToFillAttr = "";
             if(dirArg === UstadMobile.RIGHT) {
                 otherSide = UstadMobile.LEFT;
+                pageToFillAttr = "data-content-next";
             }else {
                 otherSide = UstadMobile.RIGHT;
+                pageToFillAttr = "data-content-prev";
             }
             
-            //delete the current page on the left from DOM
-            /* new method
+            if(umObj.contentPages[otherSide] !== null) {
+                UstadMobileContentZone.getInstance().triggerEventOnPageIdevices(
+                            umObj.contentPages[otherSide], "ideviceremove");
+            }
+            
+            //delete the current on the other side from DOM
             if(umObj.contentPages[otherSide] !== null) {
                 umObj.contentPages[otherSide].remove();
             }
 
             umObj.contentPages[otherSide] = currentPage;
-
-            var nextLink = nextPage.attr("data-content-next");
+                
+            var nextLink = nextPage.attr(pageToFillAttr);
             if(nextLink !== "#") {
-                umObj.preloadPage(nextPage.attr("data-content-next"),
+                umObj.preloadPage(nextPage.attr(pageToFillAttr),
                     dir);
             }else {
                 umObj.contentPages[dir] = null;
-                
-                //TODO: hide the link for directions no longer navigable
-                $("#umForward").css("visibility", "hidden");
-            }*/
-            
-            
-            if(dirArg === UstadMobile.RIGHT) {
-                //delete the current page on the left from DOM
-                if(umObj.contentPages[UstadMobile.LEFT] !== null) {
-                    umObj.contentPages[UstadMobile.LEFT].remove();
-                }
-                
-                umObj.contentPages[UstadMobile.LEFT] = currentPage;
-                
-                var nextLink = nextPage.attr("data-content-next");
-                if(nextLink !== "#") {
-                    umObj.preloadPage(nextPage.attr("data-content-next"),
-                        UstadMobile.RIGHT);
-                }else {
-                    umObj.contentPages[UstadMobile.RIGHT] = null;
-                    $("#umForward").css("visibility", "hidden");
-                }
-            }else if(dirArg === UstadMobile.LEFT) {
-                if(umObj.contentPages[UstadMobile.RIGHT] !== null) {
-                    umObj.contentPages[UstadMobile.RIGHT].remove();
-                }
-                
-                umObj.contentPages[UstadMobile.RIGHT] = currentPage;
-                
-                var prevLink = nextPage.attr("data-content-prev");
-                if(prevLink !== "#") {
-                    umObj.preloadPage(nextPage.attr("data-content-prev"),
-                        UstadMobile.LEFT);
-                }else {
-                    umObj.contentPages[UstadMobile.LEFT] = null;
-                    $("#umBack").css("visibility", "hidden");
-                }
             }
             
             umObj.transitionInProgress = false;
             UstadMobileUtils.debugLog("ChangePage: COMPLETED");
+            
+            nextPage = null;
+            umObj = null;
+            currentPage = null;
         }, animTime + Math.round(animTime * 0.1));
     },
     
@@ -595,7 +627,6 @@ UstadMobileContentZone.prototype = {
      */
     safePageLoad: function(pageURL) {
         var newPageId = pageURL;
-        newPageId = newPageId.replace(".", "_");
         
         $.ajax({
             url: pageURL,
@@ -610,9 +641,13 @@ UstadMobileContentZone.prototype = {
             if(middlePage !== null) {
                 console.log("safePageLoad: Removing old JQM pages set");
                 var contentJQMPage = middlePage.closest("[data-role='page']");
-                contentJQMPage.remove();
-                middlePage = null;
                 umContentObj.contentPages = [null, null, null];
+                
+                contentJQMPage.remove();
+                contentJQMPage = null;
+                
+                middlePage = null;
+                
             }
             
             
@@ -637,6 +672,12 @@ UstadMobileContentZone.prototype = {
             
             $.mobile.pageContainer.append(pgEl);
             
+            debugger;
+            pgEl.find("#umBack").on("click", exePreviousPageOpen);
+            pgEl.find("#umForward").on("click", exeNextPageOpen);
+            
+            
+            
             var containerShowFn = function() {
                 UstadMobileContentZone.getInstance().pageShow(pgEl);
                 $( ":mobile-pagecontainer" ).off("pagecontainershow",
@@ -644,6 +685,7 @@ UstadMobileContentZone.prototype = {
             };
             $( ":mobile-pagecontainer" ).on("pagecontainershow",containerShowFn);
             
+           
             $( ":mobile-pagecontainer" ).pagecontainer( "change", "#" + newPageId);
         });
     },

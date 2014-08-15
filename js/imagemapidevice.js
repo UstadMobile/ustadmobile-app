@@ -71,6 +71,15 @@ ImageMapIdevice.prototype = {
         return false;
     },
     
+    /**
+     * Get rid of all global references to this, unbind mapster
+     */
+    dispose: function(evt) {
+        $("#id" + evt.ideviceId).mapster("unbind", false);
+        imageMapIdevices[evt.ideviceId] = null;
+        console.log("Disposed of imagemapidevice for id: " + evt.ideviceId);
+    },
+    
     
     /**
      * Initiate this using ImageMapster JQuery plugin
@@ -78,6 +87,8 @@ ImageMapIdevice.prototype = {
      * @method initMapIdevice
      */
     initMapIdevice : function(cfg) {
+    
+
         
     	this.cfg = cfg;
     	
@@ -88,6 +99,9 @@ ImageMapIdevice.prototype = {
         //go through the areas and see if there are corresponding tips
         var areaSelector = "#imagemapidevice_map_" + this.ideviceId + " area";
         var initIdeviceId = this.ideviceId;
+        
+        $("#id" + this.ideviceId).on("ideviceremove", this.dispose);
+        
         $(areaSelector).each(function() {
             var dataKeyVal = $(this).attr("data-key");
             var imageMapToolTipSelector = "#imageMapToolTip_" + initIdeviceId 

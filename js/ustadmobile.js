@@ -1142,12 +1142,14 @@ UstadMobileUtils.playMediaElement = function(mediaEl, onPlayCallback) {
     }else if(mediaEl.seekable.length > 0 && mediaEl.readyState >= 2){
         try {
             mediaEl.pause();
-            mediaEl.addEventListener("seeked", 
-                function() { 
-                    mediaEl.play(); 
-                    UstadMobileUtils.runCallback(onPlayCallback, [true], mediaEl);
-                }, 
-                true); 
+            var seekedItFn = function() { 
+                mediaEl.play(); 
+                mediaEl = null;
+                UstadMobileUtils.runCallback(onPlayCallback, [true], mediaEl);
+                mediaEl.removeListener("seeked", seekedItFn, true);
+            };
+            
+            mediaEl.addEventListener("seeked", seekedItFn, true); 
             
             mediaEl.currentTime = 0; 
             mediaEl.play();
