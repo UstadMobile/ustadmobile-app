@@ -1144,9 +1144,11 @@ UstadMobileUtils.playMediaElement = function(mediaEl, onPlayCallback) {
             mediaEl.pause();
             var seekedItFn = function() { 
                 mediaEl.play(); 
-                mediaEl = null;
                 UstadMobileUtils.runCallback(onPlayCallback, [true], mediaEl);
+                onPlayCallback = null;
+                
                 mediaEl.removeListener("seeked", seekedItFn, true);
+                mediaEl = null;
             };
             
             mediaEl.addEventListener("seeked", seekedItFn, true); 
@@ -1167,7 +1169,9 @@ UstadMobileUtils.playMediaElement = function(mediaEl, onPlayCallback) {
             }
             
             myMediaEl.removeEventListener("canplay", playItFunction, true);
+            myMediaEl = null;
             UstadMobileUtils.runCallback(onPlayCallback, [true], mediaEl);
+            onPlayCallback = null;
         };
         mediaEl.addEventListener("canplay", playItFunction);
         mediaEl.load();

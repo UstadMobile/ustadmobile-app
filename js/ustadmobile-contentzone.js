@@ -83,14 +83,7 @@ UstadMobileContentZone.getInstance = function() {
 };
 
 UstadMobileContentZone.prototype = {
-    
-    /**
-     * JQuery elements for the left (previous), right (next) page and current page
-     * 
-     * @type {Array}
-     */
-    contentPages: [null, null, null],
-    
+        
     /**
      * JQuery selectors for the left (previous), right (next) page and current page
      * @type Number
@@ -176,7 +169,7 @@ UstadMobileContentZone.prototype = {
     /**
      * Open the page given using UstadMobile.PAGE_name constants
      * 
-     * @param string pageName UstadMobile.PAGE_name constant for page to open
+     * @param pageName string UstadMobile.PAGE_name constant for page to open
      * 
      */
     goPage: function(pageName) {
@@ -221,12 +214,12 @@ UstadMobileContentZone.prototype = {
     processPageContent: function(contentEl) {
         var fixItFunction = function() {
             var alreadyFixed=$(this).attr("data-exefixed");
-            if(alreadyFixed != "true") {
+            if(alreadyFixed !== "true") {
                 var answerFor = $(this).attr("for");
                 //ID of radio button is going to be iELEMENTID
                 //eg i0_100 idevice=0, field=100
                 var answerId = "";
-                if(answerFor.substring(0, 1) == 'i') {
+                if(answerFor.substring(0, 1) === 'i') {
                     //mcq radio button
                     answerId = answerFor.substring(1);
                 }else {
@@ -293,29 +286,28 @@ UstadMobileContentZone.prototype = {
      * @returns {undefined}
      */
     initPagePreload: function() {
-        if(this.contentPages[UstadMobile.MIDDLE] === null) {
-            var contentPageResult = $(".ui-page-active .ustadcontent");
-            if(contentPageResult.length === 0) {
+        if(this.contentPageSelectors[UstadMobile.MIDDLE] === null) {
+            var preContentSelector = ".ui-page-active .ustadcontent";
+            if($(preContentSelector).length === 0) {
                 //maybe try the #content selector
-                contentPageResult = $(".ui-page-active #content");
+                preContentSelector = ".ui-page-active #content";
+                
             }
 
-            if(contentPageResult.length > 0) {
-                this.contentPages[UstadMobile.MIDDLE] = contentPageResult;
-
+            if($(preContentSelector).length > 0) {
                 var dataURL = document.location.href;
                 if(dataURL.indexOf("#") !== -1) {
                     dataURL = dataURL.substring(dataURL.indexOf("#")+1);
                 }
+                $(preContentSelector).attr("data-url", dataURL).addClass(
+                        "ustadcontent");
                 
-                this.contentPages[UstadMobile.MIDDLE].attr("data-url", 
-                    dataURL);
                 this.contentPageSelectors[UstadMobile.MIDDLE] = 
                     ".ustadcontent[data-url='" + dataURL + "']";
             }
         }
 
-        this.checkContentNavLinks(this.contentPages[UstadMobile.MIDDLE]);
+        this.checkContentNavLinks(this.contentPageSelectors[UstadMobile.MIDDLE]);
 
         //look for the next and previous links, load them
 
@@ -341,7 +333,7 @@ UstadMobileContentZone.prototype = {
      * Process content that is loaded via AJAX before it goes into DOM.  
      * Remove inline scripts and the like.
      * 
-     * @param jQuery pageEl The element that contains the
+     * @param pageEl jQuery The element that contains the
      */
     preProcessPage: function(pageEl) {
         this.removeInlineScripts(pageEl);
@@ -350,13 +342,13 @@ UstadMobileContentZone.prototype = {
     },
     
     /**
-     * Trigger an event on every idevice element in the given parentElement
+     * Trigger an event on every idevice element in the given parentElement selector
      * 
-     * @param {jQuery} pageElement JQuery object representing the 
-     * @param string evtName
+     * @param parentElementSelector string JQuery selector object representing the parentElemetn
+     * @param evtName string
      */
-    triggerEventOnPageIdevices: function(parentElement, evtName) {
-        parentElement.find(".iDevice_wrapper").each(function() {
+    triggerEventOnPageIdevices: function(parentElementSelector, evtName) {
+        $(parentElementSelector).find(".iDevice_wrapper").each(function() {
             var evt = $.Event(evtName, {
                 target : this
             });
@@ -373,30 +365,31 @@ UstadMobileContentZone.prototype = {
     },
     
     triggerPageShowOnCurrent: function() {
-        UstadMobileContentZone.getInstance().pageshow(
-            UstadMobileContentZone.getInstance().contentPages[UstadMobile.MIDDLE]);
+        UstadMobileContentZone.getInstance().pageShow(
+            UstadMobileContentZone.getInstance().contentPageSelectors[
+            UstadMobile.MIDDLE]);
     },
     
     /**
      * Things to run when the page is actually displayed for the user
      * 
-     * @param {type} pageEl
+     * @param pageSelector string selector for the page to show
      * @returns number number of elements played
      */
-    pageShow: function(pageEl) {
-        this.triggerEventOnPageIdevices(pageEl, "ideviceshow");
+    pageShow: function(pageSelector) {
+        this.triggerEventOnPageIdevices(pageSelector, "ideviceshow");
         
         var docEvt = $.Event("execontentpageshow", {
-            target: pageEl
+            target: $(pageSelector)
         });
-        console.assert(pageEl !== null);
+        console.assert($(pageSelector).length === 1);
         
         $(document).trigger(docEvt);
         console.group("Running PageShow Event");
         UstadMobileUtils.debugLog("Trigger execontentpageshow on document");
         
         
-        var mediaToPlay = pageEl.find("audio[data-autoplay]");
+        var mediaToPlay = $(pageSelector).find("audio[data-autoplay]");
         var numToPlay = mediaToPlay.length;
         for(var i = 0; i < numToPlay; i++) {
             var playMediaEl = mediaToPlay.get(i);
@@ -405,15 +398,14 @@ UstadMobileContentZone.prototype = {
 
         console.groupEnd();
         return numToPlay;
-        
-        return 0;
     },
     
     /**
      * Things to do when the page is hidden from the user - e.g. stop sounds
+     * @param pageSelector string selector for page element being hidden
      */
-    pageHide: function(pageEl) {
-        var mediaToStopArr = pageEl.find("audio");
+    pageHide: function(pageSelector) {
+        var mediaToStopArr = $(pageSelector).find("audio");
         for(var i = 0; i < mediaToStopArr.length; i++) {
             var mediaToStop = mediaToStopArr.get(i);
             if(mediaToStop.readyState >= 2 && mediaToStop.currentTime !== 0 && mediaToStop.ended === false) {
@@ -493,10 +485,8 @@ UstadMobileContentZone.prototype = {
             
             console.log("Preloaded page for position: " + pgPos);
             
-            UstadMobileContentZone.getInstance().contentPages[pgPos] = newPageContentEl;
             UstadMobileContentZone.getInstance().contentPageSelectors[pgPos] =
                     ".ustadcontent[data-url='"+this.url+"']";
-            debugger;
         });
     },
     
@@ -513,7 +503,7 @@ UstadMobileContentZone.prototype = {
         var umObj = UstadMobileContentZone.getInstance();
         UstadMobileUtils.debugLog("ContentPageGo: " + dir);
         
-        if(umObj.contentPages[dir] === null) {
+        if(umObj.contentPageSelectors[dir] === null) {
             return;
         }
         
@@ -533,50 +523,55 @@ UstadMobileContentZone.prototype = {
         
         var animTime = umObj.contentPageTransitionTime;
         //nextPage.css("visibility", "visible");
-        umObj.contentPages[dir] = umObj.contentPages[dir].detach();
-        umObj.contentPages[dir].css("position", "absolute");
+        
+        var contentDetached = $(umObj.contentPageSelectors[dir]).detach();
+        
+        contentDetached.css("position", "absolute");
+        
         console.log("Number of insertions to make: " 
             + $.mobile.pageContainer.find(".ui-page-active .ui-content").length);
         
         $.mobile.pageContainer.find(".ui-page-active .ui-content").prepend(
-                umObj.contentPages[dir]);
+                contentDetached);
+        contentDetached = null;
         
-        umObj.contentPages[UstadMobile.MIDDLE].css("transition", "all " 
+        $(umObj.contentPageSelectors[UstadMobile.MIDDLE]).css("transition", "all " 
                 + animTime + "ms ease-in-out");
-        umObj.contentPages[dir].css("transition", "all " + animTime + "ms ease-in-out");
+        
+        $(umObj.contentPageSelectors[dir]).css("transition", "all " + animTime 
+                + "ms ease-in-out");
         
         var viewWidth = $(window).width();
         
         //stop what is going on this page now...
-        umObj.pageHide(umObj.contentPages[UstadMobile.MIDDLE]);
+        umObj.pageHide(umObj.contentPageSelectors[dir]);
         
-        umObj.contentPages[UstadMobile.MIDDLE].css("transform", "translateX(" 
-                    + (movementDir * viewWidth)+ "px)");
-        umObj.contentPages[dir].css("transform", "translateX(0px)");
+        $(umObj.contentPageSelectors[UstadMobile.MIDDLE]).css("transform",
+            "translateX(" + (movementDir * viewWidth)+ "px)");
+        
+        $(umObj.contentPageSelectors[dir]).css("transform", "translateX(0px)");
         
         var dirArg = dir;
         
         setTimeout(function() {
             var umObj = UstadMobileContentZone.getInstance();
-            var currentPage = umObj.contentPages[UstadMobile.MIDDLE];
-            var nextPage = umObj.contentPages[dir];
+            var currentPageSel = umObj.contentPageSelectors[UstadMobile.MIDDLE];
             
-            currentPage.css("transition", "");
-            umObj.contentPages[dir].css("transition", "");
+            var nextPageSel = umObj.contentPageSelectors[dir];
             
+            $(currentPageSel).css("transition", "");
+            $(umObj.contentPageSelectors[dir]).css("transition", "");
             
-            
-            umObj.contentPages[UstadMobile.MIDDLE] = umObj.contentPages[dir];
             umObj.contentPageSelectors[UstadMobile.MIDDLE] = 
                     umObj.contentPageSelectors[dir];
             
-            umObj.contentPages[UstadMobile.MIDDLE].css("position", "");
+            $(umObj.contentPageSelectors[UstadMobile.MIDDLE]).css("position", "");
             
             window.scrollTo(0,0);
             
             
             
-            UstadMobileContentZone.getInstance().pageShow(nextPage);
+            UstadMobileContentZone.getInstance().pageShow(nextPageSel);
             
             var otherSide = -1;
             var pageToFillAttr = "";
@@ -588,32 +583,29 @@ UstadMobileContentZone.prototype = {
                 pageToFillAttr = "data-content-prev";
             }
             
-            if(umObj.contentPages[otherSide] !== null) {
+            if(umObj.contentPageSelectors[otherSide] !== null) {
                 UstadMobileContentZone.getInstance().triggerEventOnPageIdevices(
-                            umObj.contentPages[otherSide], "ideviceremove");
+                        umObj.contentPageSelectors[otherSide], "ideviceremove");
             }
             
             //delete the current on the other side from DOM
-            if(umObj.contentPages[otherSide] !== null) {
-                umObj.contentPages[otherSide].remove();
+            if(umObj.contentPageSelectors[otherSide] !== null) {
+                $(umObj.contentPageSelectors[otherSide]).remove();
             }
 
-            umObj.contentPages[otherSide] = currentPage;
+            umObj.contentPageSelectors[otherSide] = currentPageSel;
                 
-            var nextLink = nextPage.attr(pageToFillAttr);
+            var nextLink = $(nextPageSel).attr(pageToFillAttr);
             if(nextLink !== "#") {
-                umObj.preloadPage(nextPage.attr(pageToFillAttr),
+                umObj.preloadPage($(nextPageSel).attr(pageToFillAttr),
                     dir);
             }else {
-                umObj.contentPages[dir] = null;
+                umObj.contentPageSelectors[dir] = null;
             }
             
             umObj.transitionInProgress = false;
             UstadMobileUtils.debugLog("ChangePage: COMPLETED");
-            
-            nextPage = null;
             umObj = null;
-            currentPage = null;
         }, animTime + Math.round(animTime * 0.1));
     },
     
@@ -637,17 +629,14 @@ UstadMobileContentZone.prototype = {
             
             //At all times we should have one and only one exe content container
             var umContentObj = UstadMobileContentZone.getInstance();
-            var middlePage = umContentObj.contentPages[UstadMobile.MIDDLE];
-            if(middlePage !== null) {
+            var middlePageSel = umContentObj.contentPageSelectors[UstadMobile.MIDDLE];
+            if(middlePageSel !== null) {
                 console.log("safePageLoad: Removing old JQM pages set");
-                var contentJQMPage = middlePage.closest("[data-role='page']");
-                umContentObj.contentPages = [null, null, null];
+                var contentJQMPage = $(middlePageSel).closest("[data-role='page']");
+                umContentObj.contentPageSelectors = [null, null, null];
                 
                 contentJQMPage.remove();
                 contentJQMPage = null;
-                
-                middlePage = null;
-                
             }
             
             
@@ -672,7 +661,6 @@ UstadMobileContentZone.prototype = {
             
             $.mobile.pageContainer.append(pgEl);
             
-            debugger;
             pgEl.find("#umBack").on("click", exePreviousPageOpen);
             pgEl.find("#umForward").on("click", exeNextPageOpen);
             
@@ -718,7 +706,7 @@ UstadMobileContentZone.prototype = {
      * 
      * Strangely this does not work if we do this using dom manipulation etc.
      * 
-     * @param String pageHTML to process
+     * @param pageHTML string to process
      */
     preProcessMediaTags: function(pageHTML) {
         pageHTML = pageHTML.replace(/autoplay(=\"autoplay\")/, function(match, $1) {
@@ -734,27 +722,27 @@ UstadMobileContentZone.prototype = {
      * 
      * Links get set as data-content-prev and data-content-next
      * 
-     * @param contentDiv {jQuery} Ustad Mobile content div we will dig nav links for
+     * @param contentSelector string Selector of Ustad Mobile content div we will dig nav links for
      */
-    checkContentNavLinks: function(contentDiv) {
+    checkContentNavLinks: function(contentSelector) {
         //look for the next and previous links
         var linkNames = [["data-content-prev", "#exePreviousPage"],
             ["data-content-next", "#exeNextPage"]];
         
-        if(contentDiv === null) {
+        if($(contentSelector).length === 0) {
             return;
         }
         
         for(var i = 0; i < linkNames.length; i++) {
-            if(typeof contentDiv.attr(linkNames[i][0]) === "undefined") {
-                if(contentDiv.siblings(linkNames[i][1]).length > 0) {
-                    var pgHref = contentDiv.siblings(
+            if(typeof $(contentSelector).attr(linkNames[i][0]) === "undefined") {
+                if($(contentSelector).siblings(linkNames[i][1]).length > 0) {
+                    var pgHref = $(contentSelector).siblings(
                             linkNames[i][1]).attr("href");
-                    contentDiv.attr(linkNames[i][0], pgHref);
+                    $(contentSelector).attr(linkNames[i][0], pgHref);
                 }
             }
         }
-    },
+    }
 };
 
 function openTOCPage(){
@@ -787,7 +775,7 @@ changing icons on buttons, so we actually make two of
 them each inside their own span and hide them
 */
 function tocTrigger(tocId, toShow) {
-    if(toShow == true) {
+    if(toShow === true) {
         $("#tocButtonShowSpan" + tocId).hide();
         $("#tocButtonHideSpan" + tocId).show();
         $("#tocDiv" + tocId).show();
@@ -844,7 +832,7 @@ function exeNextPageOpen(){
 //Function to handle Menu Page within eXe content's footer.
 function exeMenuPageOpen() {
     //Windows Phone checks.
-    if ($.mobile.path.getLocation("x-wmapp0://www/ustadmobile_menupage_content.html") != "x-wmapp0://www/ustadmobile_menupage_content.html") {
+    if ($.mobile.path.getLocation("x-wmapp0://www/ustadmobile_menupage_content.html") !== "x-wmapp0://www/ustadmobile_menupage_content.html") {
         debugLog('there is path problem');
     } else {
         debugLog('everything is OK with paths');
