@@ -395,9 +395,10 @@ UstadMobileContentZone.prototype = {
             var playMediaEl = mediaToPlay.get(i);
             UstadMobileUtils.playMediaElement(playMediaEl);
         }
+        
 
         console.groupEnd();
-        return numToPlay;
+        return numToPlay;    
     },
     
     /**
@@ -412,6 +413,20 @@ UstadMobileContentZone.prototype = {
                 mediaToStop.pause();
             }
         }
+    },
+    
+    /**
+     * Use an HTTP request to the app zone to ask for a cleanup
+     * 
+     */
+    requestAppZoneCleanup: function() {
+        $.ajax({
+            url : UstadMobile.URL_PAGECLEANUP,
+            dataType: "text",
+            cache: false
+        }).done(function(data, textStatus, jqXHR) {
+            console.log("MEDIA: Requested host to cleanup: status " + textStatus);
+        });
     },
     
     /**
@@ -591,6 +606,7 @@ UstadMobileContentZone.prototype = {
             //delete the current on the other side from DOM
             if(umObj.contentPageSelectors[otherSide] !== null) {
                 $(umObj.contentPageSelectors[otherSide]).remove();
+                umObj.requestAppZoneCleanup();
             }
 
             umObj.contentPageSelectors[otherSide] = currentPageSel;
@@ -604,6 +620,7 @@ UstadMobileContentZone.prototype = {
             }
             
             umObj.transitionInProgress = false;
+            
             UstadMobileUtils.debugLog("ChangePage: COMPLETED");
             umObj = null;
         }, animTime + Math.round(animTime * 0.1));
@@ -636,6 +653,7 @@ UstadMobileContentZone.prototype = {
                 umContentObj.contentPageSelectors = [null, null, null];
                 
                 contentJQMPage.remove();
+                umContentObj.requestAppZoneCleanup();
                 contentJQMPage = null;
             }
             

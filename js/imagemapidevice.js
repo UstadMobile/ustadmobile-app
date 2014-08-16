@@ -281,17 +281,9 @@ function imageMapIdevicePageInit() {
 
 
 
-/*
-Init - lets get going
-Disable to check on memory usage
-*/
-
-
-/*
 $(function() {
     $(document).on("execontentpageshow", function() {
                         imageMapIdevicePageInit();
                     });
     imageMapIdevicePageInit();
 });
-*/

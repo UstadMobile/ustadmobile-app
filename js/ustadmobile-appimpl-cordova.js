@@ -88,6 +88,12 @@ UstadMobileAppImplCordova.prototype = Object.create(
  */
 UstadMobileAppImplCordova.prototype.cordovaHttpd = null;
 
+/**
+ * Reference to mediaSanity plugin object
+ * @type object
+ */
+UstadMobileAppImplCordova.prototype.mediaSanityPlugin = null;
+
 /** 
  * DirectoryEntry object reference for the content directory (e.g. ustadmobileContent/)
  * 
@@ -203,6 +209,27 @@ UstadMobileAppImplCordova.prototype.startHTTPServer = function(successCallback, 
                 UstadMobileBookList.getInstance().closeBlCourseIframe();
                 httpdSvr.sendHandlerResponse(responseId, 
                     "Closed Iframe", function() {
+                        console.log("response sent back OK");
+                    }, function(err) {
+                        console.log("was an error sending response");
+                    });
+            }, function(err) {
+                console.log("Error registering handler");
+            });
+        
+        httpdSvr.registerHandler(UstadMobile.URL_PAGECLEANUP, 
+            function(resultArr) {
+                var responseId = resultArr[0];
+                var uri = resultArr[1];
+                UstadMobileAppImplCordova.getInstance(
+                    ).mediaSanityPlugin.reapTimerThreads(2, function(numReaped) {
+                        console.log("MEDIA: Reaped " + numReaped + " timer threads");
+                    }, function(err){
+                        console.log("MEDIA: ERROR: could not reap threads " + err);
+                    });
+                    
+                httpdSvr.sendHandlerResponse(responseId, 
+                    "Reaped Media Threads", function() {
                         console.log("response sent back OK");
                     }, function(err) {
                         console.log("was an error sending response");
@@ -351,6 +378,7 @@ function ustadAppImplCordovaDeviceReady() {
         
         var mediaSanity = ( cordova && cordova.plugins && cordova.plugins.MediaSanity ) 
             ? cordova.plugins.MediaSanity : null;
+        UstadMobileAppImplCordova.getInstance().mediaSanityPlugin = mediaSanity;
 
         //prevent requirement for a gesture to play media
         mediaSanity.setMediaGestureRequired(false, function() {
@@ -413,6 +441,8 @@ UstadMobileCordovaScanner.prototype = {
         this.currentEntriesIndex = 0;
         this.allBookFoundCallback = callback;
         
+        this.foldersToScan = [UstadMobile.getInstance().contentDirURI];
+        
         this.populateNextDir();
     },
     
@@ -454,6 +484,7 @@ UstadMobileCordovaScanner.prototype = {
         var umScanner = UstadMobileCordovaScanner.getInstance();
         var directoryReader = dirEntry.createReader();
         console.log("dirReader OK for: " + dirEntry.fullPath);
+        umScanner.fileSystemPathWaiting = dirEntry.fullPath;
         directoryReader.readEntries(umScanner.successDirectoryReader, 
             umScanner.failDirectoryReader);
     },

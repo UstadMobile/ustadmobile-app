@@ -170,6 +170,14 @@ UstadMobile.RUNTIME_MENUMODE = "ustad_menumode";
 UstadMobile.URL_CLOSEIFRAME = "/closeiframe";
 
 /**
+ * Constant: URL to request page cleanup procedure (e.g. ThreadTimer issue)
+ * To run when a page is removed from memory.
+ * 
+ * @type String
+ */
+UstadMobile.URL_PAGECLEANUP = "/pagecleanup";
+
+/**
  * Constant - Go page for content...
  * @type string 
  */
@@ -1147,7 +1155,7 @@ UstadMobileUtils.playMediaElement = function(mediaEl, onPlayCallback) {
                 UstadMobileUtils.runCallback(onPlayCallback, [true], mediaEl);
                 onPlayCallback = null;
                 
-                mediaEl.removeListener("seeked", seekedItFn, true);
+                mediaEl.removeEventListener("seeked", seekedItFn, true);
                 mediaEl = null;
             };
             
