@@ -104,7 +104,7 @@ UstadMobileAppImplCordova.prototype.contentDirEntry = null;
 /**
  * Get the device system language using globalization plugin
  * 
- * @param function callbackFunction function that will be called passing language
+ * @param callbackFunction function function that will be called passing language
  * value (e.g. en-US)
  * 
  * @method
@@ -166,6 +166,9 @@ UstadMobileAppImplCordova.prototype.checkPaths = function() {
 
 /**
  * Start the HTTP server
+ * @method startHTTPServer
+ * @param successCallback function called when server starts OK
+ * @param errorCallback function to call when something fails
  */
 UstadMobileAppImplCordova.prototype.startHTTPServer = function(successCallback, errorCallback) {
     this.cordovaHttpd = ( cordova && cordova.plugins && cordova.plugins.CorHttpd ) ? cordova.plugins.CorHttpd : null;
@@ -189,7 +192,7 @@ UstadMobileAppImplCordova.prototype.startHTTPServer = function(successCallback, 
         
         var mountFailFunction = function(err) {
             console.log("ERROR: Could not mount : " + err);
-        }
+        };
         
         var subDirsToMount = ["js", "jqm", "res"];
         for(var i = 0; i < subDirsToMount.length; i++) {
@@ -248,7 +251,7 @@ UstadMobileAppImplCordova.prototype.startHTTPServer = function(successCallback, 
                 }, 0);
             }, function(err) {
                 console.log("error mounting /ustadmobileContent"+err);
-            })
+            });
         console.log("Started HTTP Server OK on " + url);
     }, function(err) {
         console.log("Error starting HTTP server");
@@ -309,7 +312,7 @@ UstadMobileAppImplCordova.prototype.showCourse = function(courseObj,
  * Return a JSON string with system information - e.g. for reporting with
  * bug reports etc.
  * 
- * @param function callback which will receive one JSON arg - the result
+ * @param callback function which will receive one JSON arg - the result
  */
 UstadMobileAppImplCordova.prototype.getSystemInfo = function(callback) {
     var retVal = {};
@@ -382,7 +385,7 @@ function ustadAppImplCordovaDeviceReady() {
 
         //prevent requirement for a gesture to play media
         mediaSanity.setMediaGestureRequired(false, function() {
-            console.log("MEDIA: Set media gesture required to false OK")
+            console.log("MEDIA: Set media gesture required to false OK");
         }, function(err) {
             console.log("Media: set media gesture required FAIL : " + err);
         });
@@ -435,7 +438,11 @@ UstadMobileCordovaScanner.prototype = {
     
     fileSystemPathWaiting : "",
     
-    
+    /**
+     * Start scanning for content
+     * 
+     * @param {function} callback that will run when scan is complete
+     */
     startScan: function(callback) {
         this.currentFolderIndex = 0;
         this.currentEntriesIndex = 0;
@@ -521,7 +528,7 @@ UstadMobileCordovaScanner.prototype = {
             
             var courseEntryObj = new UstadMobileCourseEntry(folderName, "",
                 fileFullPath, null, folderName);
-            UstadMobileBookList.getInstance().addCourseToList(courseEntryObj)
+            UstadMobileBookList.getInstance().addCourseToList(courseEntryObj);
         }, function(error) {
             debugLog("failed to get parent directory folderName: " + folderName 
                     + " with an error: " + error);
@@ -584,12 +591,15 @@ UstadMobileCordovaScanner.prototype = {
 
         umScanner.currentEntriesToScan = new Array();
         umScanner.currentEntriesIndex = 0;
+        var dirNames = "";
 
         for (var i = 0; i < entries.length; i++) {
             if (entries[i].isDirectory) {
-                 umScanner.currentEntriesToScan.push(entries[i]);
+                dirNames += entries[i].toURL() + ", ";
+                umScanner.currentEntriesToScan.push(entries[i]);
             }
         } 
+        console.log("successDirectoryReader: Entries to scan: " + dirNames);
 
         umScanner.scanNextDirectoryIndex();
     },
@@ -603,6 +613,6 @@ UstadMobileCordovaScanner.prototype = {
                 + umScanner.fileSystemPathWaiting + 
                 " code: " + error.code);
         umScanner.populateNextDir();
-    },
+    }
     
 };

@@ -338,6 +338,10 @@ UstadMobileContentZone.prototype = {
     preProcessPage: function(pageEl) {
         this.removeInlineScripts(pageEl);
         
+        //some page content divs have the footer inside the content - it should
+        //not be there - caused by older versions of eXe.  Get rid of it.
+        pageEl.find("[data-role='footer']").remove();
+        
         return pageEl;
     },
     
@@ -654,7 +658,6 @@ UstadMobileContentZone.prototype = {
                 
                 contentJQMPage.remove();
                 umContentObj.requestAppZoneCleanup();
-                contentJQMPage = null;
             }
             
             
@@ -667,10 +670,14 @@ UstadMobileContentZone.prototype = {
             if(header) {
                 pgEl.append(header);
             }
+            header = null;
+            
             var pageContent = $(data).find('.ui-content').first();
             
             UstadMobileContentZone.getInstance().preProcessPage(pageContent);
             pgEl.append(pageContent);
+            pageContent = null;
+            
             
             var footer = $(data).find("[data-role='footer']").first();
             if(footer) {
@@ -679,7 +686,14 @@ UstadMobileContentZone.prototype = {
             
             $.mobile.pageContainer.append(pgEl);
             
+            //This should get removed - should be found by ID not reference.
+            //pgEl = null;
+            
+            //take off duplicate handlers if present
+            pgEl.find("#umBack").get(0).onclick = null;
             pgEl.find("#umBack").on("click", exePreviousPageOpen);
+            
+            pgEl.find("#umForward").get(0).onclick = null;
             pgEl.find("#umForward").on("click", exeNextPageOpen);
             
             
