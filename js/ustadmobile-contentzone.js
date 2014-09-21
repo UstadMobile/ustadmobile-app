@@ -501,7 +501,7 @@ UstadMobileContentZone.prototype = {
             
             var viewWidth = $(window).width();
             newPageContentEl.css("position", "absolute").css("width", 
-                "100%").css("left", "0px").css("right", "0px");
+                "100%").css("left", "0px");
                     
                        
             var newPosFactor = 1;
@@ -577,17 +577,8 @@ UstadMobileContentZone.prototype = {
         var animTime = umObj.contentPageTransitionTime;
         //nextPage.css("visibility", "visible");
         
-        var contentDetached = $(umObj.contentPageSelectors[dir]).detach();
-        
-        contentDetached.css("position", "absolute");
-        
-        console.log("Number of insertions to make: " 
-            + $.mobile.pageContainer.find(".ui-page-active .ui-content").length);
-        
-        $.mobile.pageContainer.find(".ui-page-active .ui-content").prepend(
-                contentDetached);
-        contentDetached = null;
-        
+        $(umObj.contentPageSelectors[dir]).css("position", "absolute");
+                
         $(umObj.contentPageSelectors[UstadMobile.MIDDLE]).css("transition", "all " 
                 + animTime + "ms ease-in-out");
         
@@ -618,7 +609,9 @@ UstadMobileContentZone.prototype = {
             umObj.contentPageSelectors[UstadMobile.MIDDLE] = 
                     umObj.contentPageSelectors[dir];
             
-            $(umObj.contentPageSelectors[UstadMobile.MIDDLE]).css("position", "");
+            //$(umObj.contentPageSelectors[UstadMobile.MIDDLE]).css("position", "");
+            $(umObj.contentPageSelectors[UstadMobile.MIDDLE]).css("position", 
+                "absolute").css("width", "100%").css("left", "0px");
             
             window.scrollTo(0,0);
             
