@@ -549,10 +549,11 @@ UstadMobileContentZone.prototype = {
      * Shows the next or previous page
      * 
      * @param {Number} dir UstadMobile.LEFT or UstadMobile.RIGHT
+     * @param function callBack function to run once page has changed
      * 
      * @returns {undefined}
      */
-    contentPageGo: function(dir) {
+    contentPageGo: function(dir, callbackFn) {
         var umObj = UstadMobileContentZone.getInstance();
         UstadMobileUtils.debugLog("ContentPageGo: " + dir);
         
@@ -655,6 +656,7 @@ UstadMobileContentZone.prototype = {
             
             UstadMobileUtils.debugLog("ChangePage: COMPLETED");
             umObj = null;
+            UstadMobileUtils.runCallback(callbackFn)
         }, animTime + Math.round(animTime * 0.1));
     },
     
