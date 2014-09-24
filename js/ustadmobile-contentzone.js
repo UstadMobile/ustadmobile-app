@@ -397,7 +397,8 @@ UstadMobileContentZone.prototype = {
         this.triggerEventOnPageIdevices(pageSelector, "ideviceshow");
         
         var docEvt = $.Event("execontentpageshow", {
-            target: $(pageSelector)
+            target: $(pageSelector),
+            targetSelector: pageSelector
         });
         console.assert($(pageSelector).length === 1);
         
@@ -472,12 +473,15 @@ UstadMobileContentZone.prototype = {
             
             var newPageContentEl = $(newPageContentParsed).find(".ustadcontent");
             
-
             if(newPageContentEl.length === 0) {
                 //try old #content selector
                 newPageContentEl = $(newPageContentParsed).find("#content");
                 newPageContentEl.addClass("ustadcontent");
             }
+            
+            var newPageTitle = $(newPageContentParsed).find(
+                    "[data-role='header']").text();
+            newPageContentEl.attr('data-title', newPageTitle);
                         
             console.log("Attempting to preload into DOM:" + this.url);
             console.log("preloadPage: Check existing pageContentEl - must =1; is " + 
@@ -610,13 +614,13 @@ UstadMobileContentZone.prototype = {
             umObj.contentPageSelectors[UstadMobile.MIDDLE] = 
                     umObj.contentPageSelectors[dir];
             
-            //$(umObj.contentPageSelectors[UstadMobile.MIDDLE]).css("position", "");
             $(umObj.contentPageSelectors[UstadMobile.MIDDLE]).css("position", 
                 "absolute").css("width", "100%").css("left", "0px");
             
             window.scrollTo(0,0);
             
-            
+            $("div[data-role='header'] h3").text(
+                $(nextPageSel).attr("data-title"));
             
             UstadMobileContentZone.getInstance().pageShow(nextPageSel);
             
@@ -698,6 +702,8 @@ UstadMobileContentZone.prototype = {
             var pgEl = $("<div data-role='page' id='" + newPageId +"'></div>");
             var pageParsed = $.parseHTML(data,document, true);
             var header = $(pageParsed).find("[data-role='header']").first();
+            var headerTitle = $(header).text();
+            
             if(header) {
                 pgEl.append(header);
             }
@@ -705,6 +711,8 @@ UstadMobileContentZone.prototype = {
             var footer = $(pageParsed).find("[data-role='footer']").first();
             
             var pageContent = $(pageParsed).find('.ui-content').first();
+            pageContent.find("#content").attr("data-title", headerTitle);
+            
             UstadMobileContentZone.getInstance().preProcessPage(pageContent);
             pgEl.append(pageContent);
             pageContent = null;
