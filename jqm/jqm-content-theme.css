@@ -203,3 +203,8 @@ button[disabled],
 	outline-style: auto;
 }
 			
+
+.ClozeIdevice .ui-input-text {
+    display: inline-block;
+    vertical-align: middle;
+}
