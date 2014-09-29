@@ -194,7 +194,7 @@ UstadMobileAppImplCordova.prototype.startHTTPServer = function(successCallback, 
             console.log("ERROR: Could not mount : " + err);
         };
         
-        var subDirsToMount = ["js", "jqm", "res"];
+        var subDirsToMount = ["js", "jqm", "res", "css"];
         for(var i = 0; i < subDirsToMount.length; i++) {
             console.log("Request to mount : " + subDirsToMount[i]);
             UstadMobile.getInstance().systemImpl.cordovaHttpd.mountDir(
