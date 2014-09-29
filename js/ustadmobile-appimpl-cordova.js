@@ -173,9 +173,10 @@ UstadMobileAppImplCordova.prototype.checkPaths = function() {
 UstadMobileAppImplCordova.prototype.startHTTPServer = function(successCallback, errorCallback) {
     this.cordovaHttpd = ( cordova && cordova.plugins && cordova.plugins.CorHttpd ) ? cordova.plugins.CorHttpd : null;
     this.cordovaHTTPURL = "";
+    var portNum = 3000;
     this.cordovaHttpd.startServer({
         'www_root': "/mnt/sdcard/ustadmobileContent",
-        'port' : 3000
+        'port' : portNum
     }, function(url) {
         console.log("HTTP Server running on " + url);
         
@@ -184,7 +185,8 @@ UstadMobileAppImplCordova.prototype.startHTTPServer = function(successCallback, 
             url += '/';
         }
         
-        UstadMobile.getInstance().systemImpl.cordovaHTTPURL = url;
+        UstadMobile.getInstance().systemImpl.cordovaHTTPURL = 
+            "http://localhost:" + portNum + "/";
         
         var mountOKFunction = function(url) {
             console.log("Mounted " + url + " ok");

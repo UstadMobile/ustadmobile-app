@@ -107,7 +107,8 @@ UstadMobileLogin.prototype = {
 
         debugLog("User name and password is: " + username + " / " + password);
         if (!url) {
-            var url = 'http://svr2.ustadmobile.com:8001/xAPI/statements?limit=1'; //Should be part of a config file for different TIN CAN LRS's
+            var url = "http://umcloud1.ustadmobile.com/umlrs/statements?limit=1"
+            //var url = 'http://svr2.ustadmobile.com:8001/xAPI/statements?limit=1'; //Should be part of a config file for different TIN CAN LRS's
         }
         this.umlogin(username, password, url, this.umloginredirect);
     },
