@@ -427,7 +427,8 @@ UstadMobileContentZone.prototype = {
         var mediaToStopArr = $(pageSelector).find("audio");
         for(var i = 0; i < mediaToStopArr.length; i++) {
             var mediaToStop = mediaToStopArr.get(i);
-            if(mediaToStop.readyState >= 2 && mediaToStop.currentTime !== 0 && mediaToStop.ended === false) {
+            
+            if(mediaToStop.readyState >= 2 && mediaToStop.currentTime !== 0 && !mediaToStop.ended) {
                 mediaToStop.pause();
             }
         }
@@ -593,7 +594,7 @@ UstadMobileContentZone.prototype = {
         var viewWidth = $(window).width();
         
         //stop what is going on this page now...
-        umObj.pageHide(umObj.contentPageSelectors[dir]);
+        umObj.pageHide(umObj.contentPageSelectors[UstadMobile.MIDDLE]);
         
         $(umObj.contentPageSelectors[UstadMobile.MIDDLE]).css("transform",
             "translateX(" + (movementDir * viewWidth)+ "px)");
