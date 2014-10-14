@@ -138,6 +138,9 @@ UstadMobileContentZone.prototype = {
                 if(ui.toPage === "#") {
                     //this is a blank image map string or something - prevent it!
                     evt.preventDefault();
+                } else if(ui.toPage.substring(0, 7) === "http://") {
+                    evt.preventDefault();
+                    UstadMobileContentZone.getInstance().safePageLoad(ui.toPage);
                 }
             }else {
                 console.log("pagebeforechange asking for object: " + ui.toPage);
@@ -676,6 +679,10 @@ UstadMobileContentZone.prototype = {
      */
     safePageLoad: function(pageURL) {
         var newPageId = pageURL;
+        var lastSlash = newPageId.lastIndexOf("/");
+        if(lastSlash !== -1) {
+            newPageId = newPageId.substring(lastSlash+1);
+        }
         
         $.ajax({
             url: pageURL,
