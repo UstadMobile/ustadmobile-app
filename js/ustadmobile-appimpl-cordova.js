@@ -212,6 +212,11 @@ UstadMobileAppImplCordova.prototype.startHTTPServer = function(successCallback, 
                 var responseId = resultArr[0];
                 var uri = resultArr[1];
                 UstadMobileBookList.getInstance().closeBlCourseIframe();
+                var winRef = UstadMobileAppImplCordova.getInstance().courseWinRef;
+                if(winRef !== null) {
+                    winRef.close();
+                }
+                
                 httpdSvr.sendHandlerResponse(responseId, 
                     "Closed Iframe", function() {
                         console.log("response sent back OK");
@@ -281,6 +286,12 @@ UstadMobileAppImplCordova.prototype.getHTTPURLForAppFile = function(appFileName)
 };
 
 /**
+ * The reference to the inappbrowser window opened for the course
+ */
+UstadMobileAppImplCordova.prototype.courseWinRef = null;
+
+
+/**
  * Shows the course represented by the UstadMobileCourseEntry object
  * courseObj in the correct way for this implementation.  Shows an iframe.
  * 
@@ -301,8 +312,12 @@ UstadMobileAppImplCordova.prototype.showCourse = function(courseObj,
     
     var copyJob = this.makeCopyJob(filesToCopy, 
         destURI, function() {
-            UstadMobileBookList.getInstance().showCourseIframe(httpURL, onshowCallback,
+            /*UstadMobileBookList.getInstance().showCourseIframe(httpURL, onshowCallback,
                 show, onloadCallback, onerrorCallback);
+            */
+           UstadMobileAppImplCordova.getInstance().courseWinRef = 
+                window.open(httpURL, "_blank", 
+                "location=no,toolbar=no,mediaPlaybackRequiresUserAction=no");
         });
         
     copyJob.copyNextFile();
