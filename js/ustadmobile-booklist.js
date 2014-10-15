@@ -139,7 +139,6 @@ UstadMobileBookList.prototype = {
         "js/ustadmobile-contentzone.js" : "ustadmobile-contentzone.js",
         "js/ustadmobile-localization.js" : "ustadmobile-localization.js",
         "js/ustadmobile_menupage_content.html" : "ustadmobile_menupage_content.html",
-        "js/imagemapidevice.js" : "imagemapidevice.js",
         "jqm/jqm-base.css" : "jqm-base.css",
         "css/ustadmobile.css" : "ustadmobile.css"
     },

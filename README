@@ -2,12 +2,13 @@ Ustad Mobile HTML5 Cross Platform App
 
 Copyright UstadMobile Inc 2013-2014.
 
-UstadMobile can download content created using eXe ( an eLearning authoring
-tool ) to a device and use that content even when offline.
+UstadMobile can download content created using eXeLearning ( an eLearning 
+authoring tool ) to a device and use that content even when offline.
 
 Content is downloaded according to an XML manifest; the app runs an internal
 HTTP server to ensure that content is sandboxed in a different javascript context
-and cannot be used for malicious purposes against the host device.
+and cannot be used for malicious purposes against the host device.  This is done
+with InAppBrowser with Cordova and a special iframe in NodeWebKit.
 
 Supported Platforms:
 

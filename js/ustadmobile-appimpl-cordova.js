@@ -205,20 +205,19 @@ UstadMobileAppImplCordova.prototype.startHTTPServer = function(successCallback, 
                 subDirsToMount[i], mountOKFunction, mountFailFunction);
         }
         
-        //iframe closer
+        //close the content window
         var httpdSvr = UstadMobile.getInstance().systemImpl.cordovaHttpd;
         httpdSvr.registerHandler(UstadMobile.URL_CLOSEIFRAME, 
             function(resultArr) {
                 var responseId = resultArr[0];
                 var uri = resultArr[1];
-                UstadMobileBookList.getInstance().closeBlCourseIframe();
                 var winRef = UstadMobileAppImplCordova.getInstance().courseWinRef;
                 if(winRef !== null) {
                     winRef.close();
                 }
                 
                 httpdSvr.sendHandlerResponse(responseId, 
-                    "Closed Iframe", function() {
+                    "Closed Course inappbrowser", function() {
                         console.log("response sent back OK");
                     }, function(err) {
                         console.log("was an error sending response");
