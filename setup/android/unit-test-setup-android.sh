@@ -61,11 +61,7 @@ echo "var testResultServer = 'http://$IPADDR:$NODEPORT/';" > $TARGETDIR/ustadmob
 
 cd $TARGETDIR/ustadmobile
 
-# Only as needed...  does not really effect unit testing
-#if [ "$FASTMODE" != "1" ]; then
-    cordova build
-#    sed -i.backup -e 's/hardwareAccelerated=\"true\"/hardwareAccelerated=\"false\"/' $WORKINGDIR/build-test/ustadmobile/platforms/android/AndroidManifest.xml
-#fi
+cordova build
 
 #sed -i.backup -e '\|</widget>| i\\    <preference name=\"splashscreen\" value=\"umsplash\" />' $WORKINGDIR/ustadmobile/www/config.xml 
 #sed -i.backup -e '\|</widget>| i\\    <preference name=\"splashScreenDelay\" value=\"3000\" />' $WORKINGDIR/ustadmobile/www/config.xml 

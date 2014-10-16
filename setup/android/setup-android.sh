@@ -26,8 +26,6 @@ cd $WORKINGDIR
 cd $TARGETDIR/ustadmobile
 cordova build
 
-sed -i.backup -e 's/hardwareAccelerated=\"true\"/hardwareAccelerated=\"false\"/' $WORKINGDIR/build/ustadmobile/platforms/android/AndroidManifest.xml
-
 if [ "$1" == "run" ]; then
     cordova run
 fi

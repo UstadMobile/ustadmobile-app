@@ -105,13 +105,8 @@ done
 cp res/icon/android/icon-96-xhdpi.png $FILEDEST/../platforms/android/res/drawable/icon.png
 #cp res/screen/android/umsplash-96-xhdpi.png $FILEDEST/../platforms/android/res/drawable/umsplash.png
 
+# Dont ask for location permission
 
-
-#Logic to set Hardware Acceleration to false in Android Manifest file: AndroidManifest.xml
-
-sed -i.backup -e 's/hardwareAccelerated=\"true\"/hardwareAccelerated=\"false\"/' $WORKINGDIR/build/ustadmobile/platforms/android/AndroidManifest.xml
-
-#Future changes: (Varuna Singh - 25-12-2013)
 sed -i.backup2 -e 's/ACCESS_FINE_LOCATION\"/ACCESS_FINE_LOCATION\" android:required=\"false\"/' $WORKINGDIR/build/ustadmobile/platforms/android/AndroidManifest.xml
 sed -i.backup3 -e 's/ACCESS_FINE_LOCATION\"/ACCESS_COARSE_LOCATION\" android:required=\"false\"/' $WORKINGDIR/build/ustadmobile/platforms/android/AndroidManifest.xml
 

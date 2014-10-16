@@ -10,6 +10,8 @@ HTTP server to ensure that content is sandboxed in a different javascript contex
 and cannot be used for malicious purposes against the host device.  This is done
 with InAppBrowser with Cordova and a special iframe in NodeWebKit.
 
+The app authenticates against an Experience API server
+
 Supported Platforms:
 
 * Android (Built using Apache Cordova)
