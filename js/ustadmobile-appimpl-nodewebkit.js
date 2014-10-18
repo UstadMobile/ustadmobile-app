@@ -133,15 +133,13 @@ UstadMobileAppImplNodeWebkit.prototype.showCourse = function(courseObj,
     var path = require("path");
     
     
-    //var destDirectory = courseObj.coursePath.substring(0, 
-    //    courseObj.coursePath.lastIndexOf("/"));
     var destDirectory = path.dirname(courseObj.coursePath);
     
-    //destDirectory = UstadMobile.getInstance().removeFileProtoFromURL(
-    //        destDirectory);
 
     var httpURL = UstadMobileHTTPServer.getInstance().getURLForCourseEntry(
         courseObj);
+    httpURL = UstadMobileAppZone.getInstance().appendTinCanParamsToURL(httpURL);
+
     var filesToCopy = UstadMobileBookList.getInstance().appFilesToCopyToContent;
     
     var copyJob = this.makeCopyJob(filesToCopy, 

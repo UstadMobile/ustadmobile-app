@@ -169,6 +169,8 @@ UstadMobile.RUNTIME_MENUMODE = "ustad_menumode";
  */
 UstadMobile.URL_CLOSEIFRAME = "/closeiframe";
 
+UstadMobile.URL_TINCAN_QUEUE = "/tincan-queue"
+
 /**
  * Constant: URL to request page cleanup procedure (e.g. ThreadTimer issue)
  * To run when a page is removed from memory.
@@ -476,6 +478,8 @@ UstadMobile.prototype = {
             umObj.initScriptsToLoad.push("ustadmobile-localization.js");
             umObj.initScriptsToLoad.push("ustadmobile-contentzone.js");
         }else {
+            umObj.initScriptsToLoad.push("js/tincan.js");
+            umObj.initScriptsToLoad.push("js/tincan_queue.js");
             umObj.initScriptsToLoad.push("js/ustadmobile-getpackages.js");
             if(UstadMobile.getInstance().isNodeWebkit()) {
                 umObj.initScriptsToLoad.push("js/ustadmobile-http-server.js");
@@ -744,7 +748,7 @@ UstadMobile.prototype = {
      */
     getDefaultServer: function() {
         var umServer = new UstadMobileServerSettings("UstadMobile",
-            "http://svr2.ustadmobile.com:8001/xAPI/",
+            "http://umcloud1.ustadmobile.com:8001/umlrs/",
             "http://umcloud1.ustadmobile.com:8010/getcourse/?id=");
         return umServer;
     },

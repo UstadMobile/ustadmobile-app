@@ -124,6 +124,7 @@ UstadMobileHTTPServer.prototype = {
      */
     handleRequest: function(request, response) {
         var url = request.url;
+        var querystring = require("querystring");
         var contentDir = UstadMobile.CONTENT_DIRECTORY;
         var attachPostfix = UstadMobile.HTTP_ATTACHMENT_POSTFIX;
         
@@ -139,6 +140,12 @@ UstadMobileHTTPServer.prototype = {
             require("nw.gui").Shell.openExternal(launchURL);
             response.writeHead(200, { 'Content-Type': 'text/plain'});
             response.end("Launched browser to " + launchURL);
+        }else if(url.substring(0, UstadMobile.URL_TINCAN_QUEUE.length) === 
+                UstadMobile.URL_TINCAN_QUEUE) {
+            var queryStr = url.substring(url.indexOf("?")+1);
+            var queryStrParsed = querystring.parse(queryStr);
+            var stmtStr = queryStrParsed['statement'];
+            UstadMobileAppZone.getInstance().queueTinCanStatement(stmtStr);
         }else {
             response.writeHead(200, { 'Content-Type': 'text/plain'});
             response.end("Hello");

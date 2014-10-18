@@ -107,6 +107,19 @@ UstadMobileContentZone.prototype = {
     transitionInProgress: false,
     
     /**
+     * The time (in ms since epoch) that the current page was opened
+     * @type number
+     */
+    pageOpenUtime: 0,
+    
+    /**
+     * The name of the page for which we are currently counting time
+     * 
+     * @type String
+     */
+    pageOpenXAPIName : null,
+    
+    /**
      * The ID of the navigation buttons mapped to the numerical direction
      * that is used in contentPageSelectors
      * 
@@ -306,7 +319,9 @@ UstadMobileContentZone.prototype = {
                 preContentSelector = ".ui-page-active #content";    
             }
             
-            UstadMobileContentZone.getInstance().pageShow(preContentSelector);
+            if($(preContentSelector).length !== 0) {
+                UstadMobileContentZone.getInstance().pageShow(preContentSelector);
+            }
 
             if($(preContentSelector).length > 0) {
                 var dataURL = document.location.href;
@@ -391,12 +406,27 @@ UstadMobileContentZone.prototype = {
     },
     
     /**
+     * Strip .html off the end of a name
+     * 
+     * @param String pageName
+     * @returns pageName without trailing .html if it was there
+     */
+    stripHTMLURLSuffix: function(pageName){
+        var htmlSuffix = ".html";
+        if(pageName.indexOf(htmlSuffix) === pageName.length - htmlSuffix.length) {
+            pageName = pageName.substring(0, pageName.length - htmlSuffix.length);
+        }
+        
+        return pageName;
+    },
+    
+    /**
      * Things to run when the page is actually displayed for the user
      * 
      * @param pageSelector string selector for the page to show
      * @returns number number of elements played
      */
-    pageShow: function(pageSelector) {
+    pageShow: function(pageSelector) {        
         this.triggerEventOnPageIdevices(pageSelector, "ideviceshow");
         
         var docEvt = $.Event("execontentpageshow", {
@@ -409,6 +439,12 @@ UstadMobileContentZone.prototype = {
         console.group("Running PageShow Event");
         UstadMobileUtils.debugLog("Trigger execontentpageshow on document");
         
+        //start time recording for the TinCan API for the page we are about to show
+        var pageName = $(pageSelector).attr("data-url");
+        pageName = UstadMobileContentZone.getInstance().stripHTMLURLSuffix(
+                pageName);
+        
+        UstadMobileContentZone.getInstance().startPageTimeCounter(pageName);
         
         var mediaToPlay = $(pageSelector).find("audio[data-autoplay]");
         var numToPlay = mediaToPlay.length;
@@ -435,6 +471,9 @@ UstadMobileContentZone.prototype = {
                 mediaToStop.pause();
             }
         }
+        
+        //record the TinCan API statement for having seen this page
+        UstadMobileContentZone.getInstance().stopPageTimeCounter(pageSelector);
     },
     
     /**
@@ -486,6 +525,9 @@ UstadMobileContentZone.prototype = {
             var newPageTitle = $(newPageContentParsed).find(
                     "[data-role='header']").text();
             newPageContentEl.attr('data-title', newPageTitle.trim());
+            newPageContentEl.attr('data-url', 
+                UstadMobileContentZone.getInstance().stripHTMLURLSuffix(
+                pageURL));
                         
             console.log("Attempting to preload into DOM:" + this.url);
             console.log("preloadPage: Check existing pageContentEl - must =1; is " + 
@@ -554,6 +596,36 @@ UstadMobileContentZone.prototype = {
     },
     
     /**
+     * Start counting the time that the user has been on the current page 
+     * 
+     * @param String pageName - relative name of page (e.g. without .html suffix)
+     * @method startPageTimeCounter
+     */
+    startPageTimeCounter: function(pageName) {
+        this.pageOpenUtime = new Date().getTime();
+        this.pageOpenXAPIName = pageName;
+    },
+    
+    /**
+     * Stop counting the current page, make a TinCan API statement about it and
+     * record it using EXETinCan.recordStatement
+     * 
+     * @param pageSelector Selector of the page div being finished
+     * 
+     * @method
+     */
+    stopPageTimeCounter: function(pageSelector) {
+        this.pageDurationMS = this.pageOpenUtime - (new Date().getTime());
+        
+        var pageTitle = $(pageSelector).attr("data-title");
+        if(EXETinCan.getInstance().getActor()) {
+            var stmt = EXETinCan.getInstance().makePageExperienceStmt(
+                this.pageOpenXAPIName, pageTitle, pageTitle);
+            EXETinCan.getInstance().recordStatement(stmt);
+        }
+    },
+    
+    /**
      * Shows the next or previous page
      * 
      * @param {Number} dir UstadMobile.LEFT or UstadMobile.RIGHT
@@ -576,6 +648,9 @@ UstadMobileContentZone.prototype = {
         }
         
         umObj.transitionInProgress = true;
+        
+        
+        
         
         //-1 or 1 for left or right respectively
         var movementDir = 1;
@@ -721,6 +796,9 @@ UstadMobileContentZone.prototype = {
             
             var pageContent = $(pageParsed).find('.ui-content').first();
             pageContent.find("#content").attr("data-title", headerTitle);
+            pageContent.find("#content").attr("data-url", 
+                UstadMobileContentZone.getInstance().stripHTMLURLSuffix(
+                        newPageId));
             
             UstadMobileContentZone.getInstance().preProcessPage(pageContent);
             pgEl.append(pageContent);
@@ -824,24 +902,6 @@ UstadMobileContentZone.prototype = {
 
 function openTOCPage(){
     UstadMobile.getInstance().goPage(UstadMobile.PAGE_TOC);
-    /*
-	$.mobile.loading('show', {
-        text: x_('Loading TOC..'),
-        textVisible: true,
-        theme: 'b',
-        html: ""}
-    );
-
-    //console.log("Current location: " + document.URL);
-    //var contentUrl = document.referrer;
-    //console.log("Content / Previous location: " + contentUrl);
-    //alert("Book url: " + currentBookPath);
-	//var tableOfContentsPage = contentUrl + "/exetoc.html";
-	//var tableOfContentsPage = "exetoc.html";
-    var tableOfContentsPage = currentUrl; //Not tested for Windows Phone yet.
-    debugLog("Going to Table of Contents page: " + tableOfContentsPage);
-    $.mobile.changePage( tableOfContentsPage, { transition: "slideup", reverse: true} );	
-    */
 }
 
 

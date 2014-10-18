@@ -136,8 +136,7 @@ UstadMobileLogin.prototype = {
             localStorage.setItem('username', username);
             localStorage.setItem('password', password);
             localStorage.setItem('oldusername', username);
-            var un = localStorage.getItem('username');
-            var pw = localStorage.getItem('password');
+            
             UstadMobile.getInstance().goPage(UstadMobile.PAGE_BOOKLIST);
         } else if (statuscode == 0) {
             console.log("No internet connectivity.. Still checking password from cache..");
@@ -202,28 +201,13 @@ UstadMobileLogin.prototype = {
            url = UstadMobile.getInstance().getDefaultServer().xapiBaseURL 
             + "statements?limit=1"
         }
-       
-       console.log("TESTING LOGIN: username|password|url: " + username + "|" + password + "|" + url);
-
-       var param = 'userid=' + username + '&password=' + password;
-
-       //for TIN CAN server
-       /*
-        #BASIC AUTHENTICATION
-        username="testuser"
-        password="testpassword"
-        req = urllib2.Request(lrsurl)
-        base64string = base64.encodestring('%s:%s' % (username, password)).replace('\n', '')
-        req.add_header("Authorization", "Basic %s" % base64string)
-        req.add_header("X-Experience-API-Version", "1.0.1")
-
-        */
-
-       
+              
         var thisObj = this;
         $.ajax({
             url: url,
             type: 'GET',
+            dataType: 'text',
+            
             beforeSend: function(request)
             {
                 request.setRequestHeader("X-Experience-API-Version", "1.0.1");
@@ -231,7 +215,7 @@ UstadMobileLogin.prototype = {
                 request.setRequestHeader("Authorization", "Basic " + btoa(username + ":" + password));
 
             },
-            datatype: 'json',
+            
             success: function(data, textStatus, jqxhr) {
                 debugLog("Logging to server: " + url + " a success with code:" + jqxhr.status);
                 thisObj.runcallbackwp(callback, jqxhr.status, password);
@@ -263,13 +247,13 @@ UstadMobileLogin.prototype = {
             }
 
         });   
-   },
+    },
    
-   /**
-    * Checks if user logged in from earlier and re directs to book list.
-    * @method checkLoggedIn
-    */
-   checkLoggedIn: function() {
+    /**
+     * Checks if user logged in from earlier and re directs to book list.
+     * @method checkLoggedIn
+     */
+    checkLoggedIn: function() {
        $.mobile.loading('show', {
            text: x_('Checking logged user..'),
            textVisible: true,

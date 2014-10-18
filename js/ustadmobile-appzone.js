@@ -75,6 +75,20 @@ UstadMobileAppZone.getInstance = function() {
 
 UstadMobileAppZone.prototype = {
     
+    /**
+     * The time (in ms) to wait between Queue runs
+     * 
+     * @type Number
+     */
+    tincanQueueWaitTime: (1000*60*1),
+    
+    /**
+     * Reference to the interval for transmitting the queue
+     * 
+     * @type type
+     */
+    tincanQueueTransmitInterval : null,
+    
     init: function() {
         //Make sure the implementation (e.g. cordova, NodeWebKit is ready)
         UstadMobile.getInstance().runWhenImplementationReady(function() {
@@ -84,7 +98,15 @@ UstadMobileAppZone.prototype = {
             //UstadMobile.getInstance().systemImpl.getSystemLang(function(lang){
             //});
         });
-
+        
+        localStorage.removeItem(
+                getTinCanQueueInstance().TINCAN_LOCALSTORAGE_INDEXVAR);
+        localStorage.removeItem(
+                getTinCanQueueInstance().TINCAN_LOCALSTORAGE_PENDINGSTMTSVAR);
+        
+        this.tincanQueueTransmitInterval = setInterval(function() {
+            UstadMobileAppZone.getInstance().transmitTinCanQueue();
+        }, this.tincanQueueWaitTime);
     },
     
     /**
@@ -123,6 +145,113 @@ UstadMobileAppZone.prototype = {
         }
 
         $.mobile.changePage(linkToOpen, { changeHash: true, transition: transitionMode});
+    },
+    
+    /**
+     * Get the MBOX suffix to add to a username
+     * 
+     * @returns String MBox suffix to add e.g. @server.com
+     */
+    getMboxSuffix: function() {
+        return "@ustadmobile.com";
+    },
+    
+    /**
+     * Gets the tincan endpoint
+     * 
+     * TODO: Allow users to change this, save in localstorage
+     * 
+     * @returns String TinCan endpoint URL
+     */
+    getTinCanEndpoint: function() {
+        return "http://umcloud1.ustadmobile.com/umlrs/";
+    },
+    
+    /**
+     * Return a TinCan Actor object for the currently logged in user
+     * 
+     * @returns 
+     */
+    getTinCanActor: function() {
+        var currentUsername = localStorage.getItem("username");
+        var actor = null;
+        if(currentUsername) {
+            actor = new TinCan.Agent({
+                "objectType" : "Agent",
+                "name" : currentUsername,
+                "mbox" : "mailto:" + currentUsername + this.getMboxSuffix()
+            });
+        }
+        
+        return actor;
+    },
+    
+    /**
+     * Get the current LRS username
+     * 
+     * @returns String current cloud user
+     * @method
+     */
+    getCurrentUsername: function() {
+        return localStorage.getItem("username");
+    },
+    
+    /**
+     * Get the password for the current LRS user
+     * 
+     * @returns String current cloud password
+     * @method
+     */
+    getCurrentPass: function() {
+        return localStorage.getItem("password");
+    },
+    
+    /**
+     * Append actor and proxy URLs to the course URL for launch
+     * 
+     * @param url String the course URL
+     * @returns Course URL with parameters for TINCAN statements to come back
+     */
+    appendTinCanParamsToURL: function(url) {
+        var tincanActor = this.getTinCanActor();
+        if(tincanActor) {
+            url += "?actor=" + encodeURIComponent(JSON.stringify(tincanActor));
+            url += "&exetincanproxy=" + encodeURIComponent(
+                    UstadMobile.URL_TINCAN_QUEUE);
+        }
+        
+        return url;
+    },
+    
+    /**
+     * Put a tincan statement in the queue
+     * 
+     * @param {String} stmtJSON - JSON string representing the statement
+     */
+    queueTinCanStatement: function(stmtJSON) {
+        var stmt = new TinCan.Statement(JSON.parse(stmtJSON),
+            {'storeOriginal' : true});
+        getTinCanQueueInstance().queueStatement(stmt);
+    },
+    
+    /**
+     * Send what is in our TinCan Queue to the LRS server
+     * 
+     * @returns {undefined}
+     */
+    transmitTinCanQueue: function() {
+        var tinCanObj = new TinCan();
+        var tinCanLRS = new TinCan.LRS({
+            "endpoint" : this.getTinCanEndpoint(),
+            "version" : "1.0.0",
+            "user" : this.getCurrentUsername(),
+            'auth' : "Basic " + btoa(this.getCurrentUsername()
+                + ":" + this.getCurrentPass())
+        }); 
+
+        tinCanObj.recordStores[0] = tinCanLRS;
+        
+        getTinCanQueueInstance().sendStatementQueue(tinCanObj);
     },
     
     jsonInfo2HTML: function(obj) {
