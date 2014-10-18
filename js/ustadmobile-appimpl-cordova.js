@@ -226,6 +226,23 @@ UstadMobileAppImplCordova.prototype.startHTTPServer = function(successCallback, 
                 console.log("Error registering handler");
             });
         
+        httpdSvr.registerHandler(UstadMobile.URL_TINCAN_QUEUE,
+            function(resultArr) {
+                var responseId = resultArr[0];
+                var uri = resultArr[1];
+                var stmtStr = resultArr[2]['statement'];
+                UstadMobileAppZone.getInstance().queueTinCanStatement(stmtStr);
+                
+                httpdSvr.sendHandlerResponse(responseId, 
+                    "Didnt really record anything", function() {
+                        console.log("response sent back OK");
+                    }, function(err) {
+                        console.log("was an error sending response");
+                    });
+
+            }
+        );
+        
         httpdSvr.registerHandler(UstadMobile.URL_PAGECLEANUP, 
             function(resultArr) {
                 var responseId = resultArr[0];
@@ -305,6 +322,7 @@ UstadMobileAppImplCordova.prototype.showCourse = function(courseObj,
     
     var httpURL = this.cordovaHTTPURL + UstadMobile.CONTENT_DIRECTORY + 
             "/" + courseObj.getHttpURI();
+    httpURL = UstadMobileAppZone.getInstance().appendTinCanParamsToURL(httpURL);
         
     var destURI = UstadMobile.getInstance().contentDirURI + courseObj.relativeURI;
     var filesToCopy = UstadMobileBookList.getInstance().appFilesToCopyToContent;
