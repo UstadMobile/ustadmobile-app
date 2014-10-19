@@ -99,6 +99,7 @@ UstadMobileAppZone.prototype = {
             //});
         });
         
+        
         localStorage.removeItem(
                 getTinCanQueueInstance().TINCAN_LOCALSTORAGE_INDEXVAR);
         localStorage.removeItem(

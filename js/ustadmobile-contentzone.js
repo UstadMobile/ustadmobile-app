@@ -615,12 +615,12 @@ UstadMobileContentZone.prototype = {
      * @method
      */
     stopPageTimeCounter: function(pageSelector) {
-        this.pageDurationMS = this.pageOpenUtime - (new Date().getTime());
+        var pageDurationMS = (new Date().getTime()) - this.pageOpenUtime;
         
         var pageTitle = $(pageSelector).attr("data-title");
         if(EXETinCan.getInstance().getActor()) {
             var stmt = EXETinCan.getInstance().makePageExperienceStmt(
-                this.pageOpenXAPIName, pageTitle, pageTitle);
+                this.pageOpenXAPIName, pageTitle, pageTitle, pageDurationMS);
             EXETinCan.getInstance().recordStatement(stmt);
         }
     },

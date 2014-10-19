@@ -1134,6 +1134,28 @@ UstadMobileUtils.debugLog = function(msg) {
 }
 
 /**
+ * Format an ISO8601 duration for the given number of milliseconds difference
+ * 
+ * @param Number duration the duration to format in milliseconds
+ * @returns String An ISO8601 Duration e.g. PT4H12M05S
+ */
+UstadMobileUtils.formatISO8601Duration = function(duration) {
+    var msPerHour = (1000*60*60);
+    var hours = Math.floor(duration/msPerHour);
+    var durationRemaining = duration % msPerHour;
+
+    var msPerMin = (60*1000);
+    var mins = Math.floor(durationRemaining/msPerMin);
+    durationRemaining = durationRemaining % msPerMin;
+
+    var msPerS = 1000;
+    var secs = Math.floor(durationRemaining / msPerS);
+
+    retVal = "PT" + hours +"H" + mins + "M" + secs + "S";
+    return retVal;
+};
+
+/**
  * 
  * @param Node mediaEl - DOM node representing an audio or video tag
  * @param function onPlayCallback function to call once the item has played

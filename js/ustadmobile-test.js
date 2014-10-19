@@ -90,10 +90,13 @@ var containerChangeFn = function() {
 (function () {
     
     //Uncomment if you need NodeWebKit tools to load before actually running
-    //require('nw.gui').Window.get().showDevTools();
-    //alert("load tools");
+    require('nw.gui').Window.get().showDevTools();
+    alert("load tools");
 
     QUnit.module("UstadMobile");
+    
+    alert("WTF FFS");
+    testISO8601Format();
     
     testLoadScript();
     
@@ -147,6 +150,24 @@ var containerChangeFn = function() {
     testCloseCourseIframe();
     
 }());
+
+/**
+ * Define tests to check that 8601 duration formatting for TinCan works
+ */
+function testISO8601Format() {
+    test("Format 8601 Duration", function() {
+        var twoHours = (2*60*60*1000);
+        ok(UstadMobileUtils.formatISO8601Duration(twoHours) === "PT2H0M0S",
+            "Format 2hours OK");
+        var twoHours30Mins = twoHours+(30*60*1000);
+        ok(UstadMobileUtils.formatISO8601Duration(twoHours30Mins) === "PT2H30M0S",
+            "Format 2hours30mins OK");
+        //extra 20ms should be ignored
+        var twoHours30Mins20Secs = twoHours30Mins + (20*1000)+200;
+        ok(UstadMobileUtils.formatISO8601Duration(twoHours30Mins20Secs) ===
+                "PT2H30M20S", "Format 2hr30min20s OK");
+    });
+}
 
 function testSequentialScriptLoad() {
     asyncTest("Test sequential script load", function() {
