@@ -144,6 +144,10 @@ UstadMobileContentZone.prototype = {
         $( ":mobile-pagecontainer" ).on("pagecontainershow",
             this.triggerPageShowOnCurrent);
         
+        $(document).one("pagebeforecreate", function() {
+            UstadMobileContentZone.getInstance().makeLaunchedStatement();
+        });
+        
         //TODO: stop links that with http:// - this will crash JQueryMobile
         $(document).on("pagebeforechange", function(evt, ui) {
             if(typeof ui.toPage === "string") {
@@ -163,6 +167,24 @@ UstadMobileContentZone.prototype = {
         
         this.checkTOC();
     },
+    
+    /**
+     * Make a statement that this content block (ELP file) file has been launched
+     * by the user - makes a statement with verb launched, the id of the tincan
+     * prefix.
+     * 
+     */
+    makeLaunchedStatement: function() {
+        var courseTitle = $("BODY").attr("data-package-title");
+        if(!courseTitle) {
+            courseTitle = "Course";
+        }
+        var stmt = EXETinCan.getInstance().makeLaunchedStmt(
+                EXETinCan.getInstance().getTinCanIDURLPrefix(),
+                courseTitle, courseTitle);
+        EXETinCan.getInstance().recordStatement(stmt);
+    },
+    
     
     checkTOC: function(evt, ui) {
         var pgEl = null;
