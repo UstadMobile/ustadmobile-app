@@ -80,6 +80,23 @@ UstadMobileAppZone.getInstance = function() {
  */
 UstadMobileAppZone.STORAGE_PREFIX_COURSES = "ustad_user_courses.";
 
+
+/**
+ * Prefix for course info (JSON description the course and its component blocks 
+ * 
+ * @type String
+ */
+UstadMobileAppZone.STORAGE_PREFIX_COURSEINFO = "ustad_courseinfo.";
+
+
+/**
+ * Prefix we use to save the time that we last fetched course information (in
+ * unix time number of seconds since epoch)
+ * 
+ * @type String
+ */
+UstadMobileAppZone.STORAGE_PREFIX_COURSEINFOTIME = "ustad_courseinfo_time.";
+
 UstadMobileAppZone.prototype = {
     
     /**
@@ -101,17 +118,8 @@ UstadMobileAppZone.prototype = {
         UstadMobile.getInstance().runWhenImplementationReady(function() {
             var systemImpl = UstadMobile.getInstance().systemImpl;
             systemImpl.startHTTPServer();
+            UstadMobileAppZone.getInstance().updateAssignedCourses();
             
-            //check the user assigned courses
-            var umApp = UstadMobileAppZone.getInstance();
-            if(umApp.getCurrentUsername()) {
-                umApp.loadAssignedCoursesFromServerDefault(function(coursesObj, err) {
-                    if(coursesObj) {
-                        umApp.cacheAssignedCourses(umApp.getCurrentUsername(),
-                            coursesObj);
-                    }
-                });
-            }
             
             //UstadMobile.getInstance().systemImpl.getSystemLang(function(lang){
             //});
@@ -127,6 +135,25 @@ UstadMobileAppZone.prototype = {
             UstadMobileAppZone.getInstance().transmitTinCanQueue();
         }, this.tincanQueueWaitTime);
     },
+    
+    /**
+     * Check the courses that the user is assigned to via the server, start
+     * downloads etc. where needed
+     * 
+     * @returns {undefined}
+     */
+    updateAssignedCourses: function() {
+        if(this.getCurrentUsername()) {
+            var umApp = UstadMobileAppZone.getInstance();
+            umApp.loadAssignedCoursesFromServerDefault(function(coursesObj, err) {
+                if(coursesObj) {
+                    umApp.cacheAssignedCourses(umApp.getCurrentUsername(),
+                        coursesObj);
+                }
+            });
+        }
+    },
+    
     
     /**
      * Log the user out and return to the login screen
@@ -195,6 +222,63 @@ UstadMobileAppZone.prototype = {
     getUMCloudEndpoint: function() {
         return "http://localhost/fakeumcloud/";
     },
+    
+    /**
+     * Load the JSON information about a given course from the server
+     * 
+     * @param String username 
+     * @param String password
+     * @param String courseid the TINCAN ID of the course to list out
+     * @param String httpURL HTTP url send post request to
+     * @param function callback function to run when done
+     * 
+     */
+    loadCourseInfo: function(username, password, courseid, httpURL, callback) {
+        $.ajax({
+            method : "POST",
+            url : httpURL,
+            dataType : "json",
+            data: {
+                "username" : username,
+                "password" : password,
+                "courseid" : encodeURIComponent(courseid)
+            }
+        }).done(function(data){
+            UstadMobileUtils.runCallback(callback, [data, null], this);
+        }).fail(function(jqXHR, textStatus){
+            UstadMobileUtils.runCallback(callback, [null, textStatus], this);
+        });
+    },
+    
+    /**
+     * Cache information about the course and save when it was last modified
+     * 
+     * @param {type} courseInfo
+     * @returns {undefined}
+     */
+    cacheCourseInfo: function(courseInfo) {
+        localStorage.setItem(UstadMobileAppZone.STORAGE_PREFIX_COURSEINFO 
+            + courseInfo.id, JSON.stringify(courseInfo));
+        var timeNow = Math.floor((new Date().getTime())/1000);
+        localStorage.setItem(UstadMobileAppZone.STORAGE_PREFIX_COURSEINFOTIME
+            + courseInfo.id, ""+timeNow);
+    },
+    
+    /**
+     * Get the course info (blocks, id, etc) that we have cached if available
+     * 
+     * @return cached info about course, or null if we don't have it
+     */
+    loadCachedCourseInfo: function(courseID) {
+        var courseVal = localStorage.getItem(
+            UstadMobileAppZone.STORAGE_PREFIX_COURSEINFO + courseID);
+        if(courseVal) {
+            return JSON.parse(courseVal);
+        }else {
+            return null;
+        }
+    },
+    
     
     /**
      * Load the assigned courses from the named server for the given username
