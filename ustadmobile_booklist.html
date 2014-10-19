@@ -70,6 +70,7 @@ If you need a commercial license to remove these restrictions please contact us 
                     UstadMobileBookList.getInstance().queueScan(function() {
                         UstadMobileBookList.getInstance().updateCourseListDisplay();
                     });
+                    UstadMobileAppZone.getInstance().updateAssignedCoursesDisplay();
                 });
             </script>
             
@@ -88,6 +89,9 @@ If you need a commercial license to remove these restrictions please contact us 
                 </form>
                 <br/>
                 <div id="Explorer" style="float:left"></div>
+                <div id="UMAssignedCoursesList">
+                </div>
+                
                 <ul data-role="listview" data-inset="true" data-filter="true" id="UMBookList">
                 </ul>               
                 

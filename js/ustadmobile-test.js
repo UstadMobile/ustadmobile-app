@@ -95,7 +95,6 @@ var containerChangeFn = function() {
 
     QUnit.module("UstadMobile");
     
-    alert("WTF FFS");
     testISO8601Format();
     
     testLoadScript();
@@ -105,6 +104,9 @@ var containerChangeFn = function() {
     testSequentialScriptLoad();
         
     testUstadMobileImplementationLoads();
+    
+    
+    testLoadAndCacheAssignedCourses();
     
     
     var audioEl = document.createElement("audio");
@@ -150,6 +152,35 @@ var containerChangeFn = function() {
     testCloseCourseIframe();
     
 }());
+
+function testLoadAndCacheAssignedCourses() {
+    asyncTest("Test loading assigned courses", function() {
+        expect(1);
+        UstadMobile.getInstance().runWhenImplementationReady(function() {
+            var theURL = UstadMobileAppZone.getInstance().getUMCloudEndpoint()
+                + "assigned_courses/";
+            UstadMobileAppZone.getInstance().loadAssignedCoursesFromServer(
+                   validUsername, validPassword, theURL, function(coursesObj, err) {
+                       ok(!err, "No error loading assigned courses");
+                       ok(coursesObj.length > 0, "Found assigned courses");
+                       for(var i = 0; i < coursesObj.length; i++) {
+                           ok(coursesObj[i].id, "Course has ID");
+                           ok(coursesObj[i]['last-modified'], 
+                              "Course has last modified");
+                           ok(coursesObj[i]['title'], "Course has title");
+                       }
+                       
+                       //now try and cache them and try getting them back
+                       UstadMobileAppZone.getInstance().cacheAssignedCourses(
+                               validUsername, coursesObj);
+                       ok(UstadMobileAppZone.getInstance().loadCachedAssignedCourses(
+                               validUsername) == coursesObj, 
+                                "Courses obj loads back from lcoal storage");
+                       start();
+                   });
+        });
+    });
+}
 
 /**
  * Define tests to check that 8601 duration formatting for TinCan works

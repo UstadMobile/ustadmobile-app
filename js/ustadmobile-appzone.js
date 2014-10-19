@@ -73,6 +73,13 @@ UstadMobileAppZone.getInstance = function() {
     return UstadMobileAppZone.mainInstance;
 };
 
+/**
+ * Prefix for assigned courses - will be stored as STORAGE_PREFIX_COURSES.username
+ * 
+ * @type type String
+ */
+UstadMobileAppZone.STORAGE_PREFIX_COURSES = "ustad_user_courses.";
+
 UstadMobileAppZone.prototype = {
     
     /**
@@ -95,11 +102,22 @@ UstadMobileAppZone.prototype = {
             var systemImpl = UstadMobile.getInstance().systemImpl;
             systemImpl.startHTTPServer();
             
+            //check the user assigned courses
+            var umApp = UstadMobileAppZone.getInstance();
+            if(umApp.getCurrentUsername()) {
+                umApp.loadAssignedCoursesFromServerDefault(function(coursesObj, err) {
+                    if(coursesObj) {
+                        umApp.cacheAssignedCourses(umApp.getCurrentUsername(),
+                            coursesObj);
+                    }
+                });
+            }
+            
             //UstadMobile.getInstance().systemImpl.getSystemLang(function(lang){
             //});
         });
         
-        
+        //If we are resetting all tin can matters
         localStorage.removeItem(
                 getTinCanQueueInstance().TINCAN_LOCALSTORAGE_INDEXVAR);
         localStorage.removeItem(
@@ -167,6 +185,123 @@ UstadMobileAppZone.prototype = {
     getTinCanEndpoint: function() {
         return "http://umcloud1.ustadmobile.com/umlrs/";
     },
+    
+    /**
+     * Gets the Cloud Server endpoint
+     * 
+     * TODO: Allow users to change this, save in localstorage
+     * 
+     */
+    getUMCloudEndpoint: function() {
+        return "http://localhost/fakeumcloud/";
+    },
+    
+    /**
+     * Load the assigned courses from the named server for the given username
+     * and password
+     * 
+     * @param String username
+     * @param String password
+     * @param String httpURL URL to load from (e.g. assigned_courses)
+     * @param function callback to run when courses are loaded - take two params 
+     * (courses and err).  
+     * 
+     */
+    loadAssignedCoursesFromServer: function(username, password, httpURL, callback) {
+        $.ajax({
+            method: "POST",
+            url: httpURL,
+            data: {
+                "username" : username,
+                "password" : password
+            },
+            dataType: "json"
+        }).done(function(data){
+            UstadMobileUtils.runCallback(callback, [data, null], this);
+        }).fail(function(jqXHR, textStatus){
+            UstadMobileUtils.runCallback(callback, [null, textStatus], this);
+        });
+    },
+    
+    /**
+     * Load assigned courses from the server for the current user against the 
+     * current default UMCLOUD server
+     * 
+     * @param callback function callback to run when loaded
+     */
+    loadAssignedCoursesFromServerDefault: function(callback) {
+        var url = this.getUMCloudEndpoint() + "assigned_courses";
+        this.loadAssignedCoursesFromServer(this.getCurrentUsername(),
+            this.getCurrentPass(), url, callback);
+    },
+    
+    /**
+     * Update the user assigned courses display
+     * 
+     * @param coursesObj Assigned courses object (optional) - otherwise use cached version
+     */
+    updateAssignedCoursesDisplay: function(coursesObj) {
+        if(!this.getCurrentUsername()) {
+            return;
+        }
+        
+        if(typeof coursesObj === "undefined") {
+            coursesObj = this.loadCachedAssignedCourses(
+                    this.getCurrentUsername());
+        }
+        
+        if($("#UMAssignedCoursesList").length > 0 && coursesObj) {
+            $("#UMAssignedCoursesList").html(this.makeUserCourseListHTML(
+                    coursesObj));
+        }
+    },
+    
+    /**
+     * Cache the assigned courses for a user to localStorage
+     * 
+     * @param username String Username to save courses for
+     * @param courses Object The assigned courses object as it comes back from cloud
+     */
+    cacheAssignedCourses: function(username, courses) {
+        localStorage.setItem(UstadMobileAppZone.STORAGE_PREFIX_COURSES 
+            + username, JSON.stringify(courses))
+    },
+    
+    /**
+     * Get the list of courses for the given user from the cache
+     * 
+     * @param username String the username to load courses for
+     * @returns Object of assigned courses as returned from server or null if we don't have it
+     */
+    loadCachedAssignedCourses: function(username) {
+        var retVal = localStorage.getItem(UstadMobileAppZone.STORAGE_PREFIX_COURSES 
+            + username);
+        if(retVal) {
+            return JSON.parse(retVal);
+        }else {
+            return null;
+        }
+    },
+    
+    /**
+     * Make the HTML that will show the courses assigned to this user
+     * 
+     * @param coursesObj Courses object of assigned courses
+     * @return the HTML showign the course list for this user
+     */
+    makeUserCourseListHTML: function(coursesObj) {
+        var html = "<div class='userCourseList'>";
+        for(var i = 0; i < coursesObj.length; i++) {
+            html += "<div class='userCourseItem'"
+                + "data-courseid=\""+coursesObj[i].id + "\">";
+            html += "<h4>" + coursesObj[i].title + "</h4>";
+            html += "</div>";
+        }
+        
+        html += "</div>";
+        return html;
+    },
+    
     
     /**
      * Return a TinCan Actor object for the currently logged in user
