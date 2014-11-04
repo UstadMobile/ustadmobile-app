@@ -148,6 +148,16 @@ UstadMobile.ZONE_APP = 0;
 UstadMobile.ZONE_CONTENT = 1;
 
 /**
+ * To use with standardized naming for files related to the app or content zone
+ * e.g. 
+ *  UstadMobile.ZONENAMES[UstadMobile.ZONE_APP] = "app"
+ *  UstadMobile.ZONENAMES[UstadMobile.ZONE_CONTENT] = "content"
+ *  
+ * @type Array
+ */
+UstadMobile.ZONENAMES = ["app", "content"];
+
+/**
  * Constant telling UstadMobile to get the in content menu contents from the
  * content directory itself - use for NodeWebKit
  * 
@@ -577,11 +587,12 @@ UstadMobile.prototype = {
         //required to make sure exe created pages show correctly
         console.log("UstadMobile: Running Pre-Init");
         $("body").addClass("js");
+        if(UstadMobile.getInstance().getZone() === UstadMobile.ZONE_APP) {
+            this.loadPanel();
+        }
+        
         if(UstadMobile.getInstance().getZone() === UstadMobile.ZONE_CONTENT) {
             this.loadRuntimeInfo();
-        }else {
-            //App zone - load panel
-            this.loadPanel();
         }
     },
     
@@ -868,19 +879,22 @@ UstadMobile.prototype = {
     },
     
     /**
+     * Loads the panel for the context (e.g. ustadmobile_panel_ZONENAME.html)
+     * 
+     * Will then setup the menu button on the top left to access the panel
      * 
      * @returns {undefined}
      */
     loadPanel: function() {
         $.ajax({
-            url: "ustadmobile_panel_app.html",
+            url: "ustadmobile_panel_" + UstadMobile.getInstance().getZoneName() 
+                    + ".html",
             dataType: "text"
         }).done(function(data) {
             UstadMobile.getInstance().panelHTML = data;
             $(document).on('pagebeforecreate', 
                 UstadMobile.getInstance().initPanel);
             UstadMobile.getInstance().initPanel();
-            
         }).fail(function() {
             console.log("Panel load failed");
         });
@@ -917,16 +931,22 @@ UstadMobile.prototype = {
             return;
         }
 
-        var thisPgId = pgEl.attr("id");
+        
+        var thisPgId = pgEl.attr("id") || UstadMobile.getInstance().pageURLToID(
+                pgEl.attr('data-url'));
+        
         var newPanelId = "ustad_panel_" + thisPgId;
 
+        
         if(pgEl.children(".ustadpaneldiv").length === 0) {
-            var htmlToAdd = "<div id='" + newPanelId + "'>";
+            var htmlToAdd = "<div class='ui-btn ui-btn-left' id='" + newPanelId + "'>";
             htmlToAdd += UstadMobile.getInstance().panelHTML;
             htmlToAdd += "</div>";
 
             pgEl.prepend(htmlToAdd);
-
+            
+            $("#"+newPanelId).trigger("create");
+            console.log("Appended panel to page");
         }
 
         $("#" + newPanelId).panel({
@@ -935,10 +955,53 @@ UstadMobile.prototype = {
         }).trigger("create");
         $("#" + newPanelId).addClass("ustadpaneldiv");
 
+        if(pgEl.find(".ustad_panel_href").length === 0) {
+            pgEl.find("[data-role='header']").prepend("<a href='#mypanel' "
+                + "data-role='button' data-inline='true' class='ustad_panel_href'>"
+                + "<i class='lIcon fa fa-bars'></i></a>");
+        }
+        
         pgEl.find(".ustad_panel_href").attr("href", "#" + newPanelId);
-
     },
     
+    /**
+     * Turn a page URL into something that can be used as an ID - stip the path, 
+     * query, suffix (e.g. .html)
+     * 
+     * @param String url
+     * @returns url without characters that cannot be used as an ID
+     */
+    pageURLToID: function(url) {
+        var lastSlash = url.lastIndexOf("/");
+        var pageId = ""+url;
+        if(lastSlash !== -1) {
+            pageId = pageId.substring(lastSlash+1);
+        }
+        
+        var queryStart = pageId.indexOf("?");
+        if(queryStart !== -1) {
+            pageId = pageId.substring(0, queryStart);
+        }
+        
+        pageId = UstadMobile.getInstance().stripHTMLURLSuffix(pageId);
+        
+        return pageId;
+    },
+    
+    /**
+     * Strip .html off the end of a name
+     * 
+     * @param String pageName
+     * @returns pageName without trailing .html if it was there
+     */
+    stripHTMLURLSuffix: function(pageName){
+        var htmlSuffix = ".html";
+        if(pageName.indexOf(htmlSuffix) === pageName.length - htmlSuffix.length) {
+            pageName = pageName.substring(0, pageName.length - htmlSuffix.length);
+        }
+        
+        return pageName;
+    },
     
     /**
      * Close the menu panel
@@ -963,6 +1026,16 @@ UstadMobile.prototype = {
             return UstadMobile.ZONE_CONTENT;
         }
     },
+    
+    /**
+     * Gives a string for the name of the current zone - content or app
+     * 
+     * @returns String the name of the current zone "content" or "app"
+     */
+    getZoneName: function() {
+        return UstadMobile.ZONENAMES[UstadMobile.getInstance().getZone()];
+    },
+    
     
     /**
      * Open the specified page - normally pass to the zone Object

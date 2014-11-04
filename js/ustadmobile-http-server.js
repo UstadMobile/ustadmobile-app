@@ -146,6 +146,7 @@ UstadMobileHTTPServer.prototype = {
             var queryStrParsed = querystring.parse(queryStr);
             var stmtStr = queryStrParsed['statement'];
             UstadMobileAppZone.getInstance().queueTinCanStatement(stmtStr);
+            response.end("{'result': 'OK'}");
         }else {
             response.writeHead(200, { 'Content-Type': 'text/plain'});
             response.end("Hello");

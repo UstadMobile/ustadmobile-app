@@ -140,7 +140,6 @@ UstadMobileAppZone.prototype = {
      * Check the courses that the user is assigned to via the server, start
      * downloads etc. where needed
      * 
-     * @returns {undefined}
      */
     updateAssignedCourses: function() {
         if(this.getCurrentUsername()) {

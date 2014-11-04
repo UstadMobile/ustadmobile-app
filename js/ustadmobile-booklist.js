@@ -139,6 +139,7 @@ UstadMobileBookList.prototype = {
         "js/ustadmobile-contentzone.js" : "ustadmobile-contentzone.js",
         "js/ustadmobile-localization.js" : "ustadmobile-localization.js",
         "js/ustadmobile_menupage_content.html" : "ustadmobile_menupage_content.html",
+        "js/ustadmobile_panel_content.html" : "ustadmobile_panel_content.html",
         "jqm/jqm-base.css" : "jqm-base.css",
         "css/ustadmobile.css" : "ustadmobile.css"
     },
@@ -174,7 +175,7 @@ UstadMobileBookList.prototype = {
         }
     },
     
-   
+    
     /**
       *Log out function to set localStorage to null (remove) and redirect to 
       *login page from then.
