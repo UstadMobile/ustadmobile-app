@@ -179,12 +179,30 @@ UstadMobileContentZone.prototype = {
         if(!courseTitle) {
             courseTitle = "Course";
         }
-        var stmt = EXETinCan.getInstance().makeLaunchedStmt(
-                EXETinCan.getInstance().getTinCanIDURLPrefix(),
-                courseTitle, courseTitle);
-        //EXETinCan.getInstance().recordStatement(stmt);
+        
+        if(EXETinCan.getInstance().getActor()) {
+            var stmt = EXETinCan.getInstance().makeLaunchedStmt(
+                    EXETinCan.getInstance().getTinCanIDURLPrefix(),
+                    courseTitle, courseTitle);
+            EXETinCan.getInstance().recordStatement(stmt);
+        }
     },
     
+    /**
+     * Return the active username (e.g. from tincan actor)
+     * 
+     * @returns String current active username
+     */
+    getCurrentUsername: function() {
+        var retVal = null;
+        if(EXETinCan.getInstance().getActor()) {
+            var tcMbox = EXETinCan.getInstance().getActor().mbox;
+            retVal = tcMbox.substring(tcMbox.indexOf(":")+1, 
+                tcMbox.indexOf("@"));
+        }
+        
+        return retVal;
+    },
     
     checkTOC: function(evt, ui) {
         var pgEl = null;
@@ -192,6 +210,10 @@ UstadMobileContentZone.prototype = {
             pgEl = $(evt.target);
         }else {
             pgEl = $(".ui-page-active");
+        }
+        
+        if(pgEl.attr('data-url') && pgEl.attr('data-url').indexOf("exetoc.html") !== -1) {
+            pgEl.attr("id", "exetocpage");
         }
         
         tocClicked = false;
@@ -227,8 +249,23 @@ UstadMobileContentZone.prototype = {
                dataType: "text"
             });
         }else if(pageName === UstadMobile.PAGE_TOC) {
+            var tocURL = UstadMobile.PAGE_TOC;
+            if($("#exetocpage").length) {
+                tocURL = "#exetocpage";
+            }
+            
             $( ":mobile-pagecontainer" ).pagecontainer( "change", 
-                UstadMobile.PAGE_TOC);
+                tocURL);
+        }else if(pageName === UstadMobile.PAGE_FEEDBACK) {
+            
+            /*
+            $( ":mobile-pagecontainer" ).pagecontainer( "change", 
+                UstadMobile.PAGE_FEEDBACK);
+            */
+           //$("#popupDialog").popup();
+           
+           debugger;
+           $(".ui-page-active .ustad_fb_popup").popup("open");
         }
     },
     
@@ -636,7 +673,7 @@ UstadMobileContentZone.prototype = {
         if(EXETinCan.getInstance().getActor()) {
             var stmt = EXETinCan.getInstance().makePageExperienceStmt(
                 this.pageOpenXAPIName, pageTitle, pageTitle, pageDurationMS);
-            //EXETinCan.getInstance().recordStatement(stmt);
+            EXETinCan.getInstance().recordStatement(stmt);
         }
     },
     

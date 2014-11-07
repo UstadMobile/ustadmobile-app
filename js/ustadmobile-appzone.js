@@ -119,7 +119,7 @@ UstadMobileAppZone.prototype = {
             var systemImpl = UstadMobile.getInstance().systemImpl;
             systemImpl.startHTTPServer();
             UstadMobileAppZone.getInstance().updateAssignedCourses();
-            
+            UstadMobile.getInstance().displayUsername();
             
             //UstadMobile.getInstance().systemImpl.getSystemLang(function(lang){
             //});

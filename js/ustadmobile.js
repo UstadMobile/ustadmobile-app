@@ -223,6 +223,13 @@ UstadMobile.PAGE_ABOUT = "ustadmobile_aboutus.html";
 UstadMobile.PAGE_TOC = "exetoc.html";
 
 /**
+ * Constant - page for showing dialog for sending feedback
+ * 
+ * @type String
+ */
+UstadMobile.PAGE_FEEDBACK = "feedback_dialog.html";
+
+/**
  * Constant - page for login
  * 
  * @type string
@@ -587,9 +594,7 @@ UstadMobile.prototype = {
         //required to make sure exe created pages show correctly
         console.log("UstadMobile: Running Pre-Init");
         $("body").addClass("js");
-        if(UstadMobile.getInstance().getZone() === UstadMobile.ZONE_APP) {
-            this.loadPanel();
-        }
+        this.loadPanel();
         
         if(UstadMobile.getInstance().getZone() === UstadMobile.ZONE_CONTENT) {
             this.loadRuntimeInfo();
@@ -937,9 +942,8 @@ UstadMobile.prototype = {
         
         var newPanelId = "ustad_panel_" + thisPgId;
 
-        
         if(pgEl.children(".ustadpaneldiv").length === 0) {
-            var htmlToAdd = "<div class='ui-btn ui-btn-left' id='" + newPanelId + "'>";
+            var htmlToAdd = "<div id='" + newPanelId + "'>";
             htmlToAdd += UstadMobile.getInstance().panelHTML;
             htmlToAdd += "</div>";
 
@@ -957,11 +961,39 @@ UstadMobile.prototype = {
 
         if(pgEl.find(".ustad_panel_href").length === 0) {
             pgEl.find("[data-role='header']").prepend("<a href='#mypanel' "
-                + "data-role='button' data-inline='true' class='ustad_panel_href'>"
+                + "data-role='button' data-inline='true' class='ustad_panel_href ui-btn ui-btn-left'>"
                 + "<i class='lIcon fa fa-bars'></i></a>");
         }
         
         pgEl.find(".ustad_panel_href").attr("href", "#" + newPanelId);
+        
+        if(pgEl.children(".ustad_fb_popup") !== 0) {
+            pgEl.children(".ustad_fb_popup").attr("id", "ustad_fb_" + thisPgId);
+        }
+        
+    },
+    
+    /**
+     * Update username displayed in header
+     * 
+     * DISABLED : DO NOTHING
+     * 
+     * @param pageSelector String jQuery page selector.  Optional - if ommitted user .ui-page-active
+     */
+    displayUsername: function(pageSelector) {
+        /*
+        alert("display user");
+        debugger;
+        if(typeof pageSelector === "undefined") {
+            pageSelector = ".ui-page-active";
+        }
+        var currentUsername = UstadMobile.getZoneObj().getCurrentUsername();
+        if($(pageSelector).find(".ustad_user_label").length === 0) {
+            $(pageSelector).find("[data-role='header'").append("<div class='ustad_user_label'>"
+                + currentUsername + "</div>");
+        }else {
+            $(pageSelector).find(".ustad_user_label").html(currentUsername);
+        }*/
     },
     
     /**

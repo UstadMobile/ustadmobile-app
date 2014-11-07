@@ -3,5 +3,8 @@
         <li>&#160;</li>
         <li><a onclick="UstadMobileContentZone.getInstance().goPage(UstadMobile.PAGE_TOC)"><span id="tocmenutext" class="exeTranslated" data-exe-translation="Table of Contents">Table of Contents</span></a></li>
         <li><a onclick="UstadMobileContentZone.getInstance().goPage(UstadMobile.PAGE_BOOKLIST)"><span id="exittocoursetext" class="exeTranslated" data-exe-translation="Exit to Course List">Course List</span></a></li>
+        <li><a onclick="UstadMobileContentZone.getInstance().goPage(UstadMobile.PAGE_FEEDBACK)"><span id="feedbacktxt">Feedback</span></a></li>
     </ul>
 </div>
+
+<div data-role="popup" data-history="false" id="popupDialog" class="ustad_fb_popup" data-overlay-theme="b" data-theme="b" data-dismissible="false" style="max-width:400px;"><div data-role="header" data-theme="b"><h1>Delete Page?</h1></div><div role="main" class="ui-content"><h3 class="ui-title">Are you sure you want to delete this page?</h3><p>This action cannot be undone.</p><a class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" onclick="$('#popupDialog').popup('close')">Cancel</a><a class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" data-rel="back" data-transition="flow">Delete</a></div></div>

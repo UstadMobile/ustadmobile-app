@@ -554,7 +554,6 @@ UstadMobileCordovaScanner.prototype = {
         var fileFullPath = fileEntry.toURL();
         
         debugLog("Found " + fileFullPath + " is an EXE directory - adding...");
-        var folderName = fileEntry.getParent();
         fileEntry.getParent(function(parentEntry) {
             debugLog("Got a parent Book directory name");
             debugLog("The full path = " + parentEntry.fullPath);
@@ -563,14 +562,15 @@ UstadMobileCordovaScanner.prototype = {
             var courseEntryObj = new UstadMobileCourseEntry(folderName, "",
                 fileFullPath, null, folderName);
             UstadMobileBookList.getInstance().addCourseToList(courseEntryObj);
+            umScanner.scanNextDirectoryIndex();
         }, function(error) {
             debugLog("failed to get parent directory folderName: " + folderName 
                     + " with an error: " + error);
+            umScanner.scanNextDirectoryIndex();
         });
         debugLog("Before we scan the directory, the number of Books Found is: "
                 + UstadMobileBookList.getInstance().coursesFound.length);
             
-        umScanner.scanNextDirectoryIndex();
     },
     
     /*
