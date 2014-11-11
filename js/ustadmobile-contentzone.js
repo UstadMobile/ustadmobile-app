@@ -139,6 +139,9 @@ UstadMobileContentZone.prototype = {
         //put event handlers on buttons
         $(document).on("pagebeforecreate", function(evt, ui) {
             UstadMobileContentZone.getInstance().checkTOC(evt, ui);
+            if($(evt.target).enhanceIdevicesWithin) {
+                $(evt.target).enhanceIdevicesWithin("");
+            }
         });
         
         $( ":mobile-pagecontainer" ).on("pagecontainershow",
@@ -616,7 +619,9 @@ UstadMobileContentZone.prototype = {
             $.mobile.pageContainer.find(".ui-page-active .ui-content").prepend(
                     newPageContentEl);
             newPageContentEl.enhanceWithin();
-            
+            if(newPageContentEl.enhanceIdevicesWithin) {
+                newPageContentEl.enhanceIdevicesWithin("");
+            }
             UstadMobileContentZone.getInstance().contentPageSelectors[pgPos] =
                     ".ustadcontent[data-url='"+this.url+"']";
             
@@ -625,7 +630,6 @@ UstadMobileContentZone.prototype = {
 
         }).fail(function(jqXHR, textStatus, errorThrown){
             console.log("Preload: Failed to fetch "  + pageURL + ": " + errorThrown);
-            debugger;
         });
     },
     
@@ -850,6 +854,7 @@ UstadMobileContentZone.prototype = {
             
             UstadMobileContentZone.getInstance().preProcessPage(pageContent);
             pgEl.append(pageContent);
+            
             pageContent = null;
             
             if(footer) {
