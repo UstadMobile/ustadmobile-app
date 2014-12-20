@@ -52,6 +52,7 @@ var UstadMobileAppImplNodeWebkit;
  * @constructor
  */
 UstadMobileAppImplNodeWebkit = function() {
+    this.mountedEPubs = {};
     
 };
 
@@ -84,6 +85,14 @@ UstadMobileAppImplNodeWebkit.prototype = Object.create(
  * @type String
  */
 UstadMobileAppImplNodeWebkit.prototype.winMyDocOutput = "";
+
+/**
+ * Epubs mounted to be served over http in the form of 
+ * epubname -> extracted path (e.g. tmp folder)
+ * 
+ * @type {Object}
+ */
+UstadMobileAppImplNodeWebkit.prototype.mountedEPubs = {};
 
 /**
  * Get the actual language of the system for NodeWebKit
@@ -131,24 +140,19 @@ UstadMobileAppImplNodeWebkit.prototype.getHTTPBaseURL = function() {
 UstadMobileAppImplNodeWebkit.prototype.showCourse = function(courseObj, 
     onshowCallback, show, onloadCallback, onerrorCallback) {
     var path = require("path");
+    var epubFilename = courseObj.relativeURI.substring(0, 
+        courseObj.relativeURI.indexOf("/"));
     
-    
-    var destDirectory = path.dirname(courseObj.coursePath);
-    
-
-    var httpURL = UstadMobileHTTPServer.getInstance().getURLForCourseEntry(
-        courseObj);
-    httpURL = UstadMobileAppZone.getInstance().appendTinCanParamsToURL(httpURL);
-
-    var filesToCopy = UstadMobileBookList.getInstance().appFilesToCopyToContent;
-    
-    var copyJob = this.makeCopyJob(filesToCopy, 
-        destDirectory, function() {
-            //make an iframe with the content in it
-            UstadMobileBookList.getInstance().showCourseIframe(httpURL,
-                onshowCallback, show, onloadCallback, onerrorCallback);
+    var epubFullPath = path.join(UstadMobile.getInstance().contentDirURI,
+        epubFilename);
+        
+    UstadMobileAppImplNodeWebkit.getInstance().mountContentEPub(epubFullPath, function() {
+        if(show) {
+            UstadMobileBookList.getInstance().showEPubPage(courseObj, onloadCallback);
+        }else {
+            UstadMobileBookList.getInstance().setEpubFrame(courseObj, onloadCallback);
+        }
     });
-    copyJob.copyNextFile();
 };
 
 /**
@@ -214,114 +218,296 @@ UstadMobileAppImplNodeWebkit.prototype.scanCourses = function(callback) {
     var fs = require("fs");
     var path = require("path");
     
-    fs.readdir(UstadMobile.getInstance().contentDirURI, function(err, entries) {
-        if(err) {
-            throw err;
-        }
-        
-        for (var i = 0; i < entries.length; i++) {
-            var fullPath = path.join(UstadMobile.getInstance().contentDirURI,
-                entries[i]);
-            var fStat = null;
-            try {
-                var fdObj = fs.openSync(fullPath, 'r');
-                fStat = fs.fstatSync(fdObj);
-            }catch(err) {
-               console.log("Error attempting to stat file : " + err);
-            }
-
-            if(fStat !== null && fStat.isDirectory()) {
-                var courseObj = UstadMobileAppImplNodeWebkit.getInstance(
-                        ).getCourseObjFromDir(fullPath);
-                if(courseObj !== null) {
-                    UstadMobileBookList.getInstance().addCourseToList(courseObj);
+    UstadMobileAppImplNodeWebkit.getInstance().cacheEpubsInDir(
+        UstadMobile.getInstance().contentDirURI, function() {
+            fs.readdir(UstadMobile.getInstance().contentDirURI, function(err, entries) {
+                if(err) {
+                    throw err;
                 }
-            }
-        }
-       
-        //Done scanning courses
-        UstadMobileUtils.runCallback(callback, [true], 
-            UstadMobileAppImplNodeWebkit.getInstance());
-    });
+
+                for (var i = 0; i < entries.length; i++) {
+                    var fullPath = path.join(UstadMobile.getInstance().contentDirURI,
+                        entries[i]);
+                    var fStat = null;
+                    try {
+                        var fdObj = fs.openSync(fullPath, 'r');
+                        fStat = fs.fstatSync(fdObj);
+                    }catch(err) {
+                       console.log("Error attempting to stat file : " + err);
+                    }
+
+                    var ext = entries[i].substring(entries[i].length-5, entries[i].length);
+                    if(ext === ".epub") {
+                        var courseObj = UstadMobileAppImplNodeWebkit.getInstance(
+                                ).getCourseObjFromEpub(fullPath);
+                        if(courseObj !== null) {
+                            UstadMobileBookList.getInstance().addCourseToList(courseObj);
+                        }
+                    }
+                }
+
+                //Done scanning courses
+                UstadMobileUtils.runCallback(callback, [true], 
+                    UstadMobileAppImplNodeWebkit.getInstance());
+            });
+        });
 };
 
 /**
- * Get a CourseEntryObject for a given directory, or return null if
- * this directory does not contain a course
- *
- * @method getCourseObjFromDir
- * @param dirname Directory e.g. /path/to/ustadmobileContent/contentDir contains exetoc.html
- * @return {CourseEntryObject} Representing course in that directory
+ * Unzip the specified file from the given zipPath to a base folder and get
+ * a string of the contents of the file.
+ * 
+ * E.g.
+ * 
+ * impl.unzipSingleFile('/path/to/file.zip', 'file/to/unzip.txt', '/unzip/path', function(err, strVal) {
+ *  if(err) throw err;
+ *  console.log('file contents: ' + strVal);
+ * });
+ * 
+ * @param {String} zipPath path to the zip file
+ * @param {type} zipEntryName Name of the entry to unzip e.g. META-INF/container.xml
+ * @param {String} baseFolder path to the base directory to unzip into (will create sub dirs as per zipEntryName)
+ * @param {function} callback function to call : arguments (err, String value)
+
+ * @returns {undefined}
  */
-UstadMobileAppImplNodeWebkit.prototype.getCourseObjFromDir = function(dirname) {
+UstadMobileAppImplNodeWebkit.prototype.unzipSingleFile = function(zipPath, zipEntryName, baseFolder, callback) {
     var fs = require('fs');
+    var fse = require("fs-extra");
     var path = require("path");
+    var unzip = require("unzip");
+    var streamBuffers = require("stream-buffers");
     
-    var fileEntry = path.join(dirname, 
-        UstadMobileBookList.getInstance().exeContentFileName);
+    var streamWriter = new streamBuffers.WritableStreamBuffer();
+    var destFilePath = path.join(baseFolder, zipEntryName);
+    var destDir = path.dirname(destFilePath);
+    
+    var fileFound = false;
+    
+    if(!fs.existsSync(destDir)) {
+        fse.mkdirsSync(destDir);
+    }
+        
+    streamWriter.on("close", function() {
+        //save that to disk
+        var fileContents = streamWriter.getContentsAsString('utf8');
+        fs.writeFileSync(destFilePath, fileContents);
+        callback(null, fileContents);
+    });
+    
+    fs.createReadStream(zipPath)
+        .pipe(unzip.Parse())
+        .on('entry', function (entry) {
+            if(entry.path === zipEntryName && entry.type === "File") {
+                fileFound = true;
+                entry.pipe(streamWriter);
+            }else {
+                entry.autodrain();
+            }
+        }).on("close", function() {
+            if(!fileFound) {
+                callback("NOTFOUND", null);
+            }
+        });
+};
+
+/**
+ * Make a directory with cached copies of the rootfile and manifest for every
+ * epub in the given directory.  Will run the given callback when done with no
+ * args
+ * 
+ * @method cahceEpubsInDir
+ * 
+ * @param {String} dirPath 
+ * @param {function} callback
+ */
+UstadMobileAppImplNodeWebkit.prototype.cacheEpubsInDir = function(dirPath, callback) {
+    var path = require("path");
+    var fs = require("fs");
+    fs.readdir(dirPath, function(err, entries) {
+        if(err) {
+            callback(err, null);
+        }
+        
+        var epubsArr = [];
+        for(var i = 0; i < entries.length; i++) {
+            if(entries[i].length > 5) {
+                var ext = entries[i].substring(entries[i].length-5, 
+                    entries[i].length);
+                if(ext === ".epub") {
+                    epubsArr.push(entries[i]);
+                }
+            }
+        }
+        
+        var currentEntry = 0;
+        var cacheEntryFn = function() {
+            var entryPath = path.join(dirPath, epubsArr[currentEntry]);
+            UstadMobileAppImplNodeWebkit.getInstance().makeEpubCache(entryPath,
+                function(err, rootFileStr, rootFilePath) {
+                    currentEntry++;
+                    if(currentEntry < epubsArr.length) {
+                        cacheEntryFn();
+                    }else {
+                        callback();
+                    }
+                });
+        };
+        
+        cacheEntryFn();
+    });
+};
+
+UstadMobileAppImplNodeWebkit.prototype.getCourseObjFromEpub = function(epubPath) {
+    var path = require("path");
+    var fs = require("fs");
+    
+    var cacheDirPath = epubPath + "_cache";
+    var containerXMLPath = path.join(cacheDirPath, "META-INF/container.xml");
     
     try {
-        fs.statSync(fileEntry);
+        fs.statSync(containerXMLPath);
     }catch(err) {
         //no course directory here actually...
         return null;
     }
     
-    debugLog("NodeWebKit finds content in " + fileEntry);
+    var containerXMLStr = fs.readFileSync(containerXMLPath, 'utf8');
+    var rootFiles = UstadJS.getContainerRootfilesFromXML(containerXMLStr);
+    var rootFile0 = rootFiles[0]['full-path'];
     
-    var folderName = path.basename(dirname);
+    //now open the rootfile OPF
+    var opfFullPath = path.join(cacheDirPath, rootFile0);
+    var opfStr = fs.readFileSync(opfFullPath, 'utf8');
+    var opfObj = new UstadJSOPF();
+    opfObj.loadFromOPF(opfStr);
+    
+    debugLog("NodeWebKit finds content in " + epubPath);
+    
+    var epubBasename = path.basename(epubPath);
+    var relativeURI = UstadMobileUtils.joinPath([epubBasename, rootFile0], "/");
 
-    var courseEntryObj = new UstadMobileCourseEntry(folderName, "", 
-        fileEntry, null, folderName);
+    var courseEntryObj = new UstadMobileCourseEntry(opfObj.title, "", 
+        epubPath, null, relativeURI);
+        
+    courseEntryObj.opf = opfObj;
     
-    return courseEntryObj;
+    return courseEntryObj;   
 };
 
-UstadMobileAppImplNodeWebkit.prototype.makeCopyJob = function(fileDestMap, destDir, completeCallback) {
-    var newCopyJob = new UstadMobileAppToContentCopyJob(fileDestMap, destDir, 
-        completeCallback);
-        
-    newCopyJob.copyNextFile = function() {
-        var path = require("path");
-        var fs = require("fs");
-        var copyJob = this;
-
-        var appWorkingDir = process.cwd();
-
-        if(this.currentFileIndex === 0) {
-            var runtimeInfo = { 
-                "baseURL": appWorkingDir,
-            };
-
-            runtimeInfo[UstadMobile.RUNTIME_MENUMODE] 
-                    = UstadMobile.MENUMODE_USECONTENTDIR;
-            runtimeInfo['FixAttachmentLinks'] = true;
-
-            fs.writeFileSync(path.join(this.destDir, "ustad_runtime.json"), 
-                JSON.stringify(runtimeInfo));
-        }
-
-
-        if(this.currentFileIndex < this.fileList.length) {
-            var srcFile = this.fileList[this.currentFileIndex];
-            var fullSrcPath = path.join(appWorkingDir, srcFile);
-            var destFileName = this.fileDestMap[srcFile];
-            var fullDstPath = path.join(this.destDir, destFileName);
-            var inReadStream = fs.createReadStream(fullSrcPath);
-            var outWriteStream = fs.createWriteStream(fullDstPath);
-
-            outWriteStream.on("close", function() {
-                copyJob.currentFileIndex++;
-                copyJob.copyNextFile();
-            });
-
-            inReadStream.pipe(outWriteStream);
-        }else {
-            this.completeCallback();
-        }
-    };
+/**
+ * Make a directory cache for the given epub file: usage
+ * 
+ * impl.makeEpubCache("/path/to/file.epub", function(err, rootFileStr, rootFilePath) {
+ *  if(err) throw err;
+ *  console.log("Root file (eg opf) contents: " + rootFileStr);
+ *  console.log("root file path in epub: " + rootFilePath);
+ * });
+ *
+ * @method getCourseObjFromDir
+ * @param epubPath {String} full path to the .epub file
+ * @param callback {function} callback to run
+ * @return {CourseEntryObject} Representing course in that directory
+ */
+UstadMobileAppImplNodeWebkit.prototype.makeEpubCache = function(epubPath, callback) {
+    var fs = require('fs');
+    var path = require('path');
     
-    return newCopyJob;
+    var epubCachePath = epubPath + "_cache";
+    
+    //check and see if the epub is more up to date than the directory
+    if(fs.existsSync(epubCachePath)) {
+        var pathToContainer = path.join(epubCachePath, "META-INF/container.xml");
+        var cachedContainerStat = fs.statSync(pathToContainer);
+        var epubFileStat = fs.statSync(epubPath);
+        if(epubFileStat.mtime.getTime() < cachedContainerStat.mtime.getTime()) {
+            //we already have an up to date cache here
+            var containerStr = fs.readFileSync(pathToContainer, 'utf8');
+            var rootFiles = UstadJS.getContainerRootfilesFromXML(containerStr);
+            var opubPath = path.join(epubCachePath, rootFiles[0]['full-path']);
+            var opubStr = fs.readFileSync(opubPath, 'utf8');
+            callback(null, opubStr);
+            
+            //stop now
+            return;
+        }
+    } else {
+        fs.mkdirSync(epubCachePath);
+    }
+    
+    UstadMobileAppImplNodeWebkit.getInstance().unzipSingleFile(epubPath,
+        "META-INF/container.xml", epubCachePath, function(err, strVal) {
+            if(err) {
+                
+            }
+            var rootFiles = UstadJS.getContainerRootfilesFromXML(strVal);
+            UstadMobileAppImplNodeWebkit.getInstance().unzipSingleFile(epubPath,
+                rootFiles[0]['full-path'], epubCachePath, function(err, strVal) {
+                    callback(null, strVal);
+                });
+        });
+};
+
+/**
+ * 
+ * @param {String} epubName
+ * @param {type} function
+ */
+UstadMobileAppImplNodeWebkit.prototype.unmountEpub = function(epubName, callback) {
+    var fse = require("fs-extra");
+    var tmpDirName = this.mountedEPubs[epubName];
+    if(!tmpDirName) {
+        callback("NOTFOUND", null);
+    }
+    
+    fse.removeSync(tmpDirName);
+    callback(null, tmpDirName);
+};
+
+/**
+ * Mount an epub on the HTTP server to make its contents accessible via:
+ * 
+ * http://IP:PORT/ustadmobileContent/file.epub/
+ * 
+ * e.g.
+ * 
+ * impl.mountContentEPub('/path/to/file.epub', function(err, relativeURI) {
+ *  if(err) throw err;
+ *  console.log("mounted to " + relativeURI);
+ * });
+ * 
+ * @param {String} epubPath Full path to the epub file
+ * @param {type} callback
+ * @returns {undefined}
+ */
+UstadMobileAppImplNodeWebkit.prototype.mountContentEPub = function(epubPath, callback) {
+    var temp = require("temp").track();
+    var path = require("path");
+    var unzip = require("unzip");
+    var fs = require("fs");
+    
+    var epubBasename = path.basename(epubPath);
+    
+    temp.mkdir("umepub-" + epubBasename, function(err, tmpDirPath) {
+        if(err) { 
+            callback(err, null); 
+            return;
+        }
+        
+        console.log("Extract " + epubPath + " to " + tmpDirPath);
+        fs.createReadStream(epubPath).pipe(unzip.Extract({ path: tmpDirPath }))
+            .on("close", function(err) {
+                if(err) {
+                    callback(err, null);
+                }
+                UstadMobileAppImplNodeWebkit.getInstance().mountedEPubs
+                    [epubBasename] = tmpDirPath;
+                
+                UstadMobileHTTPServer.getInstance().mountEpubDir(epubBasename,
+                    tmpDirPath);
+                callback(null, epubBasename);
+            });
+    });
 };
 
 /**

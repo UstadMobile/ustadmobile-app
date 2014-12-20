@@ -90,6 +90,7 @@ width: 91px;
 	padding: 7px 15px 7px 25px;
 	padding: 0px 0px 0px 0px;
 	min-height: 50px;
+        overflow: hidden;
 }
 
 .ui-header.noborder {
@@ -187,6 +188,7 @@ border-radius: 0px;
 	padding: 7px 15px 7px 25px;
 	padding: 0px 0px 0px 0px;
 	min-height: 50px;
+        overflow: hidden;
 }
 
 .ui-footer .ui-btn-text {

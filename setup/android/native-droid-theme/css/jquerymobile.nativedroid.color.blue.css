@@ -37,6 +37,11 @@ textarea.ui-page-theme-b.ui-input-text:focus {
 	border: 1px solid #33B5E5;
 }
 
+.ui-page-theme-b .ui-slider-bg.ui-btn-active,
+.ui-page-theme-b .ui-panel-open{
+	background-color: #33B5E5;
+}
+
 .ui-page-theme-b .ui-link,.ui-page-theme-b .ui-li a,.nativeDroidCards ul[data-nativedroid-plugin="twitter"] a {
 	color: #33B5E5;
 }

@@ -604,5 +604,5 @@ UstadMobileDownloadJob.prototype = {
 
 
 var buttonBOOLEAN = true;   //If true, then ability to click on the button and download / get course by id. If set to false, then something is waiting to get over.
-var server = "umcloud1.ustadmobile.com:8010";
+var server = "umcloud1.ustadmobile.com";
 var serverEXeExport = "http://" + server + "/media/eXeExport/";

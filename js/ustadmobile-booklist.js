@@ -94,11 +94,11 @@ var ustadMobileBookListInstance = null;
  * @constructor
  */
 function UstadMobileBookList() {
-    this.exeContentFileName = "exetoc.html";
+    this.exeContentFileName = "META-INF/container.xml";
     
     //The file that should be present in a directory to indicate this is exe content
     //var exeFileMarker = "index.html";
-    this.exeFileMarker = "exetoc.html";
+    this.exeFileMarker = "META-INF/container.xml";
 
     /** Courses found */
     this.coursesFound = [];
@@ -182,13 +182,76 @@ UstadMobileBookList.prototype = {
       *login page from then.
       * @method umLogout    
     */
-   umLogout: function() {
+    umLogout: function() {
        localStorage.removeItem('username');
        localStorage.removeItem('password');
        $.mobile.changePage("index.html"); //BB10 specific changes.
-   },
-   
-      
+    },
+    
+    /**
+     * Move to the epubrunner page, when it opens, setup the frame viewer
+     * 
+     * @param {UstadMobileCourseEntry} courseObj Course to display
+     * @param {function} onloadCallback callback to run once content loads
+     * 
+     */
+    showEPubPage: function(courseObj, onloadCallback) {
+        $( ":mobile-pagecontainer" ).one("pagecontainershow", function() {
+            UstadMobileBookList.getInstance().setEpubFrame(courseObj, onloadCallback);
+        });
+        
+        $( ":mobile-pagecontainer" ).pagecontainer( "change", 
+            "ustadmobile_epubrunner.html");
+    },
+    
+    checkButtons: function() {
+        var showNext = $("#ustad_epub_frame").opubframe("option", "spine_pos") <
+                $("#ustad_epub_frame").opubframe("option", "num_pages")-1;
+        var showPrev = $("#ustad_epub_frame").opubframe("option", "spine_pos") > 
+                0;
+        
+        if(showPrev) {
+            $("#umBack").show();
+        }else {
+            $("#umBack").hide();
+        }
+        
+        if(showNext) {
+            $("#umForward").show();
+        }else {
+            $("#umForward").hide();
+        }
+    },
+    
+    setEpubFrame: function(courseObj, onloadCallback) {
+        if(!$("#ustad_epub_frame").is(".umjs-opubframe")) {
+            $("#ustad_epub_frame").opubframe();
+            var height = UstadMobile.getInstance().getJQMViewportHeight() - 8;
+            
+            $("#ustad_epub_frame").opubframe("option", "height", height + "px");
+            $("#ustad_epub_frame").css("margin", "0px");
+            $("#ustad_epub_frame").on("pageloaded", $.proxy(this.checkButtons,
+                this));
+        }
+        
+        $("#ustad_epub_frame").one("pageloaded", function(evt, params) {
+            UstadMobileUtils.runCallback(onloadCallback, [evt, params], this);
+        });
+        
+        var fullURI = UstadMobile.getInstance().systemImpl.getHTTPBaseURL() +
+                UstadMobile.CONTENT_DIRECTORY + "/" + courseObj.relativeURI;
+        $("#ustad_epub_frame").opubframe("loadfromopf", fullURI);
+        
+        //pagecontainerbeforehide
+        $( ":mobile-pagecontainer" ).one("pagecontainerbeforehide", function() {
+            console.log("leaving page");
+            debugger;
+            UstadMobile.getInstance().systemImpl.unmountEpub(courseObj.getEpubName(), function() {
+                console.log("Unmount complete");
+            });
+        });
+    },
+    
     /**
      * Show a course in an iframe 
      * 
@@ -261,29 +324,6 @@ UstadMobileBookList.prototype = {
                 onshowCallback, show, onloadCallback, onerrorCallback);
             return;
         } 
-        
-        /* Before we had the HTTP server we were directly opening it and using
-         * base64tofile 
-         * else {
-            $.mobile.loading('show', {
-                text: x_('Ustad Mobile: Loading..'),
-                textVisible: true,
-                theme: 'b',
-                html: ""}
-            );
-
-            console.log("Mobile Device detected. Continuing..");
-
-            console.log("Book URL that UM is going to is: "
-                    + umBookListObj.currentBookPath);
-            //1. We need to create a file: ustadmobile-settings.js
-            //2. We need to put that file in that directory
-            //3. We need to open the file.
-
-            console.log("The bookpath is: " + bookpath);
-        }
-        */
-        
     }
 };
 
@@ -306,18 +346,33 @@ function UstadMobileCourseEntry(courseTitle, courseDesc, coursePath, coverImg, r
     
     this.coverImg = coverImg;
     
-    /** URI from the UstadMobileContent Dir*/
+    /** 
+     * URI from the UstadMobileContent Dir to the package.opf .
+     * e.g. filename.epub/EPUB/package.opf
+     */
     this.relativeURI = null;
     
     /** The index of this course in the list - used to generate HTML button */
     this.courseIndex = -1;
     
-    if(typeof relativeURI !== "undefined" && relativeURI != null) {
+    /** The UstadJSOPF Open Packaging Format Object for this object */
+    this.opf = null;
+    
+    if(typeof relativeURI !== "undefined" && relativeURI !== null) {
         this.relativeURI = relativeURI;
     }
 }
 
 UstadMobileCourseEntry.prototype = {
+    
+    /**
+     * Find the epub name from a correctly set relative URI
+     * 
+     * @return {String}
+     */
+    getEpubName: function() {
+        return this.relativeURI.substring(0, this.relativeURI.indexOf("/"));
+    },
     
     /**
      * 

@@ -490,11 +490,12 @@ UstadMobile.prototype = {
     loadInitScripts: function(successCallback, failCallback) {
         var umObj = UstadMobile.getInstance();
         
-        
         if(umObj.getZone() === UstadMobile.ZONE_CONTENT) {
             umObj.initScriptsToLoad.push("ustadmobile-localization.js");
             umObj.initScriptsToLoad.push("ustadmobile-contentzone.js");
+            umObj.initScriptsToLoad.push("ustadjs.js");
         }else {
+            umObj.initScriptsToLoad.push("lib/ustadjs.js");
             umObj.initScriptsToLoad.push("js/tincan.js");
             umObj.initScriptsToLoad.push("js/tincan_queue.js");
             umObj.initScriptsToLoad.push("js/ustadmobile-getpackages.js");
@@ -527,6 +528,26 @@ UstadMobile.prototype = {
                 }
             });
         }
+    },
+    
+    /**
+     * Find the hint that we can use for the actual viewport
+     * Taken from 
+     * http://stackoverflow.com/questions/22103323/jquery-mobile-viewport-height
+     * 
+     * @returns {Number} viewport height minus toolbars in pixels
+     */
+    getJQMViewportHeight: function() {
+        var screen = $.mobile.getScreenHeight();
+        var header = $(".ui-page-active .ui-header").hasClass("ui-header-fixed") ? $(".ui-page-active .ui-header").outerHeight() - 1 : $(".ui-page-active .ui-header").outerHeight();
+        var footer = $(".ui-page-active .ui-footer").hasClass("ui-footer-fixed") ? $(".ui-page-active .ui-footer").outerHeight() - 1 : $(".ui-page-active .ui-footer").outerHeight();
+
+        /* content div has padding of 1em = 16px (32px top+bottom). This step
+        can be skipped by subtracting 32px from content var directly. */
+        var contentCurrent = $(".ui-page-active .ui-content").outerHeight() - $(".ui-page-active .ui-content").height();
+
+        var contentHeight = screen - header - footer - contentCurrent;
+        return contentHeight;
     },
     
     /**
@@ -608,9 +629,7 @@ UstadMobile.prototype = {
      * @param ui {Object} UI param from jQueryMobile event
      */
     pageInit: function(evt, ui) {
-        if(UstadMobile.getInstance().getZone() === UstadMobile.ZONE_CONTENT) {
-            UstadMobileContentZone.getInstance().initPagePreload(evt, ui);
-        }
+        
     },
     
     /**
@@ -764,8 +783,8 @@ UstadMobile.prototype = {
      */
     getDefaultServer: function() {
         var umServer = new UstadMobileServerSettings("UstadMobile",
-            "http://umcloud1.ustadmobile.com:8001/umlrs/",
-            "http://umcloud1.ustadmobile.com:8010/getcourse/?id=");
+            "http://umcloud1.ustadmobile.com/umlrs/",
+            "http://umcloud1.ustadmobile.com/getcourse/?id=");
         return umServer;
     },
     

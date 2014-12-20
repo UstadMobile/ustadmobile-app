@@ -125,12 +125,14 @@ UstadMobileAppZone.prototype = {
             //});
         });
         
-        //If we are resetting all tin can matters
+        //If we are resetting all tin can matters - we are not doing so now...
+        /*
         localStorage.removeItem(
                 getTinCanQueueInstance().TINCAN_LOCALSTORAGE_INDEXVAR);
         localStorage.removeItem(
                 getTinCanQueueInstance().TINCAN_LOCALSTORAGE_PENDINGSTMTSVAR);
-        
+        */
+       
         this.tincanQueueTransmitInterval = setInterval(function() {
             UstadMobileAppZone.getInstance().transmitTinCanQueue();
         }, this.tincanQueueWaitTime);

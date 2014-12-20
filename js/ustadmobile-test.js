@@ -132,7 +132,7 @@ var containerChangeFn = function() {
         
     //Set timeout to 60seconds (download a course)
     QUnit.testTimeout = 60000;
-    testUstadMobileCourseDownloadById(5);
+    //testUstadMobileCourseDownloadById(5);
     
     testPageLocalization(); 
     
@@ -145,12 +145,9 @@ var containerChangeFn = function() {
     //Must run after looking for courses
     testHTTPServer();
     
-    
     //make sure courses open
     testBookOpen();
     
-    //make sure if we are using iframes that they can be closed
-    testCloseCourseIframe();
     
 }());
 
@@ -186,7 +183,6 @@ function testLoadAndCacheAssignedCourses() {
         UstadMobile.getInstance().runWhenImplementationReady(function() {
             var theURL = UstadMobileAppZone.getInstance().getUMCloudEndpoint()
                 + "assigned_courses/";
-            debugger;
             UstadMobileAppZone.getInstance().loadAssignedCoursesFromServer(
                    validUsername, validPassword, theURL, function(coursesObj, err) {
                        ok(!err, "No error loading assigned courses");
@@ -399,53 +395,32 @@ function testLoadScriptOnceOnly() {
     });
 }
 
-
-var numBooksOpened = 0;
 function testBookOpen() {
     if(UstadMobile.getInstance().isNodeWebkit()) {
         asyncTest("Check book open triggers onload event for content page", function() {
             expect(1);
-            var bookList = UstadMobileBookList.getInstance().coursesFound;
-            
-            
-            //debugger;
             UstadMobile.getInstance().runAfterHTTPReady(function(){
-                for(var i = 0; i < bookList.length; i++) {
-                    UstadMobileBookList.getInstance().openBLPage(i,function() {
-                        console.log("course display created");
-                    }, false, function(evt) {
-                        //debugger;
-                        var frameEl = evt.target;
-                        console.log("Loaded  " + $(frameEl).attr('src'));
-                        $(frameEl).remove();
-                        numBooksOpened++;
-                        if(numBooksOpened === bookList.length) {
-                            ok(numBooksOpened ===bookList.length, "All " 
-                                    + bookList.length 
-                                    + " packages in list triggered onload for frame");
-                            start();
-                        }
-                    });
-                }
-            });
-        });
-    }
-}
-
-function testCloseCourseIframe() {
-    if(UstadMobile.getInstance().isNodeWebkit()) {
-        asyncTest("Check can close content iframe", function() {
-            expect(1);
-            UstadMobile.getInstance().runAfterHTTPReady(function(){
-                UstadMobileBookList.getInstance().openBLPage(0,function() {
-                        console.log("course display created - lets close it");
-                    }, false, function(frameEl) {
-                        //close it
-                        var framesClosed = 
-                            UstadMobileBookList.getInstance().closeBlCourseIframe();
-                        ok(framesClosed > 0, "Found and closed content iframe");
-                        start();
-                    });
+                var bookList = UstadMobileBookList.getInstance().coursesFound;
+                var currentBook = 0;
+                var checkBookLoadFn = function() {
+                    UstadMobile.getInstance().systemImpl.showCourse(
+                        bookList[currentBook],
+                        null, false, function(evt, params) {
+                            currentBook++;
+                            if(currentBook < bookList.length) {
+                                debugger;
+                                checkBookLoadFn();
+                            }else {
+                                debugger;
+                                //its ok because we got here.
+                                ok(true, "Epubs loaded");
+                                start();
+                            }
+                        }, null);
+                };
+                checkBookLoadFn();
+                
+                debugger;
             });
         });
     }
@@ -479,45 +454,6 @@ function testHTTPServer() {
                 });
             });
         });
-
-        //make sure that all courses detected are accessible via HTTP
-
-
-        
-        
-        
-        
-        asyncTest("Check all courses are available", function() {
-            //there will be bookList.length callbacks
-            expect(UstadMobileBookList.getInstance().coursesFound.length);
-            
-            UstadMobile.getInstance().runAfterHTTPReady(function(){
-                var baseURL = UstadMobile.getInstance().systemImpl.getHTTPBaseURL();
-                var bookList = UstadMobileBookList.getInstance().coursesFound;
-                
-                //debugger;
-                for(var i = 0; i < bookList.length; i++) {
-                    var courseEntry = bookList[i];
-                    var folderName = courseEntry.relativeURI;
-                    var urlToLoad = baseURL + UstadMobile.CONTENT_DIRECTORY +
-                            "/" + folderName + "/index.html";
-                    var thisCourseURL = urlToLoad;
-                    console.log("Test load : " + urlToLoad);
-                    $.ajax({
-                        url: urlToLoad,
-                        dataType: "html"
-                    }).done(function(data, textStatus, jqXHR){
-                        ok(textStatus === "success", 
-                            "Loaded " + this.url + " OK");
-                        numBooksLoadedCount++;
-                        if(numBooksLoadedCount === bookList.length) {
-                            start();
-                        }
-                    });
-                }
-            });
-        });
-        
     }
 }
 

@@ -79,6 +79,12 @@ UstadMobileHTTPServer.prototype = {
     httpHostname: null,
     
     /**
+     * Mounted epubs in the form of epub -> tmpdir 
+     * e.g. 'file.epub' -> '/tmp/epubdir232'
+     */
+    mountedEPubs: {},
+    
+    /**
      * Start the server
      * 
      * @param {String} hostname Hostname or IP address to listen on - can be null for all interfaces
@@ -173,6 +179,33 @@ UstadMobileHTTPServer.prototype = {
     },
     
     /**
+     * Mount an epub file to be served over http from it's given directory
+     * 
+     * @param {String} epubName Filename of epub file e.g. myfile.epub
+     * @param {String} epubDir Directory where epub is extracted e.g. /tmp/pub21
+     */
+    mountEpubDir: function(epubName, epubDir) {
+        this.mountedEPubs[epubName] = epubDir;
+    },
+    
+    /**
+     * Check if a given epub name is mounted
+     * 
+     * @param {String} epubName e.g. myfile.epub to check if mounted
+     * @return true if mounted, false otherwise
+     */
+    epubMounted: function(epubName) {
+        return this.mountedEPubs.hasOwnProperty(epubName);
+    },
+    
+    /**
+     * Get the path to where an epub file is extracted for serving over http
+     */
+    getEpubDir: function(epubName) {
+        return this.mountedEPubs[epubName];
+    },
+    
+    /**
      * 
      * @param {type} request
      * @param {type} response
@@ -180,16 +213,39 @@ UstadMobileHTTPServer.prototype = {
      */
     serveContentFile: function(request, response, headers) {
         var contentDirName = UstadMobile.CONTENT_DIRECTORY;
+        
+        //the complete request url e.g. /ustadmobileContent/file.epub/EPUB/picture.jpg
         var url = new String(request.url);
         var positionOfContentDir = url.indexOf("/"+contentDirName);
+        
+        //strip off the /ustadmobileContent part
         var fromSubDirURL = url.substring(contentDirName.length + 2 
                 + positionOfContentDir);
-        var httpHeaders = {};
+        
+        //the filename on it's own e.g. picture.
+        var filename = this.getFilenameFromURL(fromSubDirURL);
+        
+        //Get the name of the epub file this should come from...
+        var endOfEpubName = url.indexOf("/",contentDirName.length+3);
+        
+        var epubName = url.substring(contentDirName.length+2, endOfEpubName);
         
         var httpQuery = "";
-        if(url.indexOf("?") !== -1) {
+        var queryPos = url.indexOf("?");
+        if(queryPos !== -1) {
             httpQuery = url.substring(url.indexOf("?")+1);
         }
+        var endOfFilePos = queryPos === -1 ? url.length : queryPos;
+        
+        var httpHeaders = {};
+
+        if(!this.epubMounted(epubName)) {
+            response.writeHead(500);
+            response.end("Epub " + epubName + " is not mounted");
+            return;
+        }
+        
+        var filenameWithinEpub = url.substring(endOfEpubName+1, endOfFilePos);
         
         if(UstadMobile.getInstance().isNodeWebkit()) {
             var fs = require("fs");
@@ -197,7 +253,7 @@ UstadMobileHTTPServer.prototype = {
             var mime = require("mime");
             
             
-            var filename = this.getFilenameFromURL(fromSubDirURL);
+            
             
             var mimeType = mime.lookup(filename);
             
@@ -223,8 +279,11 @@ UstadMobileHTTPServer.prototype = {
                 return;
             }
             
-            var fileURI = path.join(UstadMobile.getInstance().contentDirURI,
-                decodeURI(filePath));
+            
+            var epubBaseDir = this.getEpubDir(epubName);
+            
+            var fileURI = path.join(epubBaseDir,
+                decodeURI(filenameWithinEpub));
             
             fs.readFile(fileURI, function(err,data) {
                if(err) {

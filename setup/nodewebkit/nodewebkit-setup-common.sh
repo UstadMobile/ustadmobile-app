@@ -49,7 +49,7 @@ source $SRCDIR/ustad_version
 cd $SRCDIR
 
 
-cp -r *.html img css js jqm res locale ustad_version $TARGETDIR
+cp -r *.html img css js lib jqm res locale ustad_version $TARGETDIR
 cp $WORKINGDIR/package.json $TARGETDIR
 . $WORKINGDIR/../mkbuildinfo.sh > $TARGETDIR/build_info.json
 
@@ -69,9 +69,12 @@ echo "Zip $TARGETDIR/UstadMobile.nw on $(pwd)"
 if [ "$BUILDOFFLINE" != "1" ]; then
     npm install mime
     npm install fs-extra
+    npm install unzip
+    npm install stream-buffers
+    npm install temp
 fi
 
-FILELIST="*.html img css js jqm res locale ustad_version package.json node_modules build_info.json"
+FILELIST="*.html img css js lib jqm res locale ustad_version package.json node_modules build_info.json"
 if [ "$ZIPMODE" == "normal" ]; then
     zip -r $TARGETDIR/UstadMobile.nw $FILELIST
 else
