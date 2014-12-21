@@ -90,8 +90,8 @@ var containerChangeFn = function() {
 (function () {
     
     //Uncomment if you need NodeWebKit tools to load before actually running
-    //require('nw.gui').Window.get().showDevTools();
-    //alert("load tools");
+    require('nw.gui').Window.get().showDevTools();
+    alert("load tools");
 
     QUnit.module("UstadMobile");
     
@@ -108,7 +108,7 @@ var containerChangeFn = function() {
     
     testLoadAndCacheAssignedCourses();
     
-    testLoadCourseInfo();
+    //testLoadCourseInfo();
     
     var audioEl = document.createElement("audio");
     audioEl.preload = "auto";
@@ -156,11 +156,13 @@ var containerChangeFn = function() {
  */
 function testLoadCourseInfo() {
     asyncTest("Test loading course info by ID", function() {
+        debugger;
         UstadMobile.getInstance().runWhenImplementationReady(function() {
             var theURL = UstadMobileAppZone.getInstance().getUMCloudEndpoint()
-                + "get_course_blocks";
+                + "get_course_blocks/";
             UstadMobileAppZone.getInstance().loadCourseInfo(validUsername,
                 validPassword, validCourseID, theURL, function(data, err) {
+                    debugger;
                     ok(!err, "No error comes back loading course info");
                     ok(data.title, "Course has title");
                     ok(data.description, "Course has description");

@@ -221,7 +221,7 @@ UstadMobileAppZone.prototype = {
      * 
      */
     getUMCloudEndpoint: function() {
-        return "http://localhost/fakeumcloud/";
+        return "http://umcloud1.ustadmobile.com/";
     },
     
     /**
@@ -235,6 +235,7 @@ UstadMobileAppZone.prototype = {
      * 
      */
     loadCourseInfo: function(username, password, courseid, httpURL, callback) {
+        debugger;
         $.ajax({
             method : "POST",
             url : httpURL,
@@ -245,8 +246,11 @@ UstadMobileAppZone.prototype = {
                 "courseid" : encodeURIComponent(courseid)
             }
         }).done(function(data){
+            debugger;
             UstadMobileUtils.runCallback(callback, [data, null], this);
         }).fail(function(jqXHR, textStatus){
+            console.log("REQUEST FAIL: "  + jqXHR.responseText);
+            debugger;
             UstadMobileUtils.runCallback(callback, [null, textStatus], this);
         });
     },
@@ -257,6 +261,7 @@ UstadMobileAppZone.prototype = {
      * @param {type} courseInfo
      * @returns {undefined}
      */
+    
     cacheCourseInfo: function(courseInfo) {
         localStorage.setItem(UstadMobileAppZone.STORAGE_PREFIX_COURSEINFO 
             + courseInfo.id, JSON.stringify(courseInfo));
@@ -304,6 +309,7 @@ UstadMobileAppZone.prototype = {
         }).done(function(data){
             UstadMobileUtils.runCallback(callback, [data, null], this);
         }).fail(function(jqXHR, textStatus){
+            console.log("REQUEST FAIL: "  + jqXHR.responseText);
             UstadMobileUtils.runCallback(callback, [null, textStatus], this);
         });
     },
@@ -315,7 +321,7 @@ UstadMobileAppZone.prototype = {
      * @param callback function callback to run when loaded
      */
     loadAssignedCoursesFromServerDefault: function(callback) {
-        var url = this.getUMCloudEndpoint() + "assigned_courses";
+        var url = this.getUMCloudEndpoint() + "assigned_courses/";
         this.loadAssignedCoursesFromServer(this.getCurrentUsername(),
             this.getCurrentPass(), url, callback);
     },
