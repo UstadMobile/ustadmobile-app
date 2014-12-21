@@ -90,8 +90,8 @@ var containerChangeFn = function() {
 (function () {
     
     //Uncomment if you need NodeWebKit tools to load before actually running
-    require('nw.gui').Window.get().showDevTools();
-    alert("load tools");
+    //require('nw.gui').Window.get().showDevTools();
+    //alert("load tools");
 
     QUnit.module("UstadMobile");
     
@@ -156,13 +156,11 @@ var containerChangeFn = function() {
  */
 function testLoadCourseInfo() {
     asyncTest("Test loading course info by ID", function() {
-        debugger;
         UstadMobile.getInstance().runWhenImplementationReady(function() {
             var theURL = UstadMobileAppZone.getInstance().getUMCloudEndpoint()
                 + "get_course_blocks/";
             UstadMobileAppZone.getInstance().loadCourseInfo(validUsername,
                 validPassword, validCourseID, theURL, function(data, err) {
-                    debugger;
                     ok(!err, "No error comes back loading course info");
                     ok(data.title, "Course has title");
                     ok(data.description, "Course has description");
@@ -245,7 +243,6 @@ function testSequentialScriptLoad() {
 
 function testSoundPlay(mediaEl, testName, delay, setSrc) {
     asyncTest(testName, function() {
-        //debugger;
         expect(1);
         if(setSrc === true) {
             if(window.cordova) {
@@ -410,10 +407,8 @@ function testBookOpen() {
                         null, false, function(evt, params) {
                             currentBook++;
                             if(currentBook < bookList.length) {
-                                debugger;
                                 checkBookLoadFn();
                             }else {
-                                debugger;
                                 //its ok because we got here.
                                 ok(true, "Epubs loaded");
                                 start();
@@ -421,16 +416,10 @@ function testBookOpen() {
                         }, null);
                 };
                 checkBookLoadFn();
-                
-                debugger;
             });
         });
     }
 }
-
-
-//This global is used to see when we got ajax back from all the courses
-var numBooksLoadedCount = 0;
 
 function testHTTPServer() {
     if(UstadMobile.getInstance().isNodeWebkit() || UstadMobile.getInstance().isCordova()) {

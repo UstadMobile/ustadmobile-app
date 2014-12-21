@@ -70,7 +70,7 @@ function UstadMobileLogin() {
 }
 
 UstadMobileLogin.getInstance = function() {
-    if(ustadMobileLoginInstance == null) {
+    if(!ustadMobileLoginInstance) {
         ustadMobileLoginInstance = new UstadMobileLogin();
     }
     
@@ -79,15 +79,6 @@ UstadMobileLogin.getInstance = function() {
 
 UstadMobileLogin.prototype = {
     
-    /**
-     * @method fail
-     * @param {type} evt
-     * @returns {undefined}
-     */
-    fail : function(evt) {
-        debugLog(evt.target.error.code);
-        debugLog("Something went wrong");
-    },
         
     /** This runs when login is triggered
       * arguments with actual function of login for
@@ -102,14 +93,22 @@ UstadMobileLogin.prototype = {
             theme: 'b',
             html: ""});
 
-        username = $("#username").val();
-        password = $("#password").val();
+        var username = $("#username").val();
+        var password = $("#password").val();
 
-        debugLog("User name and password is: " + username + " / " + password);
         if (!url) {
-            var url = "http://umcloud1.ustadmobile.com/umlrs/statements?limit=1"
+            var url = "http://umcloud1.ustadmobile.com/umlrs/statements?limit=1";
         }
-        this.umlogin(username, password, url, this.umloginredirect);
+        
+        this.umlogin(username, password, url, function(statusCode, pass) {
+            $.mobile.loading('hide');
+            if(statusCode === 200) {
+                UstadMobile.getInstance().goPage(UstadMobile.PAGE_BOOKLIST);
+            }else {
+                //change this alert
+                alert("Computer says no");
+            }
+        });
     },
     
     /**
@@ -120,7 +119,6 @@ UstadMobileLogin.prototype = {
      * @returns {undefined}
      */
     umloginredirect: function(statuscode, password) {
-        var umLoginObj = UstadMobileLogin.getInstance();
         var pass = password.trim();
         debugLog("Status code is: " + statuscode);
         if (statuscode === 200) {
@@ -168,84 +166,41 @@ UstadMobileLogin.prototype = {
         }
     },
     
-    //This function will get called when umlogin proceeds with success or error. The arg is the statusCode that will get 
-    //passed to the 
-    runcallback: function(callbackfunction, arg) {
-        if (callbackfunction != null && typeof callbackfunction === "function") {
-            debugLog("Within the call back function with arg: " + arg);
-            callbackfunction(arg);
-        }
-    },
-    
     /**
-     * @method runcallbackwp
+     * Checks the given user credentials.  If valid saves them to localstorage
      * 
-     * @param {type} callbackfunction
-     * @param {type} arg1
-     * @param {type} arg2
-     * @returns {undefined}
+     * @param username {String} username to authenticate with
+     * @param password {String} password to authenticate with
+     * @param url {String} optional: tincan statements url or null to use default
+     * @param callback {function} 
      */
-    runcallbackwp: function(callbackfunction, arg1, arg2) {
-        if (callbackfunction != null && typeof callbackfunction === "function") {
-            debugLog("Within the call back function with arg: " + arg1 + " and password too!: " + arg2);
-            callbackfunction(arg1, arg2);
-        }
-    },
-    
-    /*
-    This function logs the user to the specified server and credentials. Initially, server being UmCloud(Toughra). This uses Ajax to authenticate.
-    */
     umlogin: function(username, password, url, callback) {
         if(typeof url === "undefined" || url === null) {
            url = UstadMobile.getInstance().getDefaultServer().xapiBaseURL 
-            + "statements?limit=1"
+                + "statements?limit=1";
         }
               
-        var thisObj = this;
         $.ajax({
             url: url,
             type: 'GET',
             dataType: 'text',
             
-            beforeSend: function(request)
-            {
+            beforeSend: function(request) {
                 request.setRequestHeader("X-Experience-API-Version", "1.0.1");
-                console.log(btoa(username + ":" + password));
                 request.setRequestHeader("Authorization", "Basic " + btoa(username + ":" + password));
-
-            },
-            
-            success: function(data, textStatus, jqxhr) {
-                debugLog("Logging to server: " + url + " a success with code:" + jqxhr.status);
-                thisObj.runcallbackwp(callback, jqxhr.status, password);
-            },
-            complete: function(jqxhr, txt_status) {
-                debugLog("Ajax call completed to server. Status: " + jqxhr.status);
-            },
-            error: function(jqxhr, b, c) {
-
-                alert(x_("Wrong username/password combination or server error. Status Code:") + jqxhr.status);
-                
-                debugLog("Wrong username/password combination or server error. Status Code:" + jqxhr.status);
-                $.mobile.loading('hide');
-                thisObj.runcallbackwp(callback, jqxhr.status, password);
-            },
-            statusCode: {
-                200: function() {
-                    //alert("Login success on the server!");
-                    debugLog("Login success on the server with statusCode 200.");
-                    localStorage.setItem('username', username);
-                    localStorage.setItem('password', password);
-                    console.log("Username and Password set in statusCode");
-                },
-                0: function() {
-                    localStorage.setItem('newusername', username);
-                    console.log("newusername is: " + localStorage.getItem('newusername'));
-                    debugLog("Status code 0, unable to connect to server or no internet/intranet access");
-                }
             }
-
-        });   
+        }).done($.proxy(function(data, textStatus, jqxhr) {
+            debugLog("Logging to server: " + url + " a success with code:"
+                + jqxhr.status);
+            localStorage.setItem('username', username);
+            localStorage.setItem('password', password);
+            UstadMobileUtils.runCallback(callback, [jqxhr.status, password], 
+                this);
+        }, this)).fail($.proxy(function(jqxhr, b, c) {
+            debugLog("Wrong username/password combination or server error. Status Code:" + jqxhr.status);
+            UstadMobileUtils.runCallback(callback, [jqxhr.status, password], 
+                this);
+        }, this));
     },
    
     /**
@@ -253,21 +208,10 @@ UstadMobileLogin.prototype = {
      * @method checkLoggedIn
      */
     checkLoggedIn: function() {
-       $.mobile.loading('show', {
-           text: x_('Checking logged user..'),
-           textVisible: true,
-           theme: 'b',
-           html: ""}
-       );
-
-       console.log("Username stored before: " + localStorage.getItem('username'));
-
-       if (localStorage.getItem('username')) {
+        console.log("Username stored before: " + localStorage.getItem('username'));
+        if (localStorage.getItem('username')) {
            UstadMobileLogin.getInstance().openPage("ustadmobile_booklist.html");
-       } else {
-           debugLog("Nope, no one logged in.");
-       }
-       $.mobile.loading('hide');
+        }
    },
    
    /**
@@ -277,8 +221,6 @@ UstadMobileLogin.prototype = {
    umSkip: function() {
        //temp       
        localStorage.removeItem('username');
-       //openPage("ustadmobile_booklist.html");
-       //try jquerymobile changepage
        $.mobile.changePage("ustadmobile_booklist.html");
    },
    
