@@ -105,6 +105,10 @@ var containerChangeFn = function() {
         
     testUstadMobileImplementationLoads();
     
+    //Set timeout to 75 seconds (cache courses; includes working with zips)
+    QUnit.testTimeout = 75000;
+    testUstadMobileCourseLoad();
+    
     
     testLoadAndCacheAssignedCourses();
     
@@ -136,10 +140,6 @@ var containerChangeFn = function() {
     
     testPageLocalization(); 
     
-    
-    //Set timeout to 10 seconds (scan directories)
-    QUnit.testTimeout = 10000;
-    testUstadMobileCourseLoad();
     
     //make sure internal http server (if any) is working
     //Must run after looking for courses
