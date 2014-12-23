@@ -354,7 +354,12 @@ UstadMobileAppImplNodeWebkit.prototype.cacheEpubsInDir = function(dirPath, callb
                 });
         };
         
-        cacheEntryFn();
+        if(epubsArr.length > 0) {
+            cacheEntryFn();
+        }else {
+            callback();
+        }
+        
     });
 };
 

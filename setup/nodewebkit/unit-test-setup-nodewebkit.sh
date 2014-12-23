@@ -13,7 +13,14 @@ WORKINGDIR=$(pwd)
 #Time after which we will kill processes and assume failure (seconds)
 TIMEOUT=180
 
+#delete cached epub entries
+UMCONTENTDIR=~/ustadmobileContent
+if [ "$(uname | grep MINGW)" != "" ]; then
+    UMCONTENTDIR=~/Documents/ustadmobileContent
+fi
 
+echo "Removing epub cache from $UMCONTENTDIR"
+rm -rf $UMCONTENTDIR/*.epub_cache
 
 if [ ! -e coverage_report ]; then
     mkdir coverage_report
