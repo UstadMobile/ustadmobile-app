@@ -245,7 +245,6 @@ UstadMobileBookList.prototype = {
         //pagecontainerbeforehide
         $( ":mobile-pagecontainer" ).one("pagecontainerbeforehide", function() {
             console.log("leaving page");
-            debugger;
             UstadMobile.getInstance().systemImpl.unmountEpub(courseObj.getEpubName(), function() {
                 console.log("Unmount complete");
             });

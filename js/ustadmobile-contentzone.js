@@ -126,14 +126,6 @@ UstadMobileContentZone.prototype = {
      * @method
      */
     init: function() {
-        //put event handlers on buttons
-        $(document).on("pagebeforecreate", function(evt, ui) {
-            UstadMobileContentZone.getInstance().processPageContent($(evt.target));
-            if($(evt.target).enhanceIdevicesWithin) {
-                $(evt.target).enhanceIdevicesWithin("");
-            }
-        });
-        
         $( ":mobile-pagecontainer" ).on("pagecontainershow",
             this.triggerPageShowOnCurrent);
         
@@ -431,6 +423,6 @@ UstadMobileContentZone.prototype = {
 
 //Enhance JQueryMobile based items
 $(function() {
+    UstadMobileContentZone.getInstance().processPageContent($("#main"));
     $("#main").enhanceWithin();
 });
-
