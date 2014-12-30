@@ -125,26 +125,6 @@ UstadMobileBookList.prototype = {
      */
     nextPageToOpen: "",
     
-    /**
-     * Files that should be copied from the app into the content
-     * Map in the form of src : dest
-     * 
-     * @type {Object}
-     */
-    appFilesToCopyToContent: {"js/ustadmobile.js" : "ustadmobile.js",
-        "js/ustadmobile-booklist.js" :  "ustadmobile-booklist.js",
-        "jqm/jqm-app-theme.css" : "jqm-app-theme.css",
-        "jqm/jqm-content-theme.css" : "jqm-content-theme.css",
-        "jqm/jquery.mobile.icons.min.css" : "jquery.mobile.icons.min.css",
-        "js/ustadmobile-contentzone.js" : "ustadmobile-contentzone.js",
-        "js/ustadmobile-localization.js" : "ustadmobile-localization.js",
-        "js/ustadmobile_menupage_content.html" : "ustadmobile_menupage_content.html",
-        "js/ustadmobile_panel_content.html" : "ustadmobile_panel_content.html",
-        "js/feedback_dialog.html": "feedback_dialog.html",
-        "jqm/jqm-base.css" : "jqm-base.css",
-        "css/ustadmobile.css" : "ustadmobile.css"
-    },
-    
     /** 
       * Will run a scan when device is ready to do so... This relies on 
       * UstadMobile runAfterPathsCreated, which if running cordova can
@@ -245,7 +225,9 @@ UstadMobileBookList.prototype = {
                 UstadMobile.CONTENT_DIRECTORY + "/" + courseObj.relativeURI;
         $("#ustad_epub_frame").opubframe("loadfromopf", fullURI);
         
-        //pagecontainerbeforehide
+        
+        
+        //pagecontainerbeforehide - cleanup
         $( ":mobile-pagecontainer" ).one("pagecontainerbeforehide", function() {
             UstadMobile.getInstance().systemImpl.unmountEpub(courseObj.getEpubName(), function() {
                 console.log("Unmount complete");

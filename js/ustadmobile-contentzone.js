@@ -121,25 +121,7 @@ UstadMobileContentZone.prototype = {
         });
     },
     
-    /**
-     * Make a statement that this content block (ELP file) file has been launched
-     * by the user - makes a statement with verb launched, the id of the tincan
-     * prefix.
-     * 
-     */
-    makeLaunchedStatement: function() {
-        var courseTitle = $("BODY").attr("data-package-title");
-        if(!courseTitle) {
-            courseTitle = "Course";
-        }
-        
-        if(EXETinCan.getInstance().getActor()) {
-            var stmt = EXETinCan.getInstance().makeLaunchedStmt(
-                    EXETinCan.getInstance().getTinCanIDURLPrefix(),
-                    courseTitle, courseTitle);
-            EXETinCan.getInstance().recordStatement(stmt);
-        }
-    },
+    
     
     /**
      * Return the active username (e.g. from tincan actor)
