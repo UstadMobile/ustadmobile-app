@@ -234,6 +234,9 @@ UstadMobileBookList.prototype = {
                 this));
         }
         
+        $("#ustad_epub_frame").opubframe("option", "page_query_params",
+            UstadMobileAppZone.getInstance().getTinCanParams());
+        
         $("#ustad_epub_frame").one("pageloaded", function(evt, params) {
             UstadMobileUtils.runCallback(onloadCallback, [evt, params], this);
         });
@@ -244,7 +247,6 @@ UstadMobileBookList.prototype = {
         
         //pagecontainerbeforehide
         $( ":mobile-pagecontainer" ).one("pagecontainerbeforehide", function() {
-            console.log("leaving page");
             UstadMobile.getInstance().systemImpl.unmountEpub(courseObj.getEpubName(), function() {
                 console.log("Unmount complete");
             });
@@ -389,7 +391,7 @@ UstadMobileCourseEntry.prototype = {
     getButtonHTML: function() {
         return "<a onclick='UstadMobileBookList.getInstance().openBLPage(\"" 
                 + this.courseIndex
-                + "\")' href=\"#\" data-role=\"button\" "
+                + "\", null, true)' href=\"#\" data-role=\"button\" "
                 + "data-icon=\"star\" data-ajax=\"false\">" + this.courseTitle 
                 + "</a>";
     }

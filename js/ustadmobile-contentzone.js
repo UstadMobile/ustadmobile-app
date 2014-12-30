@@ -107,19 +107,6 @@ UstadMobileContentZone.prototype = {
     transitionInProgress: false,
     
     /**
-     * The time (in ms since epoch) that the current page was opened
-     * @type number
-     */
-    pageOpenUtime: 0,
-    
-    /**
-     * The name of the page for which we are currently counting time
-     * 
-     * @type String
-     */
-    pageOpenXAPIName : null,
-    
-    /**
      * Run startup routines for the content zone - setup event handlers for making
      * Table of Content links safe, etc.
      * 
@@ -369,16 +356,7 @@ UstadMobileContentZone.prototype = {
         UstadMobileContentZone.getInstance().stopPageTimeCounter(pageSelector);
     },
     
-    /**
-     * Start counting the time that the user has been on the current page 
-     * 
-     * @param String pageName - relative name of page (e.g. without .html suffix)
-     * @method startPageTimeCounter
-     */
-    startPageTimeCounter: function(pageName) {
-        this.pageOpenUtime = new Date().getTime();
-        this.pageOpenXAPIName = pageName;
-    },
+    
     
     /**
      * Stop counting the current page, make a TinCan API statement about it and

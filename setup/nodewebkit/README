@@ -25,6 +25,9 @@ To Build:
 If you have already installed node modules and want to buidl offline:
 export BUILDOFFLINE=1
 
+To run without coverage (e.g. debugging):
+export COVERAGE=0
+
 Will make the .nw file
 
 To make distributable packages:

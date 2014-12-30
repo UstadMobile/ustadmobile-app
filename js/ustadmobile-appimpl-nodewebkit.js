@@ -1,3 +1,6 @@
+
+"use strict";
+
 /* 
 <!-- This file is part of Ustad Mobile.  
     
@@ -145,7 +148,6 @@ UstadMobileAppImplNodeWebkit.prototype.showCourse = function(courseObj,
     
     var epubFullPath = path.join(UstadMobile.getInstance().contentDirURI,
         epubFilename);
-        
     UstadMobileAppImplNodeWebkit.getInstance().mountContentEPub(epubFullPath, function() {
         if(show) {
             UstadMobileBookList.getInstance().showEPubPage(courseObj, onloadCallback);
@@ -265,47 +267,83 @@ UstadMobileAppImplNodeWebkit.prototype.scanCourses = function(callback) {
  * });
  * 
  * @param {String} zipPath path to the zip file
- * @param {type} zipEntryName Name of the entry to unzip e.g. META-INF/container.xml
+ * @param {Array} zipEntryNames Array of Names of the entry to unzip e.g. ['META-INF/container.xml', 'tincan.xml']
  * @param {String} baseFolder path to the base directory to unzip into (will create sub dirs as per zipEntryName)
  * @param {function} callback function to call : arguments (err, String value)
 
  * @returns {undefined}
  */
-UstadMobileAppImplNodeWebkit.prototype.unzipSingleFile = function(zipPath, zipEntryName, baseFolder, callback) {
+UstadMobileAppImplNodeWebkit.prototype.unzipSingleFile = function(zipPath, zipEntryNames, baseFolder, callback) {
     var fs = require('fs');
     var fse = require("fs-extra");
     var path = require("path");
     var unzip = require("unzip");
     var streamBuffers = require("stream-buffers");
     
-    var streamWriter = new streamBuffers.WritableStreamBuffer();
-    var destFilePath = path.join(baseFolder, zipEntryName);
-    var destDir = path.dirname(destFilePath);
+    //streamwriters used to save text content
+    var streamWriters = [];
+    //array of booleans indicating if files have been found
+    var filesFound = [];
     
-    var fileFound = false;
-    
-    if(!fs.existsSync(destDir)) {
-        fse.mkdirsSync(destDir);
-    }
+    //string values of files found 
+    var strVals = [];
         
-    streamWriter.on("close", function() {
-        //save that to disk
-        var fileContents = streamWriter.getContentsAsString('utf8');
-        fs.writeFileSync(destFilePath, fileContents);
-        callback(null, fileContents);
-    });
+    //number of files with processing outstanding
+    var numFilesRemaining = 0;
+    
+    var numFilesFound = 0;
+    
+    for(var i = 0; i < zipEntryNames.length; i++) {
+        //need a local copy for nested functions
+        (function(i) {
+            var currentIndex = i;
+            filesFound[currentIndex] = false;
+            strVals[currentIndex] = null;
+            var currentStreamWriter = new streamBuffers.WritableStreamBuffer();
+            streamWriters[currentIndex] = currentStreamWriter;
+
+            var destFilePath = path.join(baseFolder, zipEntryNames[i]);
+            var destDir = path.dirname(destFilePath);
+
+            currentStreamWriter.on("close", function() {
+                //save that to disk
+                console.log("Close streamwriter for " + zipEntryNames[currentIndex]);
+                var fileContents = currentStreamWriter.getContentsAsString('utf8');
+                strVals[currentIndex] = fileContents;
+                fs.writeFileSync(destFilePath, fileContents);
+                numFilesRemaining--;
+                if(numFilesRemaining === 0) {
+                    callback(null, strVals);
+                }
+            });
+
+            if(!fs.existsSync(destDir)) {
+                fse.mkdirsSync(destDir);
+            }
+        })(i);
+    }
     
     fs.createReadStream(zipPath)
         .pipe(unzip.Parse())
         .on('entry', function (entry) {
-            if(entry.path === zipEntryName && entry.type === "File") {
-                fileFound = true;
-                entry.pipe(streamWriter);
+            var seekIndex = -1;
+            for(var j = 0; j < zipEntryNames.length; j++) {
+                if(entry.path === zipEntryNames[j] && entry.type === "File") {
+                    seekIndex = j;
+                    break;
+                }
+            }
+            
+            if(seekIndex !== -1) {
+                numFilesFound++;
+                numFilesRemaining++;
+                filesFound[seekIndex] = true;
+                entry.pipe(streamWriters[seekIndex]);
             }else {
                 entry.autodrain();
             }
         }).on("close", function() {
-            if(!fileFound) {
+            if(numFilesFound === 0) {
                 callback("NOTFOUND", null);
             }
         });
@@ -441,15 +479,19 @@ UstadMobileAppImplNodeWebkit.prototype.makeEpubCache = function(epubPath, callba
     }
     
     UstadMobileAppImplNodeWebkit.getInstance().unzipSingleFile(epubPath,
-        "META-INF/container.xml", epubCachePath, function(err, strVal) {
+        ["META-INF/container.xml", "tincan.xml"], epubCachePath, function(err, strVals) {
             if(err) {
-                
+                throw "no container.xml: not a valid epub file";
             }
-            var rootFiles = UstadJS.getContainerRootfilesFromXML(strVal);
+            
+            var rootFiles = UstadJS.getContainerRootfilesFromXML(strVals[0]);
+            
+            //finally unzip the 
             UstadMobileAppImplNodeWebkit.getInstance().unzipSingleFile(epubPath,
-                rootFiles[0]['full-path'], epubCachePath, function(err, strVal) {
-                    callback(null, strVal);
+                [ rootFiles[0]['full-path'] ], epubCachePath, function(err, strVals) {
+                    callback(null, strVals[0]);
                 });
+               
         });
 };
 

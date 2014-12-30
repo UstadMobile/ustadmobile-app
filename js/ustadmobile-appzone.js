@@ -113,6 +113,20 @@ UstadMobileAppZone.prototype = {
      */
     tincanQueueTransmitInterval : null,
     
+    /**
+     * The time (in ms since epoch) that the current page was opened
+     * @type number
+     */
+    pageOpenUtime: 0,
+    
+    /**
+     * The name of the page for which we are currently counting time
+     * 
+     * @type String
+     */
+    pageOpenXAPIName : null,
+    
+    
     init: function() {
         //Make sure the implementation (e.g. cordova, NodeWebKit is ready)
         UstadMobile.getInstance().runWhenImplementationReady(function() {
@@ -414,6 +428,37 @@ UstadMobileAppZone.prototype = {
     },
     
     /**
+     * Make a statement that this content block (ELP file) file has been launched
+     * by the user - makes a statement with verb launched, the id of the tincan
+     * prefix.
+     * 
+     */
+    makeLaunchedStatement: function() {
+        var courseTitle = $("BODY").attr("data-package-title");
+        if(!courseTitle) {
+            courseTitle = "Course";
+        }
+        
+        if(EXETinCan.getInstance().getActor()) {
+            var stmt = EXETinCan.getInstance().makeLaunchedStmt(
+                    EXETinCan.getInstance().getTinCanIDURLPrefix(),
+                    courseTitle, courseTitle);
+            EXETinCan.getInstance().recordStatement(stmt);
+        }
+    },
+    
+    /**
+     * Start counting the time that the user has been on the current page 
+     * 
+     * @param String pageName - relative name of page (e.g. without .html suffix)
+     * @method startPageTimeCounter
+     */
+    startPageTimeCounter: function(pageName) {
+        this.pageOpenUtime = new Date().getTime();
+        this.pageOpenXAPIName = pageName;
+    },
+    
+    /**
      * Get the current LRS username
      * 
      * @returns String current cloud user
@@ -434,19 +479,33 @@ UstadMobileAppZone.prototype = {
     },
     
     /**
+     * Get the TinCan LRS parameters to add to the URL of content
+     * 
+     * @returns {String} TinCan LRS parameters as param=val URI encoded
+     */
+    getTinCanParams: function() {
+        var tincanActor = this.getTinCanActor();
+        var params = null;
+        if(tincanActor) {
+            params = "actor=" + encodeURIComponent(JSON.stringify(tincanActor));
+            params += "&exetincanproxy=" + encodeURIComponent(
+                    UstadMobile.URL_TINCAN_QUEUE);
+        }
+        
+        return params;
+    },
+    
+    /**
      * Append actor and proxy URLs to the course URL for launch
      * 
      * @param url String the course URL
      * @returns Course URL with parameters for TINCAN statements to come back
      */
     appendTinCanParamsToURL: function(url) {
-        var tincanActor = this.getTinCanActor();
-        if(tincanActor) {
-            url += "?actor=" + encodeURIComponent(JSON.stringify(tincanActor));
-            url += "&exetincanproxy=" + encodeURIComponent(
-                    UstadMobile.URL_TINCAN_QUEUE);
+        var tinCanParams = this.getTinCanParams();
+        if(tinCanParams) {
+            url += "?" + tinCanParams;
         }
-        
         return url;
     },
     
