@@ -425,6 +425,19 @@ UstadMobileAppImplNodeWebkit.prototype.getCourseObjFromEpub = function(epubPath)
     var opfObj = new UstadJSOPF();
     opfObj.loadFromOPF(opfStr);
     
+    //see if there is a tincan file
+    var tinCanPath = path.join(cacheDirPath, "tincan.xml");
+    var tincanId = null;
+    var ustadJSTinCanObj = null;
+    if(fs.existsSync(tinCanPath)) {
+        var tinCanXmlStr = fs.readFileSync(tinCanPath, "utf8");
+        ustadJSTinCanObj = new UstadJSTinCanXML();
+        ustadJSTinCanObj.loadFromXML(tinCanXmlStr);
+        tincanId = ustadJSTinCanObj.launchActivityID;
+    }else {
+        tincanId = UstadMobile.TINCAN_DEFAULT_PREFIX + opfObj.identifier;
+    }
+    
     debugLog("NodeWebKit finds content in " + epubPath);
     
     var epubBasename = path.basename(epubPath);
@@ -434,6 +447,8 @@ UstadMobileAppImplNodeWebkit.prototype.getCourseObjFromEpub = function(epubPath)
         epubPath, null, relativeURI);
         
     courseEntryObj.opf = opfObj;
+    courseEntryObj.tincanXML = ustadJSTinCanObj;
+    courseEntryObj.tincanId = tincanId;
     
     return courseEntryObj;   
 };

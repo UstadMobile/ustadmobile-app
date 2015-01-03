@@ -428,23 +428,73 @@ UstadMobileAppZone.prototype = {
     },
     
     /**
+     * Get the language the user is currently using
+     * 
+     * TODO: use actual language values, hardcoded now to use english
+     * 
+     * @returns {undefined}
+     */
+    getUserLang: function() {
+        return "en";
+    },
+    
+    /**
      * Make a statement that this content block (ELP file) file has been launched
      * by the user - makes a statement with verb launched, the id of the tincan
      * prefix.
      * 
+     * @param ustadJSTinCan {UstadJSTinCanXML} 
+     * @param ustadJSOPF {UstadJSOPF} 
+     * 
      */
-    makeLaunchedStatement: function() {
-        var courseTitle = $("BODY").attr("data-package-title");
-        if(!courseTitle) {
-            courseTitle = "Course";
+    makeLaunchedStatement: function(ustadJSTinCan, ustadJSOPF) {
+        var activityDef = null;
+        var userLang = this.getUserLang();
+        var activityID = null;
+        var stmt = null;
+        
+        if(ustadJSTinCan) {
+            activityDef = ustadJSTinCan.makeLaunchedActivityDefByLang(
+                    userLang);
+            activityID = ustadJSTinCan.launchActivityID;
+        }else {
+            activityDef = {
+                type : "http://adlnet.gov/expapi/activities/lesson",
+                name : { },
+                description : { }
+            };
+            activityDef.name[userLang] = ustadJSOPF.title;
+            
+            //TODO: change this to use opf description if available
+            activityDef.description[userLang] = ustadJSOPF.title;
+            activityID = UstadMobile.TINCAN_DEFAULT_PREFIX 
+                    + ustadJSOPF.identifier;
         }
         
-        if(EXETinCan.getInstance().getActor()) {
-            var stmt = EXETinCan.getInstance().makeLaunchedStmt(
-                    EXETinCan.getInstance().getTinCanIDURLPrefix(),
-                    courseTitle, courseTitle);
-            EXETinCan.getInstance().recordStatement(stmt);
+        if(this.getTinCanActor()) {
+            var myVerb = new TinCan.Verb({
+                id : "http://adlnet.gov/expapi/verbs/launched",
+                display : {
+                    "en-US": "launched"
+                }
+            });
+            
+            var myActivity = new TinCan.Activity({
+                id : activityID,
+                definition : activityDef
+            });
+            
+            var stmtVals = {
+                actor: this.getTinCanActor(),
+                verb : myVerb,
+                target : myActivity
+            };
+            
+            stmt = new TinCan.Statement(stmtVals, 
+    			{'storeOriginal' : true});
+            
         }
+        return stmt;
     },
     
     /**
@@ -512,11 +562,17 @@ UstadMobileAppZone.prototype = {
     /**
      * Put a tincan statement in the queue
      * 
-     * @param {String} stmtJSON - JSON string representing the statement
+     * @param {Object} stmtVal - TinCan.Statement object or JSON string
      */
-    queueTinCanStatement: function(stmtJSON) {
-        var stmt = new TinCan.Statement(JSON.parse(stmtJSON),
+    queueTinCanStatement: function(stmtVal) {
+        var stmt = null;
+        if(typeof stmtVal === "string") {
+            stmt = new TinCan.Statement(JSON.parse(stmtVal),
             {'storeOriginal' : true});
+        }else {
+            stmt = stmtVal;
+        }
+        
         getTinCanQueueInstance().queueStatement(stmt);
     },
     
@@ -536,7 +592,6 @@ UstadMobileAppZone.prototype = {
         }); 
 
         tinCanObj.recordStores[0] = tinCanLRS;
-        
         getTinCanQueueInstance().sendStatementQueue(tinCanObj);
     },
     

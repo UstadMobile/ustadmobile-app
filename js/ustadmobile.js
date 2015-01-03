@@ -242,6 +242,14 @@ UstadMobile.PAGE_LOGIN = "index.html";
  */
 UstadMobile.PAGE_CONTENT_MENU = "ustadmobile_menupage_content.html";
 
+
+/**
+ * Default TinCan Prefix for activities that have no tincan.xml file
+ * @type String
+ */
+UstadMobile.TINCAN_DEFAULT_PREFIX = 
+        "http://www.ustadmobile.com/um-tincan/activities/";
+
 UstadMobile.prototype = {
     
     /**

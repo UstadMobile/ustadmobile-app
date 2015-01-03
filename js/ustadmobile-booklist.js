@@ -102,7 +102,20 @@ function UstadMobileBookList() {
 
     /** Courses found */
     this.coursesFound = [];
-
+    
+    /** Course object for the currently showing course if any */
+    this.currentCourse = null;
+    
+    //Stuff for tracking which page was opened / timing
+    
+    /** the last opened relative URL */
+    this.lastPageRelativeURL = null;
+    
+    /** last page open time */
+    this.lastPageOpenTime = 0;
+    
+    /** the last page title */
+    this.lastPageTitle = null;
 }
 
 UstadMobileBookList.getInstance = function() {
@@ -184,6 +197,8 @@ UstadMobileBookList.prototype = {
             "ustadmobile_epubrunner.html");
     },
     
+    
+    
     checkButtons: function() {
         var showNext = $("#ustad_epub_frame").opubframe("option", "spine_pos") <
                 $("#ustad_epub_frame").opubframe("option", "num_pages")-1;
@@ -203,7 +218,91 @@ UstadMobileBookList.prototype = {
         }
     },
     
+    makePageExperiencedStmt: function() {
+        var stmt = null;
+        var actorObj = UstadMobileAppZone.getInstance().getTinCanActor();
+        if(actorObj) {
+            var myVerb = new TinCan.Verb({
+                id : "http://adlnet.gov/expapi/verbs/experienced",
+                display: {
+                    "en-US": "experienced"
+                }
+            });
+
+            var pageName = this.lastPageRelativeURL.substring(0, 
+                this.lastPageRelativeURL.lastIndexOf("."));
+
+            var duration = new Date().getTime() - this.lastPageOpenTime;
+
+            var myDefinition = {
+                type : "http://adlnet.gov/expapi/activities/module",
+                name : {
+                    "en" : this.lastPageTitle
+                },
+                description : {
+                    "en" : this.lastPageTitle
+                }
+            };
+            var myActivity = new TinCan.Activity({
+                id : this.currentCourse.tincanId + "/" + pageName,
+                definition : myDefinition
+            });
+
+            var myResult = new TinCan.Result({
+                duration : this.formatISO8601Duration(duration)
+            });
+
+            stmt = new TinCan.Statement({
+                actor : actorObj,
+                verb : myVerb,
+                result : myResult,
+                target : myActivity,
+            },{'storeOriginal' : true});
+        }
+        
+        return stmt;
+    },
+    
+    /**
+     * Format an ISO8601 duration for the given number of milliseconds difference
+     * 
+     * @param Number duration the duration to format in milliseconds
+     * @returns String An ISO8601 Duration e.g. PT4H12M05S
+     */
+    formatISO8601Duration: function(duration) {
+        var msPerHour = (1000*60*60);
+        var hours = Math.floor(duration/msPerHour);
+        var durationRemaining = duration % msPerHour;
+
+        var msPerMin = (60*1000);
+        var mins = Math.floor(durationRemaining/msPerMin);
+        durationRemaining = durationRemaining % msPerMin;
+
+        var msPerS = 1000;
+        var secs = Math.floor(durationRemaining / msPerS);
+
+        retVal = "PT" + hours +"H" + mins + "M" + secs + "S";
+        return retVal;
+    },
+    
+    epubPageLoaded: function(evt, data) {
+        var pageLoadTime = new Date().getTime();
+        
+        if(this.lastPageOpenTime > 0) {
+            var stmt = this.makePageExperiencedStmt();
+            if(stmt) {
+                UstadMobileAppZone.getInstance().queueTinCanStatement(stmt);
+            }
+        }
+        
+        this.lastPageRelativeURL = data.url;
+        this.lastPageTitle = $("#ustad_epub_frame").opubframe("currenttitle");
+        this.lastPageOpenTime = pageLoadTime;
+    },
+    
     setEpubFrame: function(courseObj, onloadCallback) {
+        this.currentCourse = courseObj;
+        
         if(!$("#ustad_epub_frame").is(".umjs-opubframe")) {
             $("#ustad_epub_frame").opubframe();
             var height = UstadMobile.getInstance().getJQMViewportHeight() - 8;
@@ -213,6 +312,9 @@ UstadMobileBookList.prototype = {
             $("#ustad_epub_frame").on("pageloaded", $.proxy(this.checkButtons,
                 this));
         }
+        
+        $("#ustad_epub_frame").opubframe("option", "pageloaded", 
+            $.proxy(this.epubPageLoaded, this));
         
         $("#ustad_epub_frame").opubframe("option", "page_query_params",
             UstadMobileAppZone.getInstance().getTinCanParams());
@@ -225,6 +327,12 @@ UstadMobileBookList.prototype = {
                 UstadMobile.CONTENT_DIRECTORY + "/" + courseObj.relativeURI;
         $("#ustad_epub_frame").opubframe("loadfromopf", fullURI);
         
+        var launchStmt = UstadMobileAppZone.getInstance().makeLaunchedStatement(
+                courseObj.tincanXML, courseObj.opf);
+        
+        if(launchStmt) {
+            UstadMobileAppZone.getInstance().queueTinCanStatement(launchStmt);
+        }
         
         
         //pagecontainerbeforehide - cleanup
@@ -344,6 +452,12 @@ function UstadMobileCourseEntry(courseTitle, courseDesc, coursePath, coverImg, r
     if(typeof relativeURI !== "undefined" && relativeURI !== null) {
         this.relativeURI = relativeURI;
     }
+    
+    /** The TinCan object if any */
+    this.tincanXML = null;
+    
+    /** The TinCan ID - must be set */
+    this.tincanId = null;
 }
 
 UstadMobileCourseEntry.prototype = {
