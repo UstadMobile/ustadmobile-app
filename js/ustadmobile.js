@@ -723,27 +723,36 @@ UstadMobile.prototype = {
      * @param runtimeCallback {function} callback to run on fail/success passes data, textStatus, jqXHR from $.ajax
      */
     loadRuntimeInfo: function(runtimeCallback) {
-        $.ajax({
-            url: "ustad_runtime.json",
-            dataType: "json"
-        }).done(function(data, textStatus, jqXHR) {
-            UstadMobile.getInstance().runtimeInfo = data;
+        var queryVars = {};
+        if(window.location.search.length > 2) {
+            var query = window.location.search.substring(1);
+            var vars = query.split("&");
+            for (var i=0;i<vars.length;i++) {
+                var pair = vars[i].split("=");
+                queryVars[pair[0]] = decodeURIComponent(pair[1]);
+            }
+        }
+        
+        if(queryVars['ustad_runtime']) {
+            UstadMobile.getInstance().runtimeInfo = JSON.parse(
+                    queryVars['ustad_runtime']);
+            var runtimeData = UstadMobile.getInstance().runtimeInfo;
             UstadMobile.getInstance().runtimeInfoLoaded = true;
-            if(data['baseURL']) {
-                localStorage.setItem("baseURL", data['baseURL']);
+            if(runtimeData['baseURL']) {
+                localStorage.setItem("baseURL", runtimeData['baseURL']);
             }
             if(typeof runtimeCallback !== "undefined" && runtimeCallback !== null) {
-                runtimeCallback(data, textStatus, jqXHR);
+                runtimeCallback(runtimeData);
             }
             UstadMobile.getInstance().fireRuntimeInfoLoadedEvent();
-        }).fail(function(data, textStatus, jqXHR) {
+        }else {
             UstadMobile.getInstance().runtimeInfoLoaded = true;
-            console.log("Package does not have ustad_runtime.json");
+            console.log("page does not have runtime arguments provided");
             if(typeof runtimeCallback !== "undefined" && runtimeCallback !== null) {
-                runtimeCallback(data, textStatus, jqXHR);
+                runtimeCallback(null);
             }
             UstadMobile.getInstance().fireRuntimeInfoLoadedEvent();
-        });
+        }
     },
     
     /**

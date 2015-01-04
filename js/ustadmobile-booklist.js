@@ -316,8 +316,15 @@ UstadMobileBookList.prototype = {
         $("#ustad_epub_frame").opubframe("option", "pageloaded", 
             $.proxy(this.epubPageLoaded, this));
         
+        var params = UstadMobileAppZone.getInstance().getTinCanParams() || "";
+        if(params !== "") {
+            params += "&";
+        }
+        params += "ustad_runtime=" + encodeURIComponent(JSON.stringify(
+                UstadMobileAppZone.getInstance().runtimeInfo));
+        
         $("#ustad_epub_frame").opubframe("option", "page_query_params",
-            UstadMobileAppZone.getInstance().getTinCanParams());
+            params);
         
         $("#ustad_epub_frame").one("pageloaded", function(evt, params) {
             UstadMobileUtils.runCallback(onloadCallback, [evt, params], this);
@@ -326,6 +333,11 @@ UstadMobileBookList.prototype = {
         var fullURI = UstadMobile.getInstance().systemImpl.getHTTPBaseURL() +
                 UstadMobile.CONTENT_DIRECTORY + "/" + courseObj.relativeURI;
         $("#ustad_epub_frame").opubframe("loadfromopf", fullURI);
+        if(courseObj.opf.title) {
+            $("#epub_runner_title").text(courseObj.opf.title)
+        }
+        
+        
         
         var launchStmt = UstadMobileAppZone.getInstance().makeLaunchedStatement(
                 courseObj.tincanXML, courseObj.opf);

@@ -115,10 +115,6 @@ UstadMobileContentZone.prototype = {
     init: function() {
         $( ":mobile-pagecontainer" ).on("pagecontainershow",
             this.triggerPageShowOnCurrent);
-        
-        $(document).one("pagebeforecreate", function() {
-            UstadMobileContentZone.getInstance().makeLaunchedStatement();
-        });
     },
     
     
@@ -159,7 +155,7 @@ UstadMobileContentZone.prototype = {
                     answerId = answerFor.substring(1);
                 }else {
                     //multi select checkbox
-                    answerId = $(this).children("A").first().attr("href");
+                    answerId = $(this).children("a").first().attr("href");
                     answerId = answerId.split("-")[1];
                 }
 
@@ -211,14 +207,15 @@ UstadMobileContentZone.prototype = {
         
         UstadMobile.getInstance().runAfterRuntimeInfoLoaded(function() {
             if(UstadMobile.getInstance().getRuntimeInfoVal("FixAttachmentLinks") === true) {
-                contentEl.find(".FileAttachIdeviceInc .exeFileList A").each(function() {
+                contentEl.find(".FileAttachIdeviceInc .exeFileList a").each(function() {
                     var href= $(this).attr('href');
-                    if(href.indexOf("startdownload=true") === -1) {
+                    if($(this).attr("data-startdownload-url")) {
                         var ajaxHref = href + "?startdownload=true";
-                        $(this).attr("href", "#");
                         $(this).attr("data-startdownload-url", ajaxHref);
+                        $(this).attr("href", "#");
                         $(this).on("click", function() {
                             var hrefToOpen = $(this).attr("data-startdownload-url");
+                            debugger;
                             $.ajax({
                                 url: hrefToOpen,
                                 dataType : "text"
@@ -227,7 +224,7 @@ UstadMobileContentZone.prototype = {
                     }
                 });
 
-                contentEl.find("A").each(function() {
+                contentEl.find("a").each(function() {
                     var href = $(this).attr("href");
                     if(typeof href !== "undefined" && href !== null){
                         if(href.substring(0,7)==="http://" ||
