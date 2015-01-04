@@ -342,56 +342,7 @@ UstadMobileBookList.prototype = {
             });
         });
     },
-    
-    /**
-     * Show a course in an iframe 
-     * 
-     * @param string httpURL URL of the course - e.g. that running on the http server
-     * @param function onshowCallback run when the course element is on screen 
-     * @param boolean show whether or not to actually show (if false set display: none css
-     * @param function onloadCallback function to run when iframe has loaded
-     * @param function onerrorCallback function to run if an error occurs with iframe load
-     */
-    showCourseIframe: function(httpURL, onshowCallback, show, onloadCallback, onerrorCallback) {
-        var iframeEl = $("<iframe src='" + httpURL + "' nwdisable nwfaketop></iframe>");
-        iframeEl.css("border-width", "0px");
-        iframeEl.css("position", "absolute");
-        iframeEl.css("width", "100%");
-        iframeEl.css("height", "100%");
-        iframeEl.css("z-index", "50000");
-        //so it can be found to close it
-        iframeEl.addClass(UstadMobileBookList.IRAME_CLASSNAME);
-        if(show === false) {
-            iframeEl.css("display", "none");
-        }
-        if(typeof onloadCallback !== "undefined" && onloadCallback !== null) {
-            iframeEl.load(onloadCallback);
-        }
-        
-        if(typeof onerrorCallback !== "undefined" && onerrorCallback !== null) {
-            iframeEl.error(onerrorCallback);
-        }
 
-        $(".ustadbooklistpage").css("display", "none");
-        $("BODY").prepend(iframeEl);
-        UstadMobileUtils.runCallback(onshowCallback, [iframeEl], this);
-    },
-      
-    /**
-     * Close any iframes that are being used to display content
-     * 
-     * @return {Number} number of iframes closed
-     */
-    closeBlCourseIframe: function() {
-       var elResult = $("." + UstadMobileBookList.IRAME_CLASSNAME);
-       $(".ustadbooklistpage").css("display", "inherit");
-       
-       var numRemoved = elResult.length;
-       elResult.remove();
-       
-       
-       return numRemoved;
-    },
    
     /**
      * Open the given booklist page
@@ -491,29 +442,5 @@ UstadMobileCourseEntry.prototype = {
                 + "data-icon=\"star\" data-ajax=\"false\">" + this.courseTitle 
                 + "</a>";
     }
-}
-
-
-function UstadMobileAppToContentCopyJob(fileDestMap, destDir, completeCallback) {
-    this.fileDestMap = fileDestMap;
-    this.fileList = [];
-    
-    for(srcFile in fileDestMap) {
-        this.fileList.push(srcFile);
-    }
-    
-    this.destDir = destDir;
-    this.completeCallback = completeCallback;
-}
-
-UstadMobileAppToContentCopyJob.prototype = {
-    
-    currentFileIndex: 0,
-    
-    //Needs to be overriden by implementation - access using Impl.makeCopyJob
-    copyNextFile: function() {
-        
-    }
-    
 };
 

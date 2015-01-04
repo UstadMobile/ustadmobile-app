@@ -504,8 +504,8 @@ UstadMobile.prototype = {
             umObj.initScriptsToLoad.push("ustadjs.js");
         }else {
             umObj.initScriptsToLoad.push("lib/ustadjs.js");
-            umObj.initScriptsToLoad.push("js/tincan.js");
-            umObj.initScriptsToLoad.push("js/tincan_queue.js");
+            umObj.initScriptsToLoad.push("lib/tincan.js");
+            umObj.initScriptsToLoad.push("lib/tincan_queue.js");
             umObj.initScriptsToLoad.push("js/ustadmobile-getpackages.js");
             if(UstadMobile.getInstance().isNodeWebkit()) {
                 umObj.initScriptsToLoad.push("js/ustadmobile-http-server.js");
@@ -998,6 +998,19 @@ UstadMobile.prototype = {
             pgEl.children(".ustad_fb_popup").attr("id", "ustad_fb_" + thisPgId);
         }
         
+        var zoneObj = null;
+        try {
+            zoneObj = UstadMobile.getInstance().getZoneObj();
+        }catch (err) {
+            //do nothing
+        }
+        
+        if(zoneObj) {
+            var currentUsername = zoneObj.getCurrentUsername();
+            if(currentUsername) {
+                pgEl.find("#ustad_user_button").text(currentUsername);
+            }
+        }
     },
     
     /**

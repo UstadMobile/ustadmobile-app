@@ -79,6 +79,31 @@ UstadMobileLogin.getInstance = function() {
 
 UstadMobileLogin.prototype = {
     
+    /**
+     * 
+     * @returns {undefined}
+     */
+    getLoginMessageByStatus: function(statusCode) {
+        var msg = null;
+        switch(statusCode) {
+            case 0:
+                msg = "Could not reach server; please check connection";
+                break;
+            case 401:
+                msg = "Invalid username/password";
+                break
+            case 500:
+                msg = "Error on server; please contact support";
+                break;
+        }
+        
+        if(!msg) {
+            msg = "Generic login error: " + statusCode;
+        }
+        
+        return msg;
+    },
+    
         
     /** This runs when login is triggered
       * arguments with actual function of login for
@@ -100,15 +125,19 @@ UstadMobileLogin.prototype = {
             var url = "http://umcloud1.ustadmobile.com/umlrs/statements?limit=1";
         }
         
-        this.umlogin(username, password, url, function(statusCode, pass) {
-            $.mobile.loading('hide');
-            if(statusCode === 200) {
-                UstadMobile.getInstance().goPage(UstadMobile.PAGE_BOOKLIST);
-            }else {
-                //change this alert
-                alert("Computer says no");
-            }
-        });
+        this.umlogin(username, password, url, $.proxy(
+            function(statusCode, pass) {
+                $.mobile.loading('hide');
+                if(statusCode === 200) {
+                    UstadMobile.getInstance().goPage(UstadMobile.PAGE_BOOKLIST);
+                }else {
+                    //change this alert
+                    $("#ustad_loginerrortext").text(
+                            this.getLoginMessageByStatus(statusCode));
+                
+                    $("#ustad_login_popup_dialog").popup("open");
+                }
+            }, this));
     },
     
     /**
