@@ -282,9 +282,6 @@ UstadMobileAppImplNodeWebkit.prototype.unzipSingleFile = function(zipPath, zipEn
     var unzip = require("unzip");
     var streamBuffers = require("stream-buffers");
     
-    
-    console.log("unzipsinglefile: Requested to unzip " + zipEntryNames.length + " files from " + zipPath);
-    
     //streamwriters used to save text content
     var streamWriters = [];
     //array of booleans indicating if files have been found
@@ -292,12 +289,7 @@ UstadMobileAppImplNodeWebkit.prototype.unzipSingleFile = function(zipPath, zipEn
     
     //string values of files found 
     var strVals = [];
-        
-    //number of files with processing outstanding
-    var numFilesRemaining = zipEntryNames.length;
-    
-    var numFilesFound = 0;
-    
+            
     //the number of files where extraction is going on
     var numFilesInProgress = 0;
     
@@ -321,14 +313,11 @@ UstadMobileAppImplNodeWebkit.prototype.unzipSingleFile = function(zipPath, zipEn
 
             currentStreamWriter.on("close", function() {
                 //save that to disk
-                //console.log("Close streamwriter for " + zipEntryNames[currentIndex]);
                 var fileContents = currentStreamWriter.getContentsAsString('utf8');
                 strVals[currentIndex] = fileContents;
                 fs.writeFileSync(destFilePath, fileContents);
-                numFilesRemaining--;
                 numFilesInProgress--;
                 if(scanComplete && numFilesInProgress === 0) {
-                    console.log("unzipsinglefile: run callback: no files remaining from " + requestedFilesStr + " to unzip in " + zipPath);
                     callback(null, strVals);
                 }
             });
@@ -351,7 +340,6 @@ UstadMobileAppImplNodeWebkit.prototype.unzipSingleFile = function(zipPath, zipEn
             }
             
             if(seekIndex !== -1) {
-                numFilesFound++;
                 numFilesInProgress++;
                 filesFound[seekIndex] = true;
                 entry.pipe(streamWriters[seekIndex]);
@@ -361,7 +349,6 @@ UstadMobileAppImplNodeWebkit.prototype.unzipSingleFile = function(zipPath, zipEn
         }).on("close", function() {
             scanComplete = true;
             if(numFilesInProgress === 0) {
-                console.log("running notfound callback for " + zipPath);
                 callback(null, strVals);
             }
         });
@@ -397,16 +384,12 @@ UstadMobileAppImplNodeWebkit.prototype.cacheEpubsInDir = function(dirPath, callb
         }
         
         var cacheEntryFn = function(i) {
-            //debugger;
             var entryPath = path.join(dirPath, epubsArr[i]);
             UstadMobileAppImplNodeWebkit.getInstance().makeEpubCache(entryPath,
                 function(err, rootFileStr, rootFilePath) {
-                    console.log("cacheEntryFn: makeEpubCache complete for " + entryPath);
                     if(i < epubsArr.length-1) {
-                        console.log("cacheEntryFn: running callback for " + entryPath);
                         cacheEntryFn(i+1);
                     }else {
-                        // # debugger;
                         callback();
                     }
                 });

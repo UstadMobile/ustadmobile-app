@@ -51,7 +51,10 @@ var UstadMobileAppZone;
  * @constructor
  */
 UstadMobileAppZone = function() {
-    //info that can be overriden by the implementation; used to inform the content side of the house
+    /**
+     * Runtime Info used to inform the content side of the house (e.g. how
+     * to open external links + docs
+     */
     this.runtimeInfo = {};
 };
 
