@@ -228,7 +228,8 @@ UstadMobileHTTPServer.prototype = {
         //Get the name of the epub file this should come from...
         var endOfEpubName = url.indexOf("/",contentDirName.length+3);
         
-        var epubName = url.substring(contentDirName.length+2, endOfEpubName);
+        var epubName = url.substring(contentDirName.length+2, 
+            endOfEpubName);
         
         var httpQuery = "";
         var queryPos = url.indexOf("?");

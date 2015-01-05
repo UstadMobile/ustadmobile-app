@@ -147,6 +147,7 @@ UstadMobileAppImplNodeWebkit.prototype.showCourse = function(courseObj,
     var path = require("path");
     var epubFilename = courseObj.relativeURI.substring(0, 
         courseObj.relativeURI.indexOf("/"));
+    epubFilename = decodeURI(epubFilename);
     
     var epubFullPath = path.join(UstadMobile.getInstance().contentDirURI,
         epubFilename);
@@ -444,7 +445,8 @@ UstadMobileAppImplNodeWebkit.prototype.getCourseObjFromEpub = function(epubPath)
     debugLog("NodeWebKit finds content in " + epubPath);
     
     var epubBasename = path.basename(epubPath);
-    var relativeURI = UstadMobileUtils.joinPath([epubBasename, rootFile0], "/");
+    var relativeURI = UstadMobileUtils.joinPath([encodeURI(epubBasename), 
+        rootFile0], "/");
 
     var courseEntryObj = new UstadMobileCourseEntry(opfObj.title, "", 
         epubPath, null, relativeURI);
@@ -571,7 +573,8 @@ UstadMobileAppImplNodeWebkit.prototype.mountContentEPub = function(epubPath, cal
                 UstadMobileAppImplNodeWebkit.getInstance().mountedEPubs
                     [epubBasename] = tmpDirPath;
                 
-                UstadMobileHTTPServer.getInstance().mountEpubDir(epubBasename,
+                var epubBasenameEncoded = encodeURI(epubBasename);
+                UstadMobileHTTPServer.getInstance().mountEpubDir(epubBasenameEncoded,
                     tmpDirPath);
                 callback(null, epubBasename);
             });
