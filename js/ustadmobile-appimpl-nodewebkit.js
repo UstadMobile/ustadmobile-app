@@ -488,11 +488,15 @@ UstadMobileAppImplNodeWebkit.prototype.makeEpubCache = function(epubPath, callba
             var containerStr = fs.readFileSync(pathToContainer, 'utf8');
             var rootFiles = UstadJS.getContainerRootfilesFromXML(containerStr);
             var opubPath = path.join(epubCachePath, rootFiles[0]['full-path']);
-            var opubStr = fs.readFileSync(opubPath, 'utf8');
-            callback(null, opubStr);
             
-            //stop now
-            return;
+            //check that the opf file is really here
+            if(fs.existsSync(opubPath)) {
+                var opubStr = fs.readFileSync(opubPath, 'utf8');
+                callback(null, opubStr);
+
+                //stop now
+                return;
+            }
         }
     } 
     
