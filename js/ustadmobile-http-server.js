@@ -264,8 +264,8 @@ UstadMobileHTTPServer.prototype = {
             }
             
             if(httpQuery === "download=true") {
-                httpHeaders['Content-Disposition'] = "attachment; filename=" 
-                        + filename;
+                httpHeaders['Content-Disposition'] = "attachment; filename=\"" 
+                        + decodeURI(filename) + "\"";
             }
             
             //check and see if this is just an ajax call for NWGUI to launch browser

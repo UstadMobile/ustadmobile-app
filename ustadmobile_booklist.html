@@ -67,9 +67,15 @@ If you need a commercial license to remove these restrictions please contact us 
         <div data-role="page" id="exemainpage" data-theme="b" class="ustadbooklistpage">
             <script type="text/javascript">
                 $(".ustadbooklistpage").on("pageshow", function(event, ui) {
-                    console.log("BOOKLIST: In pageshow");
+                    $.mobile.loading('show', {
+                        text: x_("Updating course list"),
+                        textVisible: true,
+                        theme: 'b',
+                        html: ""
+                    });
                     UstadMobileBookList.getInstance().queueScan(function() {
                         UstadMobileBookList.getInstance().updateCourseListDisplay();
+                        $.mobile.loading('hide');
                     });
                     UstadMobileAppZone.getInstance().updateAssignedCoursesDisplay();
                 });

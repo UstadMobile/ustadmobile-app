@@ -148,6 +148,9 @@ UstadMobileBookList.prototype = {
       *@method onBookListLoad
       */
     queueScan: function(queueCallback) {
+        var callbackFn = function() {
+            
+        };
         UstadMobile.getInstance().runAfterPathsCreated(function() {
             UstadMobileBookList.getInstance().coursesFound = [];
             UstadMobile.getInstance().systemImpl.scanCourses(queueCallback);

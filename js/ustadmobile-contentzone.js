@@ -209,7 +209,7 @@ UstadMobileContentZone.prototype = {
             if(UstadMobile.getInstance().getRuntimeInfoVal("FixAttachmentLinks") === true) {
                 contentEl.find(".FileAttachIdeviceInc .exeFileList a").each(function() {
                     var href= $(this).attr('href');
-                    if($(this).attr("data-startdownload-url")) {
+                    if(!$(this).attr("data-startdownload-url")) {
                         var ajaxHref = href + "?startdownload=true";
                         $(this).attr("data-startdownload-url", ajaxHref);
                         $(this).attr("href", "#");
