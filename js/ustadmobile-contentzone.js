@@ -215,7 +215,6 @@ UstadMobileContentZone.prototype = {
                         $(this).attr("href", "#");
                         $(this).on("click", function() {
                             var hrefToOpen = $(this).attr("data-startdownload-url");
-                            debugger;
                             $.ajax({
                                 url: hrefToOpen,
                                 dataType : "text"
