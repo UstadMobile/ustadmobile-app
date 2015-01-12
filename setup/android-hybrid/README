@@ -1,0 +1,12 @@
+
+1. Install all Android developer requirements / SDK
+
+
+Development Env Setup
+
+$ android create project --target 6 --name UstadMobile --path ./ustadmobile --activity UstadMobile --package com.toughra.ustadmobile
+
+From within 
+android update project --target 6 --path ./ustadmobile/ --library ../umcordovalib/platforms/android/CordovaLib/
+
+
