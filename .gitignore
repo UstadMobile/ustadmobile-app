@@ -25,3 +25,6 @@ gen
 #generated each time
 umcordovalib
 
+#eclipse stuff
+.classpath
+.project
