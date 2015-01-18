@@ -3,19 +3,24 @@
 # Setup an Android project on the command line, make a Cordova project,
 # and use the CordovaLib Project
 
+
+#Make sure that the ANDROID_HOME env variable is set
+
+if [ ! -e $ANDROID_HOME/tools/ant/build.xml ]; then
+    echo "You must set the ANDROID_HOME environment variable"
+    exit 1
+fi
+
+
 BASEDIR=$(pwd)
 
-mkdir androidproject
-cd androidproject 
-android create project --target 6 --name UstadMobile --path ./ustadmobile --activity UstadMobile --package com.toughra.ustadmobile
+android create project --target 6 --name UstadMobileActivity --path ./ustadmobileandroid --activity UstadMobileActivity --package com.toughra.ustadmobile
 
-cd ..
+$BASEDIR/make-cordovalib-project.sh
 
-cordova create umcordovalib com.ustadmobile UMCordovaLib
-cd umcordovalib
-cordova platform add android
-cordova build
+android update project --target 6 --path ./ustadmobileandroid/ --library ../umcordovalib/platforms/android/CordovaLib/
 
-cd ../androidproject
-android update project --target 6 --path ./ustadmobile/ --library ../../umcordovalib/platforms/android/CordovaLib/
+#Create a test project
+cd $BASEDIR
+android create test-project -m ../ustadmobileandroid -n ustadmobileandroid_test -p ustadmobileandroid_test
 

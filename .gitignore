@@ -18,3 +18,10 @@ ustad-test-credentials.js
 release-ant.properties
 plugins-offline
 
+#android hybrid exclusions
+bin
+gen
+
+#generated each time
+umcordovalib
+

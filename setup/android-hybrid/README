@@ -1,12 +1,35 @@
+UstadMobile Android Hybrid App Building + Testing
+=================================================
 
-1. Install all Android developer requirements / SDK
+The environment consists of three projects:
 
+1. The main UstadMobile android project that is to use a CordovaWebView
+ to run most of the action
+2. A blank cordova project that contains the CordovaLib project, used as
+ a library project by the main UstadMobile android project
+3. An Android test project for unit testing purposes
 
-Development Env Setup
+GETTING STARTED:
+================
 
-$ android create project --target 6 --name UstadMobile --path ./ustadmobile --activity UstadMobile --package com.toughra.ustadmobile
+1. Create the Cordova Project
+$ ./make-cordovalib-project.sh
 
-From within 
-android update project --target 6 --path ./ustadmobile/ --library ../umcordovalib/platforms/android/CordovaLib/
+2. Compile the debug application
+$ cd ustadmobileandroid && ant debug
 
+3. Run tests
+$ cd ustadmobileandroid_tests
+$ ant [emma] debug install test
+
+emma is optional for coverage: It may or may not function depending on
+permissions copying from device to system using adb
+
+Projects can be imported into eclipse using file - import - existing 
+android code into workspace.  You must import all three projects.
+
+SETUP PROJECTS FROM SCRATCH
+===========================
+
+./make-env.sh is used to create blank Android projects
 
