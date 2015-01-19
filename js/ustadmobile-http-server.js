@@ -254,8 +254,6 @@ UstadMobileHTTPServer.prototype = {
             var mime = require("mime");
             
             
-            
-            
             var mimeType = mime.lookup(filename);
             
             var filePath = fromSubDirURL;
@@ -286,21 +284,99 @@ UstadMobileHTTPServer.prototype = {
             var fileURI = path.join(epubBaseDir,
                 decodeURI(filenameWithinEpub));
             
-            fs.readFile(fileURI, function(err,data) {
-               if(err) {
-                   response.writeHead(404);
-                   response.end(JSON.stringify(err));
-               } else {
-                   var fileStat = fs.statSync(fileURI);
-                   var fileSize = fileStat['size'];
+            if(!fs.existsSync(fileURI)) {
+                response.writeHead(404);
+                response.end("File Not Found : " + fileURI);
+                return;
+            }
             
-                   response.setHeader("Content-Type", mimeType);
-                   response.setHeader("Content-Length", fileSize);
-                   response.writeHead(200, httpHeaders);
-                   response.end(data);
-               }
-            });
+            var fileStat = fs.statSync(fileURI);
+            var fileSize = fileStat.size;
+            
+            if(fileStat.isDirectory()) {
+                response.writeHead(401);
+                response.end("Directory listings are unauthorized");
+                return;
+            }
+            
+            var rangeRequest = UstadMobileHTTPServer.getInstance().readRangeHeader(
+                    request.headers['range'], fileSize);
+            
+            if(rangeRequest === null || (rangeRequest.Start === 0 && rangeRequest.End === fileSize-1)) {
+                fs.readFile(fileURI, function(err,data) {
+                    if(err) {
+                        response.writeHead(500);
+                        response.end("Error accessing file: " + err);
+                    } else {
+                        response.setHeader("Content-Type", mimeType);
+                        response.setHeader("Content-Length", fileSize);
+                        response.setHeader("Accept-Ranges", "bytes");
+                        response.writeHead(200, httpHeaders);
+                        response.end(data);
+                    }
+                 });
+            }else {
+                var start = rangeRequest.Start;
+                var end = rangeRequest.End;
+                if(start <= fileSize && end <= fileSize) {
+                    var contentLength = start === end ? 0 : (end - start + 1);
+                    response.setHeader("Content-Length", contentLength);
+                    response.setHeader("Content-Type", mimeType);
+                    response.setHeader("Accept-Ranges", "bytes");
+                    response.writeHead(206);
+                    fs.createReadStream(fileURI, 
+                        {'start' : start, 'end' : end}).pipe(response);
+                }else {
+                    response.writeHead(416);
+                    response.end("Range request cannot be satisfied on this file");
+                }
+            }
+            
         }
+    },
+    
+    /**
+     * Borrowed from: 
+     * http://www.codeproject.com/Articles/813480/HTTP-Partial-Content-In-Node-js
+     * 
+     * @param {type} range
+     * @param {type} totalLength
+     * @returns {ustadmobile-http-server_L310.result}
+     */
+    readRangeHeader: function(range, totalLength) {
+        /*
+         * Example of the method 'split' with regular expression.
+         * 
+         * Input: bytes=100-200
+         * Output: [null, 100, 200, null]
+         * 
+         * Input: bytes=-200
+         * Output: [null, null, 200, null]
+         */
+
+        if (!range) {
+            return null;
+        }
+
+        var array = range.split(/bytes=([0-9]*)-([0-9]*)/);
+        var start = parseInt(array[1]);
+        var end = parseInt(array[2]);
+        var result = {
+            Start: isNaN(start) ? 0 : start,
+            End: isNaN(end) ? (totalLength - 1) : end
+        };
+
+        if (!isNaN(start) && isNaN(end)) {
+            result.Start = start;
+            result.End = totalLength - 1;
+        }
+
+        if (isNaN(start) && !isNaN(end)) {
+            result.Start = totalLength - end;
+            result.End = totalLength - 1;
+        }
+
+        return result;
     },
     
     /**
