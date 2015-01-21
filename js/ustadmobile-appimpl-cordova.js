@@ -367,7 +367,149 @@ UstadMobileAppImplCordova.prototype.getSystemInfo = function(callback) {
  * @returns {undefined}
  */
 UstadMobileAppImplCordova.prototype.scanCourses = function(callback) {
-    UstadMobileCordovaScanner.getInstance().startScan(callback);
+    //UstadMobileCordovaScanner.getInstance().startScan(callback);
+    
+    var dirPath = UstadMobile.getInstance().contentDirURI;
+    UstadMobileAppImplCordova.getInstance().cacheEpubsInDir(dirPath, 
+        function() {
+            
+            console.log("scanned courses OK-ish");
+        }
+    );
+};
+
+/**
+ * 
+ * @param {type} dirPath
+ * @param {type} callback
+ * @returns {undefined}
+ */
+UstadMobileAppImplCordova.prototype.cacheEpubsInDir = function(dirPath, callback) {
+    window.resolveLocalFileSystemURL(dirPath,
+        function(entry){
+            console.log("found" + entry);
+            //now try and get a list of entries here
+            var dirReader = entry.createReader();
+            dirReader.readEntries(function(entries) {
+                var epubEntries = [];
+                
+                for(var i = 0; i < entries.length; i++) {
+                    var entryName = entries[i].name;
+                    if(entryName.indexOf(".epub", entryName.length-5) !== -1) {
+                        epubEntries.push(entries[i]);
+                    }
+                }
+                
+                var cacheEntryFn = function(entryNum) {
+                    UstadMobileAppImplCordova.getInstance().makeEpubCache(
+                        epubEntries[entryNum], function() {
+                            if(entryNum < epubEntries.length -1) {
+                                cacheEntryFn(entryNum+1);
+                            }else {
+                                callback();
+                            }
+                        });
+                };
+                
+                if(epubEntries.length > 0) {
+                    cacheEntryFn(0);
+                }else {
+                    callback();
+                }
+            }, function(failEvt) {
+                console.log("shisse2");
+            });
+        },
+        function(evt) {
+            console.log("schisse");
+        }
+    );
+};
+
+/**
+ * Make a directory cache for the given epub file: usage
+ * 
+ * impl.makeEpubCache("/path/to/file.epub", function(err, rootFileStr, rootFilePath) {
+ *  if(err) throw err;
+ *  console.log("Root file (eg opf) contents: " + rootFileStr);
+ *  console.log("root file path in epub: " + rootFilePath);
+ * });
+ *
+ * @method getCourseObjFromDir
+ * @param epubFileEntry {FileEntry} File entry object
+ * @param callback {function} callback to run
+ * @return {CourseEntryObject} Representing course in that directory
+ */
+UstadMobileAppImplCordova.prototype.makeEpubCache = function(epubFileEntry, callback) {
+    console.log("want to extract: ");
+    var baseName = epubFileEntry.name;
+    var cacheDirName = baseName + "_cache";
+    epubFileEntry.getParent(function(epubParentEntry) {
+        epubParentEntry.getDirectory(cacheDirName, 
+        { create : true, exclusive : false}, function(cacheDirEntry) {
+            
+            var unzipFn = function() {
+                zip.unzip(epubFileEntry.toURL(), cacheDirEntry.toURL(), function(val) {
+                    UstadMobileUtils.runCallback(callback, [cacheDirEntry], this);
+                });
+            };
+            
+            //look and see if the cache dir is up to date; check container mod date
+            var containerURL = UstadMobileUtils.joinPath([cacheDirEntry.toURL(),
+                "META-INF", "container.xml"]);
+            window.resolveLocalFileSystemURL(containerURL, function(containerEntry) {
+                UstadMobileAppImplCordova.getInstance().modTimeDifference(containerEntry, epubFileEntry, function(diff,err) {
+                    if(diff > 0) {
+                        //means epubFile was more recently modified
+                        unzipFn();
+                    }else {
+                        //cache is up to date
+                        UstadMobileUtils.runCallback(callback, [cacheDirEntry], this);
+                    }
+                });
+            }, function(err) {
+                //means nothing has been extracted here, extract it
+                unzipFn();
+            });
+            
+        }, function(err) {
+            UstadMobileUtils.runCallback(callback, [err], this);
+        });
+    }, function(err) {
+        UstadMobileUtils.runCallback(callback, [err], this);
+    });
+};
+
+
+/**
+ * Gets the difference in modification time between two files 
+ * 
+ * e.g. fileEntry2.modificationTime - fileEntry1.modificationTime
+ * 
+ * usage:
+ * 
+ * UstadMobileAppImplCordova.getInstance().modTimeDifference(f1, f2, function(diff, err) {
+ *     if(err) throw err;
+ *     
+ *     console.log("f2.modtime - f1.modtime = " + diff); 
+ * });
+ * 
+ * @param {FileEntry} fileEntry1
+ * @param {FileEntry} fileEntry2
+ * @param {function} callback 
+ * @returns {undefined}
+ */
+UstadMobileAppImplCordova.prototype.modTimeDifference = function(fileEntry1, fileEntry2, callback) {
+    var errFn = function(fileErr) {
+        callback("ERR", fileErr);
+    };
+    
+    fileEntry1.getMetadata(function(metadata1) {
+        fileEntry2.getMetadata(function(metadata2) {
+            callback(metadata2.modificationTime.getTime() 
+                    - metadata1.modificationTime.getTime());
+        }, errFn);
+    }, errFn);
 };
 
 UstadMobileAppImplCordova.prototype.makeCopyJob = function(fileDestMap, destDir, completeCallback) {

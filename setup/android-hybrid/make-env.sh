@@ -24,3 +24,6 @@ android update project --target 6 --path ./ustadmobileandroid/ --library ../umco
 cd $BASEDIR
 android create test-project -m ../ustadmobileandroid -n ustadmobileandroid_test -p ustadmobileandroid_test
 
+#now copy the base html files
+cp -r $BASEDIR/umcordovalib/platforms/android/assets/www androidproject/assets/
+

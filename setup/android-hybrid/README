@@ -28,8 +28,23 @@ permissions copying from device to system using adb
 Projects can be imported into eclipse using file - import - existing 
 android code into workspace.  You must import all three projects.
 
+
+INSTALLING PLUGINS:
+===================
+
+From this dir:
+plugman install --platform android --project ustadmobileandroid \
+     --plugin PLUGINNAME --www ustadmobileandroid/assets/www
+
+
 SETUP PROJECTS FROM SCRATCH
 ===========================
 
-./make-env.sh is used to create blank Android projects
+These scripts make new projects from scratch:
+
+To make project:
+./make-env.sh 
+
+To install cordova plugins:
+./install-cordova-plugins.sh
 
