@@ -1249,6 +1249,62 @@ UstadMobileUtils.runOrWait = function(runNow, fn, args, thisObj, waitingList) {
     }
 }
 
+
+/**
+ * If parameter seperator is specified; use it; otherwise use /
+ * 
+ * @param {String} seperator (optional)
+ * @returns {undefined}
+ */
+UstadMobileUtils.getSeperator = function(seperator) {
+    if(typeof seperator === "undefined" || seperator === null) {
+        return "/";
+    }else {
+        return seperator;
+    }
+}
+
+/**
+ * Gets the extension of a file - e.g. ".epub" for somefile.epub
+ * 
+ * @param {String} name
+ * @returns {String} the extension of the file
+ */
+UstadMobileUtils.getExtension = function(name) {
+    var lastDotPos = name.lastIndexOf(".");
+    if(lastDotPos === -1) {
+        return null;
+    }else {
+        return name.substring(lastDotPos);
+    }
+};
+
+/**
+ * Split up the path into components according to the seperator
+ * 
+ * @param {type} path
+ * @param {type} seperator
+ * @returns {undefined}
+ */
+UstadMobileUtils.splitPath = function(path, seperator) {
+    seperator = UstadMobileUtils.getSeperator(seperator);
+    return path.split(seperator);
+};
+
+/**
+ * Chop off the last part of the URL
+ * 
+ * e.g. file://localhost/some/dir/file - file://localhost/some/dir
+ * 
+ * @param {type} url
+ * @param {type} seperator
+ * @returns {undefined}
+ */
+UstadMobileUtils.getURLParent = function(url, seperator) {
+    seperator = UstadMobileUtils.getSeperator(seperator);
+    return url.substring(0, url.lastIndexOf(seperator));
+}
+
 /**
  * Joins an array of Strings together with one and only one seperator between
  * them
@@ -1258,9 +1314,7 @@ UstadMobileUtils.runOrWait = function(runNow, fn, args, thisObj, waitingList) {
  * @returns string Path components joined into one string
  */
 UstadMobileUtils.joinPath = function(pathArr, seperator) {
-    if(typeof seperator === "undefined" || seperator === null) {
-        seperator = "/";
-    }
+    seperator = UstadMobileUtils.getSeperator(seperator);
     
     if(pathArr.length === 1) {
         return pathArr[1];
