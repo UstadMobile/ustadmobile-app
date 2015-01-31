@@ -1,0 +1,5 @@
+key.store=/path/to/keystore
+key.store.password=SECRET
+key.alias=KEYALIAS
+key.alias.password=SECRET
+

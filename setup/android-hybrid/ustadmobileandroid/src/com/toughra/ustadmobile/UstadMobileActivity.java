@@ -57,6 +57,21 @@ public class UstadMobileActivity extends Activity implements CordovaInterface
 	private CordovaWebView cordova_webview;
 	private String TAG = "CORDOVA_ACTIVITY";
 	private final ExecutorService threadPool = Executors.newCachedThreadPool();
+	
+    // Plugin to call when activity result is received
+    protected CordovaPlugin activityResultCallback = null;
+    protected boolean activityResultKeepRunning;
+    
+    // Keep app running when pause is received. (default = true)
+    // If true, then the JavaScript and native code continue to run in the background
+    // when another application (activity) is started.
+    protected boolean keepRunning = true;
+
+    private static int ACTIVITY_STARTING = 0;
+    private static int ACTIVITY_RUNNING = 1;
+    private static int ACTIVITY_EXITING = 2;
+    private int activityState = 0;  // 0=starting, 1=running (after 1st resume), 2=shutting down
+
 
 	// Android Activity Life-cycle events
 	@Override
@@ -69,26 +84,73 @@ public class UstadMobileActivity extends Activity implements CordovaInterface
 		cordova_webview.loadUrl(url, 5000);
 	}
 
-	@Override
-	protected void onPause() {
-		super.onPause();
-		Log.d(TAG, "onPause");
+	/**
+     * Called when the system is about to start resuming a previous activity.
+     */
+    @Override
+    protected void onPause() {
+    	Log.d(TAG, "onPause");
+        super.onPause();
+
+        LOG.d(TAG, "Paused the application!");
+
+        // Don't process pause if shutting down, since onDestroy() will be called
+        if (this.activityState == ACTIVITY_EXITING) {
+            return;
+        }
+
+        if (this.cordova_webview == null) {
+            return;
+        }
+        else
+        {
+            this.cordova_webview.handlePause(this.keepRunning);
+        }
+		
 	}
 
-	@Override
-	protected void onResume() {
-		super.onResume();
-		Log.d(TAG, "onResume");
-	}
+    /**
+     * Called when the activity will start interacting with the user.
+     */
+    @Override
+    protected void onResume() {
+        super.onResume();
+        LOG.d(TAG, "Resuming the App");
+        
+        if (this.activityState == ACTIVITY_STARTING) {
+            this.activityState = ACTIVITY_RUNNING;
+            return;
+        }
+
+        if (this.cordova_webview == null) {
+            return;
+        }
+        // Force window to have focus, so application always
+        // receive user input. Workaround for some devices (Samsung Galaxy Note 3 at least)
+        this.getWindow().getDecorView().requestFocus();
+
+        this.cordova_webview.handleResume(this.keepRunning, this.activityResultKeepRunning);
+
+        // If app doesn't want to run in background
+        if (!this.keepRunning || this.activityResultKeepRunning) {
+
+            // Restore multitasking state
+            if (this.activityResultKeepRunning) {
+                this.keepRunning = this.activityResultKeepRunning;
+                this.activityResultKeepRunning = false;
+            }
+        }
+    }
 
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
+		Log.d(TAG, "onDestroy");
 		if (this.cordova_webview != null) {
-			this.cordova_webview
-					.loadUrl("javascript:try{cordova.require('cordova/channel').onDestroy.fire();}catch(e){console.log('exception firing destroy event from native');};");
-			this.cordova_webview.loadUrl("about:blank");
+			Log.d(TAG, "onDestroy destroy cordova webview");
 			cordova_webview.handleDestroy();
+		}else {
+			this.activityState = ACTIVITY_EXITING; 
 		}
 	}
 
@@ -109,19 +171,46 @@ public class UstadMobileActivity extends Activity implements CordovaInterface
 	public Object onMessage(String message, Object obj) {
 		Log.d(TAG, message);
 		if (message.equalsIgnoreCase("exit")) {
-			super.finish();
+			this.endActivity();
 		}
 		return null;
 	}
+	
+	
 
-	@Override
-	public void setActivityResultCallback(CordovaPlugin cordovaPlugin) {
-		Log.d(TAG, "setActivityResultCallback is unimplemented");
-	}
+	/**
+     * Launch an activity for which you would like a result when it finished. When this activity exits,
+     * your onActivityResult() method will be called.
+     *
+     * @param command           The command object
+     * @param intent            The intent to start
+     * @param requestCode       The request code that is passed to callback to identify the activity
+     */
+    public void startActivityForResult(CordovaPlugin command, Intent intent, int requestCode) {
+    	Log.d(TAG, "startActivityForResult is unimplemented");
+        this.activityResultCallback = command;
+        this.activityResultKeepRunning = this.keepRunning;
 
-	@Override
-	public void startActivityForResult(CordovaPlugin cordovaPlugin,
-			Intent intent, int resultCode) {
-		Log.d(TAG, "startActivityForResult is unimplemented");
-	}
+        // If multitasking turned on, then disable it for activities that return results
+        if (command != null) {
+            this.keepRunning = false;
+        }
+
+        // Start activity
+        super.startActivityForResult(intent, requestCode);
+    }
+    
+    public void setActivityResultCallback(CordovaPlugin plugin) {
+    	this.activityResultCallback = plugin;
+    }
+    
+    
+    /**
+     * End this activity by calling finish for activity
+     */
+    public void endActivity() {
+        this.activityState = ACTIVITY_EXITING;
+        super.finish();
+    }
+
 }

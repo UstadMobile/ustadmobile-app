@@ -34,6 +34,7 @@ umcordovalib
 setup/android-hybrid/ustadmobileandroid/assets/www
 setup/android-hybrid/ustadmobileandroid/cordova/plugins
 
+setup/android-hybrid/ustadmobileandroid/ant.properties
 setup/android-hybrid/ustadmobileandroid/src
 !setup/android-hybrid/ustadmobileandroid/src/com/toughra/ustadmobile/*.java
 #setup/android-hybrid/ustadmobileandroid/src

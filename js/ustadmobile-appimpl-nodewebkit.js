@@ -1,6 +1,9 @@
 
 "use strict";
 
+require('nw.gui').Window.get().showDevTools();
+alert("load tools");
+
 /* 
 <!-- This file is part of Ustad Mobile.  
     
@@ -136,6 +139,29 @@ UstadMobileAppImplNodeWebkit.prototype.getHTTPBaseURL = function() {
  * Shows the course represented by the UstadMobileCourseEntry object
  * courseObj in the correct way for this implementation.  Shows an iframe.
  * 
+ * @param opdsFeedEntry {UstadJSOPDSEntry} CourseEntry to be shown
+ * @param onshowCallback function to run when course is on screen
+ * @param show boolean whether or not to make the course itself visible
+ * @param onloadCallback function to run when the course has loaded/displayed
+ * @param onerrorCallback function to run when the course has failed to load
+ */
+UstadMobileAppImplNodeWebkit.prototype.showContainer = function(opdsFeedEntry, 
+    onshowCallback, show, onloadCallback, onerrorCallback) {
+    var epubHREF = opdsFeedEntry.getAcquisitionLinks(
+        UstadJSOPDSEntry.LINK_ACQUIRE, "application/zip+epub");
+    
+    UstadMobileAppImplNodeWebkit.getInstance().mountContentEPub(epubHREF, function(err, httpBaseURL) {
+        console.log("Mounted " + epubHREF + " to " + httpBaseURL);
+        UstadMobileBookList.getInstance().openContainerFromBaseURL(
+            httpBaseURL, opdsFeedEntry, onshowCallback, show, onloadCallback, 
+            onerrorCallback);
+    });
+};
+
+/**
+ * Shows the course represented by the UstadMobileCourseEntry object
+ * courseObj in the correct way for this implementation.  Shows an iframe.
+ * 
  * @param courseObj {UstadMobileCourseEntry} CourseEntry to be shown
  * @param onshowCallback function to run when course is on screen
  * @param show boolean whether or not to make the course itself visible
@@ -223,12 +249,16 @@ UstadMobileAppImplNodeWebkit.prototype.scanCourses = function(callback) {
     var fs = require("fs");
     var path = require("path");
     
+    var courseDirFeed = new UstadJSOPDSFeed("Courses on device", 
+        "com.ustadmobile.ondevice");
     UstadMobileAppImplNodeWebkit.getInstance().cacheEpubsInDir(
         UstadMobile.getInstance().contentDirURI, function() {
             fs.readdir(UstadMobile.getInstance().contentDirURI, function(err, entries) {
                 if(err) {
                     throw err;
                 }
+                
+                var opdsEntries = [];
 
                 for (var i = 0; i < entries.length; i++) {
                     var fullPath = path.join(UstadMobile.getInstance().contentDirURI,
@@ -243,16 +273,18 @@ UstadMobileAppImplNodeWebkit.prototype.scanCourses = function(callback) {
 
                     var ext = entries[i].substring(entries[i].length-5, entries[i].length);
                     if(ext === ".epub") {
-                        var courseObj = UstadMobileAppImplNodeWebkit.getInstance(
-                                ).getCourseObjFromEpub(fullPath);
-                        if(courseObj !== null) {
-                            UstadMobileBookList.getInstance().addCourseToList(courseObj);
+                        var opdsEntry = UstadMobileAppImplNodeWebkit.getInstance(
+                                ).getOPDSEntryFromEpub(fullPath, courseDirFeed);
+                        opdsEntries.push(opdsEntry);
+                        
+                        if(opdsEntry !== null) {
+                            courseDirFeed.addEntry(opdsEntry);
                         }
                     }
                 }
-
+                
                 //Done scanning courses
-                UstadMobileUtils.runCallback(callback, [true], 
+                UstadMobileUtils.runCallback(callback, [courseDirFeed], 
                     UstadMobileAppImplNodeWebkit.getInstance());
             });
         });
@@ -405,6 +437,38 @@ UstadMobileAppImplNodeWebkit.prototype.cacheEpubsInDir = function(dirPath, callb
     });
 };
 
+UstadMobileAppImplNodeWebkit.prototype.getOPDSEntryFromEpub = function(epubPath, parentFeed) {
+    var path = require("path");
+    var fs = require("fs");
+    
+    var cacheDirPath = epubPath + "_cache";
+    var containerXMLPath = path.join(cacheDirPath, "META-INF/container.xml");
+    
+    try {
+        fs.statSync(containerXMLPath);
+    }catch(err) {
+        //no course directory here actually...
+        return null;
+    }
+    
+    var containerXMLStr = fs.readFileSync(containerXMLPath, 'utf8');
+    var rootFiles = UstadJS.getContainerRootfilesFromXML(containerXMLStr);
+    var rootFile0 = rootFiles[0]['full-path'];
+    
+    //now open the rootfile OPF
+    var opfFullPath = path.join(cacheDirPath, rootFile0);
+    var opfStr = fs.readFileSync(opfFullPath, 'utf8');
+    var opfObj = new UstadJSOPF();
+    opfObj.loadFromOPF(opfStr);
+    
+    var opdsEntry = opfObj.getOPDSEntry({
+        href : epubPath,
+        mime : "application/zip+epub",
+    },parentFeed);
+    
+    return opdsEntry;
+};
+
 UstadMobileAppImplNodeWebkit.prototype.getCourseObjFromEpub = function(epubPath) {
     var path = require("path");
     var fs = require("fs");
@@ -428,6 +492,8 @@ UstadMobileAppImplNodeWebkit.prototype.getCourseObjFromEpub = function(epubPath)
     var opfStr = fs.readFileSync(opfFullPath, 'utf8');
     var opfObj = new UstadJSOPF();
     opfObj.loadFromOPF(opfStr);
+    
+    
     
     //see if there is a tincan file
     var tinCanPath = path.join(cacheDirPath, "tincan.xml");
@@ -578,9 +644,9 @@ UstadMobileAppImplNodeWebkit.prototype.mountContentEPub = function(epubPath, cal
                     [epubBasename] = tmpDirPath;
                 
                 var epubBasenameEncoded = encodeURI(epubBasename);
-                UstadMobileHTTPServer.getInstance().mountEpubDir(epubBasenameEncoded,
+                var httpBase = UstadMobileHTTPServer.getInstance().mountEpubDir(epubBasenameEncoded,
                     tmpDirPath);
-                callback(null, epubBasename);
+                callback(null, httpBase);
             });
     });
 };

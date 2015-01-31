@@ -14,6 +14,11 @@ for dir in $DIRLIST; do
     cp -r $SRCDIR/$dir $ASSETSDIR
 done
 
+if [ -e $ASSETSDIR/res/umres ]; then
+    rm -rf $ASSETSDIR/res/umres;
+fi
+mkdir -p $ASSETSDIR/res/umres
+cp $SRCDIR/res/umres/*.png $ASSETSDIR/res/umres/
 
 rm $ASSETSDIR/*.html
 cp $SRCDIR/*.html $ASSETSDIR/

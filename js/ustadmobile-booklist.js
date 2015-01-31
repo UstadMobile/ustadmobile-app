@@ -106,6 +106,9 @@ function UstadMobileBookList() {
     /** Course object for the currently showing course if any */
     this.currentCourse = null;
     
+    /** Current OPDS entry being shown*/
+    this.currentOPDSEntry = null;
+    
     //Stuff for tracking which page was opened / timing
     
     /** the last opened relative URL */
@@ -116,6 +119,9 @@ function UstadMobileBookList() {
     
     /** the last page title */
     this.lastPageTitle = null;
+    
+    /** The OPDS feed of the courses on device*/
+    this.deviceCourseFeed = null;
 }
 
 UstadMobileBookList.getInstance = function() {
@@ -131,12 +137,6 @@ UstadMobileBookList.IRAME_CLASSNAME = "umcontentiframe";
 
 UstadMobileBookList.prototype = {
     
-    /**
-     *  The URL of the next page to open, used by nodewebkit code
-     *  
-     * @type {String}
-     */
-    nextPageToOpen: "",
     
     /** 
       * Will run a scan when device is ready to do so... This relies on 
@@ -148,9 +148,6 @@ UstadMobileBookList.prototype = {
       *@method onBookListLoad
       */
     queueScan: function(queueCallback) {
-        var callbackFn = function() {
-            
-        };
         UstadMobile.getInstance().runAfterPathsCreated(function() {
             UstadMobileBookList.getInstance().coursesFound = [];
             UstadMobile.getInstance().systemImpl.scanCourses(queueCallback);
@@ -164,11 +161,16 @@ UstadMobileBookList.prototype = {
     },
     
     
-    updateCourseListDisplay: function() {
+    updateCourseListDisplay: function(userCourseFeed) {
         $("#UMBookList").empty().append();
-        for(var i = 0; i < this.coursesFound.length; i++) {
-            $("#UMBookList").append(this.coursesFound[i].getButtonHTML()
-                    ).trigger("create");
+        this.deviceCourseFeed = userCourseFeed;
+        for(var i = 0; i < userCourseFeed.entries.length; i++) {
+            var buttonHTML = "<a onclick='UstadMobileBookList.getInstance().showContainer("
+                + i + ")' href='#' data-role='button' data-icon='star' "
+                + " data-ajax='false'>" 
+                + userCourseFeed.entries[i].title
+                + "</a>";
+            $("#UMBookList").append(buttonHTML).trigger("create");
         }
     },
     
@@ -191,9 +193,10 @@ UstadMobileBookList.prototype = {
      * @param {function} onloadCallback callback to run once content loads
      * 
      */
-    showEPubPage: function(courseObj, onloadCallback) {
+    showEPubPage: function(opfHREF, opdsEntry, onloadCallback) {
         $( ":mobile-pagecontainer" ).one("pagecontainershow", function() {
-            UstadMobileBookList.getInstance().setEpubFrame(courseObj, onloadCallback);
+            UstadMobileBookList.getInstance().setEpubFrame(opfHREF, opdsEntry, 
+                onloadCallback);
         });
         
         $( ":mobile-pagecontainer" ).pagecontainer( "change", 
@@ -291,21 +294,21 @@ UstadMobileBookList.prototype = {
     epubPageLoaded: function(evt, data) {
         var pageLoadTime = new Date().getTime();
         
+        /*
         if(this.lastPageOpenTime > 0) {
             var stmt = this.makePageExperiencedStmt();
             if(stmt) {
                 UstadMobileAppZone.getInstance().queueTinCanStatement(stmt);
             }
         }
-        
+        */
+       
         this.lastPageRelativeURL = data.url;
         this.lastPageTitle = $("#ustad_epub_frame").opubframe("currenttitle");
         this.lastPageOpenTime = pageLoadTime;
     },
     
-    setEpubFrame: function(courseObj, onloadCallback) {
-        this.currentCourse = courseObj;
-        
+    setEpubFrame: function(opfHREF, opdsEntry,onloadCallback) {
         if(!$("#ustad_epub_frame").is(".umjs-opubframe")) {
             $("#ustad_epub_frame").opubframe();
             var height = UstadMobile.getInstance().getJQMViewportHeight() - 8;
@@ -333,31 +336,53 @@ UstadMobileBookList.prototype = {
             UstadMobileUtils.runCallback(onloadCallback, [evt, params], this);
         });
         
-        var fullURI = UstadMobile.getInstance().systemImpl.getHTTPBaseURL() +
-                UstadMobile.CONTENT_DIRECTORY + "/" + courseObj.relativeURI;
-        $("#ustad_epub_frame").opubframe("loadfromopf", fullURI);
-        if(courseObj.opf.title) {
-            $("#epub_runner_title").text(courseObj.opf.title)
+        $("#ustad_epub_frame").opubframe("loadfromopf", opfHREF);
+        if(opdsEntry.title) {
+            $("#epub_runner_title").text(opdsEntry.title)
         }
         
         
-        
+        /*
         var launchStmt = UstadMobileAppZone.getInstance().makeLaunchedStatement(
                 courseObj.tincanXML, courseObj.opf);
         
         if(launchStmt) {
             UstadMobileAppZone.getInstance().queueTinCanStatement(launchStmt);
         }
-        
+        */
         
         //pagecontainerbeforehide - cleanup
+        
+        /*
         $( ":mobile-pagecontainer" ).one("pagecontainerbeforehide", function() {
             UstadMobile.getInstance().systemImpl.unmountEpub(courseObj.getEpubName(), function() {
                 console.log("Unmount complete");
             });
         });
+        */
     },
 
+
+    showContainer: function(courseIndex, onshowCallback, show, onloadCallback, onerrorCallback) {
+        var opdsEntry = this.deviceCourseFeed.entries[courseIndex];
+        this.currentOPDSEntry = opdsEntry;
+        UstadMobile.getInstance().systemImpl.showContainer(opdsEntry,
+                onshowCallback, show, onloadCallback, onerrorCallback);
+    },
+    
+    openContainerFromBaseURL: function(containerURL, opdsEntry, onshowCallback, show, onloadCallback, onerrorCallback) {
+        var containerXMLURL = UstadMobileUtils.joinPath([containerURL, 
+            'META-INF/container.xml']);
+        $.ajax(containerXMLURL, {
+            dataType: "text"
+        }).done(function(containerXMLStr) {
+            var rootFiles = UstadJS.getContainerRootfilesFromXML(containerXMLStr);
+            var rootFile0 = rootFiles[0]['full-path'];
+            var opfURL = UstadMobileUtils.joinPath([containerURL, rootFile0]);
+            UstadMobileBookList.getInstance().showEPubPage(opfURL, opdsEntry,
+                onshowCallback);
+        });
+    },
    
     /**
      * Open the given booklist page

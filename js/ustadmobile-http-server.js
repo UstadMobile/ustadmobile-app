@@ -186,6 +186,8 @@ UstadMobileHTTPServer.prototype = {
      */
     mountEpubDir: function(epubName, epubDir) {
         this.mountedEPubs[epubName] = epubDir;
+        return "http://" + this.httpHostname + ":" + this.httpPort + "/"
+            + UstadMobile.CONTENT_DIRECTORY + "/" + epubName;
     },
     
     /**

@@ -325,17 +325,11 @@ UstadMobileAppImplCordova.prototype.showCourse = function(courseObj,
     httpURL = UstadMobileAppZone.getInstance().appendTinCanParamsToURL(httpURL);
         
     var destURI = UstadMobile.getInstance().contentDirURI + courseObj.relativeURI;
-    var filesToCopy = UstadMobileBookList.getInstance().appFilesToCopyToContent;
     
-    var copyJob = this.makeCopyJob(filesToCopy, 
-        destURI, function() {
-            /*UstadMobileBookList.getInstance().showCourseIframe(httpURL, onshowCallback,
-                show, onloadCallback, onerrorCallback);
-            */
-           UstadMobileAppImplCordova.getInstance().courseWinRef = 
-                window.open(httpURL, "_blank", 
-                "location=no,toolbar=no,mediaPlaybackRequiresUserAction=no");
-        });
+    UstadMobileAppImplCordova.getInstance().courseWinRef = 
+        window.open(httpURL, "_blank", 
+            "location=no,toolbar=no,mediaPlaybackRequiresUserAction=no");
+
         
     copyJob.copyNextFile();
     
@@ -361,6 +355,22 @@ UstadMobileAppImplCordova.prototype.getSystemInfo = function(callback) {
     UstadMobileUtils.runCallback(callback, [retVal], this);
 };
 
+UstadMobileAppImplCordova.prototype.showContainer = function(opdsFeedEntry, onshowCallback, show, onloadCallback, onerrorCallback) {
+    var epubHREF = opdsFeedEntry.getAcquisitionLinks(
+        UstadJSOPDSEntry.LINK_ACQUIRE, "application/zip+epub");
+
+    var epubBaseName = epubHREF.substring(epubHREF.lastIndexOf("/")+1);
+    var epubCacheDirName = encodeURI(epubBaseName + "_cache");
+    
+    var epubHREFBaseDir = UstadMobileUtils.joinPath([
+        UstadMobile.getInstance().systemImpl.cordovaHTTPURL,
+        UstadMobile.CONTENT_DIRECTORY, epubCacheDirName]);
+    
+    
+    UstadMobileBookList.getInstance().openContainerFromBaseURL(epubHREFBaseDir,
+        opdsFeedEntry, onshowCallback);
+}
+
 /**
  * 
  * @param {type} callback
@@ -368,7 +378,9 @@ UstadMobileAppImplCordova.prototype.getSystemInfo = function(callback) {
  */
 UstadMobileAppImplCordova.prototype.scanCourses = function(callback) {
     var dirPath = UstadMobile.getInstance().contentDirURI;
-    
+    var courseDirFeed = new UstadJSOPDSFeed("Courses on device", 
+        "com.ustadmobile.ondevice");
+        
     var contentDirEntry = UstadMobile.getInstance().systemImpl.contentDirEntry;
     UstadMobileAppImplCordova.getInstance().cacheEpubsInDir(dirPath, 
         function() {
@@ -383,14 +395,14 @@ UstadMobileAppImplCordova.prototype.scanCourses = function(callback) {
                 }
                 
                 var getCourseFn = function(index) {
-                    UstadMobileAppImplCordova.getInstance().getCourseObjFromEpub(
-                        epubCacheEntries[index], function(courseObj){ 
-                            UstadMobileBookList.getInstance().addCourseToList(
-                                    courseObj);
+                    UstadMobileAppImplCordova.getInstance().getOPDSEntryFromEpub(
+                        epubCacheEntries[index], courseDirFeed, function(opdsEntry){ 
+                            courseDirFeed.addEntry(opdsEntry);
                             if(index < epubCacheEntries.length -1) {
                                 getCourseFn(index+1);
                             }else {
-                                UstadMobileUtils.runCallback(callback, [true], 
+                                UstadMobileUtils.runCallback(callback, 
+                                    [courseDirFeed], 
                                     UstadMobileAppImplCordova.getInstance());
                             }
                     });
@@ -399,7 +411,7 @@ UstadMobileAppImplCordova.prototype.scanCourses = function(callback) {
                 if(epubCacheEntries.length > 0) {
                     getCourseFn(0);
                 }else  {
-                    UstadMobileUtils.runCallback(callback, [true], 
+                    UstadMobileUtils.runCallback(callback, [courseDirFeed], 
                                     UstadMobileAppImplCordova.getInstance());
                 }
             }, function(fileErr) {
@@ -520,7 +532,7 @@ UstadMobileAppImplCordova.prototype.makeEpubCache = function(epubFileEntry, call
  * @param {type} callback
  * @returns {undefined}
  */
-UstadMobileAppImplCordova.prototype.getCourseObjFromEpub = function(epubFileEntry, callback) {
+UstadMobileAppImplCordova.prototype.getOPDSEntryFromEpub = function(epubFileEntry, parentFeed, callback) {
     var epubParentURL = UstadMobileUtils.getURLParent(epubFileEntry.toURL());
     var epubName = epubFileEntry.name;
     var cacheDirName = epubName + "_cache";
@@ -538,11 +550,12 @@ UstadMobileAppImplCordova.prototype.getCourseObjFromEpub = function(epubFileEntr
         UstadMobileAppImplCordova.getInstance().readFileAsTextByURL(opfURL, function(opfStr) {
             opfObj = new UstadJSOPF();
             opfObj.loadFromOPF(opfStr);
-            var relativeURI = UstadMobileUtils.joinPath([epubName, rootFile0]);
+            var opdsEntry = opfObj.getOPDSEntry({
+                href : epubFileEntry.toURL(),
+                mime : "application/zip+epub",
+            },parentFeed);
             
-            var courseEntryObj = new UstadMobileCourseEntry(opfObj.title, "", 
-                cacheDirName, null, relativeURI);
-            callback(courseEntryObj);
+            callback(opdsEntry);
         });
     });
     
