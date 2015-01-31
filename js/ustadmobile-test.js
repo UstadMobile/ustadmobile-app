@@ -58,14 +58,6 @@ var ustad_version = '';
 
 var testPageChangeWait = 400;
 
-/*
-$.get('ustad_version', function(data){
-	dataline = data.split("\n");
-	ustad_version = dataline[0];
-	console.log("Ustad version is: " + ustad_version);
-});
-console.log ("With Qunit logs in 01");
-*/
 
 /**
  * Function used for testing to see if a page change took place, and then
@@ -117,7 +109,7 @@ var containerChangeFn = function() {
     var audioEl = document.createElement("audio");
     audioEl.preload = "auto";
     
-    testSoundPlay(audioEl, "Test play sound first time", 0,true);
+    //testSoundPlay(audioEl, "Test play sound first time", 0,true);
     
     //TODO: Run test that sound plays twice
     //testSoundPlay(audioEl, "Test sound plays second time", 1500, false);
@@ -362,14 +354,16 @@ function testUstadMobileCourseDownloadById(id) {
  * @returns 
  */
 function testUstadMobileCourseLoad() {
-    var bookListObj = UstadMobileBookList.getInstance();
-    asyncTest("Can load booklist", 1, function(){
-       bookListObj.queueScan(function() {
-           var numCourses = UstadMobileBookList.getInstance().coursesFound.length;
-           ok(numCourses > 0,
-                "Found " + numCourses + " courses in scan");
-           start();
-       });
+    QUnit.test("Can scan booklist for files", function(assert) {
+        var bookListObj = UstadMobileBookList.getInstance();
+        assert.expect(1);
+        var courseLoadDoneFn = assert.async();
+        bookListObj.queueScan(function(opdsFeed) {
+            var numCourses = opdsFeed.entries.length;
+            assert.ok(numCourses > 0, "Found " + opdsFeed.entries.length
+                    + " courses");
+            courseLoadDoneFn();
+        });
     });
 }
 
@@ -396,24 +390,27 @@ function testLoadScriptOnceOnly() {
 
 function testBookOpen() {
     if(UstadMobile.getInstance().isNodeWebkit()) {
-        asyncTest("Check book open triggers onload event for content page", function() {
-            expect(1);
+        QUnit.test("Check book open triggers onload event for content page", function(assert) {
+            assert.expect(1);
+            var testOpenDoneFn = assert.async();
             UstadMobile.getInstance().runAfterHTTPReady(function(){
-                var bookList = UstadMobileBookList.getInstance().coursesFound;
-                var currentBook = 0;
+                var deviceCourseFeed = 
+                        UstadMobileBookList.getInstance().deviceCourseFeed;
+                var currentCourse = 0;
+                debugger;
                 var checkBookLoadFn = function() {
-                    UstadMobile.getInstance().systemImpl.showCourse(
-                        bookList[currentBook],
-                        null, false, function(evt, params) {
-                            currentBook++;
-                            if(currentBook < bookList.length) {
+                    UstadMobileBookList.getInstance().showContainer(
+                        currentCourse,
+                        function(evt, params) {
+                            currentCourse++;
+                            if(currentCourse < deviceCourseFeed.entries.length) {
                                 checkBookLoadFn();
                             }else {
                                 //its ok because we got here.
-                                ok(true, "Epubs loaded");
-                                start();
+                                assert.ok(true, "Epubs loaded");
+                                testOpenDoneFn();
                             }
-                        }, null);
+                        }, false, null);
                 };
                 checkBookLoadFn();
             });

@@ -16,7 +16,7 @@ GETTING STARTED:
 $ ./make-cordovalib-project.sh
 
 2. Compile the debug application
-$ cd ustadmobileandroid && ant debug
+$ cd ustadmobileandroid && ant clean debug
 
 3. Run tests
 $ cd ustadmobileandroid_tests

@@ -121,7 +121,8 @@ kill $NWPID
 kill $NODEPID
 rm result
 
-source ../jscover-makereport.sh
-
+if [ ! "$COVERAGE" == "0" ]; then
+    source ../jscover-makereport.sh
+fi
 
 exit $RESULTCODE

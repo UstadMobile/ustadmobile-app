@@ -1,9 +1,6 @@
 
 "use strict";
 
-require('nw.gui').Window.get().showDevTools();
-alert("load tools");
-
 /* 
 <!-- This file is part of Ustad Mobile.  
     
@@ -101,26 +98,21 @@ UstadMobileAppImplNodeWebkit.prototype.winMyDocOutput = "";
 UstadMobileAppImplNodeWebkit.prototype.mountedEPubs = {};
 
 /**
- * Get the actual language of the system for NodeWebKit
+ * Get the actual language of the system for NodeWebKit - will callback with
+ * system preferred lang : e.g.
+ * appImpl.getSystemLang(function(prefLang)) {
+ *    console.log("system lang is " + prefLang);
+ * });
+ * 
+ * Warning: not actually implemented; currently returns en
  * 
  * @method
- * @param function callbackFunction
+ * @param callbackFunction {function} callback to run
  */
 UstadMobileAppImplNodeWebkit.prototype.getSystemLang = function(callbackFunction) {
     setTimeout(function() {
         callbackFunction("en");
     }, 0);
-};
-
-/**
- * 
- * @param string pageName
- * @returns {undefined}
- */
-UstadMobileAppImplNodeWebkit.prototype.goPage = function(pageName) {
-    
-    //window.open("ustadmobile_booklist.html", "_self");
-    
 };
 
 UstadMobileAppImplNodeWebkit.prototype.startHTTPServer = function() {
@@ -136,10 +128,10 @@ UstadMobileAppImplNodeWebkit.prototype.getHTTPBaseURL = function() {
 };
 
 /**
- * Shows the course represented by the UstadMobileCourseEntry object
- * courseObj in the correct way for this implementation.  Shows an iframe.
+ * Shows the course represented by the opdsFeedEntry object
+ * in the correct way for this implementation.  Shows an iframe.
  * 
- * @param opdsFeedEntry {UstadJSOPDSEntry} CourseEntry to be shown
+ * @param opdsFeedEntry {UstadJSOPDSEntry} OPDS Feed Entry to be shown
  * @param onshowCallback function to run when course is on screen
  * @param show boolean whether or not to make the course itself visible
  * @param onloadCallback function to run when the course has loaded/displayed
@@ -155,34 +147,6 @@ UstadMobileAppImplNodeWebkit.prototype.showContainer = function(opdsFeedEntry,
         UstadMobileBookList.getInstance().openContainerFromBaseURL(
             httpBaseURL, opdsFeedEntry, onshowCallback, show, onloadCallback, 
             onerrorCallback);
-    });
-};
-
-/**
- * Shows the course represented by the UstadMobileCourseEntry object
- * courseObj in the correct way for this implementation.  Shows an iframe.
- * 
- * @param courseObj {UstadMobileCourseEntry} CourseEntry to be shown
- * @param onshowCallback function to run when course is on screen
- * @param show boolean whether or not to make the course itself visible
- * @param onloadCallback function to run when the course has loaded/displayed
- * @param onerrorCallback function to run when the course has failed to load
- */
-UstadMobileAppImplNodeWebkit.prototype.showCourse = function(courseObj, 
-    onshowCallback, show, onloadCallback, onerrorCallback) {
-    var path = require("path");
-    var epubFilename = courseObj.relativeURI.substring(0, 
-        courseObj.relativeURI.indexOf("/"));
-    epubFilename = decodeURI(epubFilename);
-    
-    var epubFullPath = path.join(UstadMobile.getInstance().contentDirURI,
-        epubFilename);
-    UstadMobileAppImplNodeWebkit.getInstance().mountContentEPub(epubFullPath, function() {
-        if(show) {
-            UstadMobileBookList.getInstance().showEPubPage(courseObj, onloadCallback);
-        }else {
-            UstadMobileBookList.getInstance().setEpubFrame(courseObj, onloadCallback);
-        }
     });
 };
 
@@ -241,6 +205,16 @@ UstadMobileAppImplNodeWebkit.prototype.checkPaths = function() {
 
 
 /**
+ * Scan the courses on the main system directory (UstadMobile.ContentDirURI)
+ * Run a callback providing an UstadJSOPDSFeed object representing the courses
+ * in the directory.  The entry object of the OPDS feed will be populated from
+ * the OPF file in the EPUB and an aquisition link will be provided 
+ * 
+ * impl.scanCourses(function(coursesDirFeed) {
+ *   //use coursesDirFeed.entries etc.
+ * }
+ * 
+ * 
  * 
  * @param {type} callback
  * @returns {undefined}
@@ -463,65 +437,10 @@ UstadMobileAppImplNodeWebkit.prototype.getOPDSEntryFromEpub = function(epubPath,
     
     var opdsEntry = opfObj.getOPDSEntry({
         href : epubPath,
-        mime : "application/zip+epub",
+        mime : "application/zip+epub"
     },parentFeed);
     
     return opdsEntry;
-};
-
-UstadMobileAppImplNodeWebkit.prototype.getCourseObjFromEpub = function(epubPath) {
-    var path = require("path");
-    var fs = require("fs");
-    
-    var cacheDirPath = epubPath + "_cache";
-    var containerXMLPath = path.join(cacheDirPath, "META-INF/container.xml");
-    
-    try {
-        fs.statSync(containerXMLPath);
-    }catch(err) {
-        //no course directory here actually...
-        return null;
-    }
-    
-    var containerXMLStr = fs.readFileSync(containerXMLPath, 'utf8');
-    var rootFiles = UstadJS.getContainerRootfilesFromXML(containerXMLStr);
-    var rootFile0 = rootFiles[0]['full-path'];
-    
-    //now open the rootfile OPF
-    var opfFullPath = path.join(cacheDirPath, rootFile0);
-    var opfStr = fs.readFileSync(opfFullPath, 'utf8');
-    var opfObj = new UstadJSOPF();
-    opfObj.loadFromOPF(opfStr);
-    
-    
-    
-    //see if there is a tincan file
-    var tinCanPath = path.join(cacheDirPath, "tincan.xml");
-    var tincanId = null;
-    var ustadJSTinCanObj = null;
-    if(fs.existsSync(tinCanPath)) {
-        var tinCanXmlStr = fs.readFileSync(tinCanPath, "utf8");
-        ustadJSTinCanObj = new UstadJSTinCanXML();
-        ustadJSTinCanObj.loadFromXML(tinCanXmlStr);
-        tincanId = ustadJSTinCanObj.launchActivityID;
-    }else {
-        tincanId = UstadMobile.TINCAN_DEFAULT_PREFIX + opfObj.identifier;
-    }
-    
-    debugLog("NodeWebKit finds content in " + epubPath);
-    
-    var epubBasename = path.basename(epubPath);
-    var relativeURI = UstadMobileUtils.joinPath([encodeURI(epubBasename), 
-        rootFile0], "/");
-
-    var courseEntryObj = new UstadMobileCourseEntry(opfObj.title, "", 
-        epubPath, null, relativeURI);
-        
-    courseEntryObj.opf = opfObj;
-    courseEntryObj.tincanXML = ustadJSTinCanObj;
-    courseEntryObj.tincanId = tincanId;
-    
-    return courseEntryObj;   
 };
 
 /**
@@ -533,7 +452,7 @@ UstadMobileAppImplNodeWebkit.prototype.getCourseObjFromEpub = function(epubPath)
  *  console.log("root file path in epub: " + rootFilePath);
  * });
  *
- * @method getCourseObjFromDir
+ * @method makeEpubCache
  * @param epubPath {String} full path to the .epub file
  * @param callback {function} callback to run
  * @return {CourseEntryObject} Representing course in that directory
@@ -589,8 +508,10 @@ UstadMobileAppImplNodeWebkit.prototype.makeEpubCache = function(epubPath, callba
 };
 
 /**
+ * Unmount a mounted epub; delete temporary files etc.
  * 
- * @param {String} epubName
+ * @param {String} epubName Name of epub mounted (e.g. file.epub)
+ * @param {function} callback function to run once done
  * @param {type} function
  */
 UstadMobileAppImplNodeWebkit.prototype.unmountEpub = function(epubName, callback) {
@@ -666,7 +587,7 @@ UstadMobileAppImplNodeWebkit.prototype.getSystemInfo = function(callback) {
     retVal['windows.mydocinfo'] = this.winMyDocOutput;
     
     UstadMobileUtils.runCallback(callback, [retVal], this);
-}
+};
 
 
 //Set the implementation accordingly on UstadMobile object

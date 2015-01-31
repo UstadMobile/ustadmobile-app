@@ -42,42 +42,6 @@
  
  */
 
-/*
- Ustad Mobile Book List will scan a list of root directories for sub directories.
- Each sub directory will be queried for a marker file.  If that file exists it will
- be considered an EXE content directory and it will be displayed in a JQuery Mobile 
- UI list that the user can open a chosen content entry.
-
-
- Callback hell scheme is as follows:
-
-  1. Call onBLDeviceReady on device ready: 
-    foldersToScan is set to an array depending on the platform, does first call
-    of populateNextDir
-  2. populateNextDir will go through foldersToScan incrementing currentFolderIndex,
-        call populate
-  3. populate will call window.requestFileSystem for the path; if successful 
-     calls dirReader, otherwise failbl (which will call populateNextDir)
-     
-     -> dirReader: calls either successDirectoryReader or failDirectoryReader - request entries
-            -> successDirectoryReader: will put the paths in the directory into
-                an array called *currentEntriesToScan*, then call 
-                scanNextDirectoryIndex:
-
-                -> findEXEFileMarkerSuccess : Put in coursesFound array
-                -> findEXEFileMarkerFail : call scanNextDirectoryIndex to look at next dir
-
-            -> failDirectoryReader
-
-     -> failbl: simply logs and calls populateNextDir
-    
- */
-
-/*
- The file to look for in a sub directory to determine if it is EXE
- content or not
- */
-
 /**
  * 
  * @module UstadMobileBookList
@@ -93,19 +57,7 @@ var ustadMobileBookListInstance = null;
  * @class UstadMobileBookList
  * @constructor
  */
-function UstadMobileBookList() {
-    this.exeContentFileName = "META-INF/container.xml";
-    
-    //The file that should be present in a directory to indicate this is exe content
-    //var exeFileMarker = "index.html";
-    this.exeFileMarker = "META-INF/container.xml";
-
-    /** Courses found */
-    this.coursesFound = [];
-    
-    /** Course object for the currently showing course if any */
-    this.currentCourse = null;
-    
+function UstadMobileBookList() {    
     /** Current OPDS entry being shown*/
     this.currentOPDSEntry = null;
     
@@ -132,34 +84,25 @@ UstadMobileBookList.getInstance = function() {
     return ustadMobileBookListInstance;
 };
 
-/** Classname used to find iframes we made for content */
-UstadMobileBookList.IRAME_CLASSNAME = "umcontentiframe";
-
 UstadMobileBookList.prototype = {
     
-    
     /** 
-      * Will run a scan when device is ready to do so... This relies on 
-      * UstadMobile runAfterPathsCreated, which if running cordova can
-      * run only after the deviceready event occurs.
-      *
-      *@param queueCallback function callback to run after scan is done
-      *
-      *@method onBookListLoad
-      */
+     * Will scan the main content library directory on the device for epub files
+     * 
+     * UstadMobile runAfterPathsCreated, which if running cordova can
+     * run only after the deviceready event occurs etc.
+     * 
+     * 
+     *
+     * @param queueCallback function callback to run after scan is done
+     * 
+     * @method onBookListLoad
+     */
     queueScan: function(queueCallback) {
         UstadMobile.getInstance().runAfterPathsCreated(function() {
-            UstadMobileBookList.getInstance().coursesFound = [];
             UstadMobile.getInstance().systemImpl.scanCourses(queueCallback);
         });
     },
-    
-    addCourseToList: function(courseObj) {
-        var courseIndex = this.coursesFound.length;
-        this.coursesFound.push(courseObj);
-        courseObj.courseIndex = courseIndex;
-    },
-    
     
     updateCourseListDisplay: function(userCourseFeed) {
         $("#UMBookList").empty().append();
@@ -193,14 +136,22 @@ UstadMobileBookList.prototype = {
      * @param {function} onloadCallback callback to run once content loads
      * 
      */
-    showEPubPage: function(opfHREF, opdsEntry, onloadCallback) {
-        $( ":mobile-pagecontainer" ).one("pagecontainershow", function() {
+    showEPubPage: function(opfHREF, opdsEntry, onloadCallback, show, onerrorCallback) {
+        var showFn = function() {
             UstadMobileBookList.getInstance().setEpubFrame(opfHREF, opdsEntry, 
-                onloadCallback);
-        });
+                onloadCallback, onerrorCallback);
+        };
         
-        $( ":mobile-pagecontainer" ).pagecontainer( "change", 
-            "ustadmobile_epubrunner.html");
+        if(show) {
+            $( ":mobile-pagecontainer" ).one("pagecontainershow", showFn);
+        
+            $( ":mobile-pagecontainer" ).pagecontainer( "change", 
+                "ustadmobile_epubrunner.html");
+        }else {
+            showFn();
+        }
+        
+        
     },
     
     
@@ -308,7 +259,7 @@ UstadMobileBookList.prototype = {
         this.lastPageOpenTime = pageLoadTime;
     },
     
-    setEpubFrame: function(opfHREF, opdsEntry,onloadCallback) {
+    setEpubFrame: function(opfHREF, opdsEntry,onloadCallback, onErrorcallback) {
         if(!$("#ustad_epub_frame").is(".umjs-opubframe")) {
             $("#ustad_epub_frame").opubframe();
             var height = UstadMobile.getInstance().getJQMViewportHeight() - 8;
@@ -326,6 +277,7 @@ UstadMobileBookList.prototype = {
         if(params !== "") {
             params += "&";
         }
+        
         params += "ustad_runtime=" + encodeURIComponent(JSON.stringify(
                 UstadMobileAppZone.getInstance().runtimeInfo));
         
@@ -380,107 +332,8 @@ UstadMobileBookList.prototype = {
             var rootFile0 = rootFiles[0]['full-path'];
             var opfURL = UstadMobileUtils.joinPath([containerURL, rootFile0]);
             UstadMobileBookList.getInstance().showEPubPage(opfURL, opdsEntry,
-                onshowCallback);
-        });
-    },
-   
-    /**
-     * Open the given booklist page
-     * @param courseIndex {Number} Index of the course object in UstadMobileBookList.coursesFound
-     */
-    openBLPage: function(courseIndex, onshowCallback, show, onloadCallback, onerrorCallback) {
-        var umBookListObj = UstadMobileBookList.getInstance();
-        var courseObj = umBookListObj.coursesFound[courseIndex];
-        var openFile = courseObj.coursePath;
-
-        umBookListObj.currentBookPath = openFile;
-        var bookpath = umBookListObj.currentBookPath.substring(0,
-                umBookListObj.currentBookPath.lastIndexOf("/"));
-
-
-        jsLoaded = false;
-        if (UstadMobile.getInstance().isNodeWebkit() || window.cordova) {
-            //use the open course handler
-            var courseObj = umBookListObj.coursesFound[courseIndex];
-            UstadMobile.getInstance().systemImpl.showCourse(courseObj,
                 onshowCallback, show, onloadCallback, onerrorCallback);
-            return;
-        } 
-    }
-};
-
-/**
- * 
- * @param {String} courseTitle Title to be displayed
- * @param {String} courseDesc Description of course to show
- * @param {String} coursePath Full path to open the course
- * @param {String} coverImg Path to image
- * @param {String} relativeURI URI relative to UstadMobileContent directory
- * 
- * @return {UstadMobileCourseEntry}
- */
-function UstadMobileCourseEntry(courseTitle, courseDesc, coursePath, coverImg, relativeURI) {
-    this.courseTitle = courseTitle;
-    
-    this.courseDesc = courseDesc;
-    
-    this.coursePath = coursePath;
-    
-    this.coverImg = coverImg;
-    
-    /** 
-     * URI from the UstadMobileContent Dir to the package.opf .
-     * e.g. filename.epub/EPUB/package.opf
-     */
-    this.relativeURI = null;
-    
-    /** The index of this course in the list - used to generate HTML button */
-    this.courseIndex = -1;
-    
-    /** The UstadJSOPF Open Packaging Format Object for this object */
-    this.opf = null;
-    
-    if(typeof relativeURI !== "undefined" && relativeURI !== null) {
-        this.relativeURI = relativeURI;
-    }
-    
-    /** The TinCan object if any */
-    this.tincanXML = null;
-    
-    /** The TinCan ID - must be set */
-    this.tincanId = null;
-}
-
-UstadMobileCourseEntry.prototype = {
-    
-    /**
-     * Find the epub name from a correctly set relative URI
-     * 
-     * @return {String}
-     */
-    getEpubName: function() {
-        return this.relativeURI.substring(0, this.relativeURI.indexOf("/"));
-    },
-    
-    /**
-     * 
-     * @return {String} URL relative to /ustadmobileContent/
-     */
-    getHttpURI : function() {
-        return this.relativeURI + "/exetoc.html";
-    },
-    
-    /**
-     * Make the HTML needed for this items button
-     * 
-     * @return string JQueryMobile HTML for a button to open this course
-     */
-    getButtonHTML: function() {
-        return "<a onclick='UstadMobileBookList.getInstance().openBLPage(\"" 
-                + this.courseIndex
-                + "\", null, true)' href=\"#\" data-role=\"button\" "
-                + "data-icon=\"star\" data-ajax=\"false\">" + this.courseTitle 
-                + "</a>";
+        });
     }
 };
 
