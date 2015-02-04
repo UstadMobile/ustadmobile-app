@@ -37,4 +37,7 @@
     <feature name="CorHttpd">
         <param name="android-package" value="com.rjfun.cordova.httpd.CorHttpd" />
     </feature>
+    <feature name="UstadMobileAppView">
+        <param name="android-package" value="com.ustadmobile.ustadmobileappview.UstadMobileAppViewPlugin" />
+    </feature>
 </widget>

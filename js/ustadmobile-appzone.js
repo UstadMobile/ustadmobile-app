@@ -106,7 +106,7 @@ UstadMobileAppZone.prototype = {
     /**
      * The time (in ms) to wait between Queue runs
      * 
-     * @type Number
+     * @type {number}
      */
     tincanQueueWaitTime: (1000*60*1),
     
@@ -119,21 +119,24 @@ UstadMobileAppZone.prototype = {
     
     /**
      * The time (in ms since epoch) that the current page was opened
-     * @type number
+     * @type {number}
      */
     pageOpenUtime: 0,
     
     /**
      * The name of the page for which we are currently counting time
      * 
-     * @type String
+     * @type {string}
      */
     pageOpenXAPIName : null,
     
     
     init: function() {
-        //Make sure the implementation (e.g. cordova, NodeWebKit is ready)
         UstadMobile.getInstance().runWhenImplementationReady(function() {
+            UstadMobile.getInstance().appController = 
+                        new UstadMobileAppController();
+            UstadMobile.getInstance().appController.init();
+            
             var systemImpl = UstadMobile.getInstance().systemImpl;
             systemImpl.startHTTPServer();
             UstadMobileAppZone.getInstance().updateAssignedCourses();
@@ -143,14 +146,6 @@ UstadMobileAppZone.prototype = {
             //});
         });
         
-        //If we are resetting all tin can matters - we are not doing so now...
-        /*
-        localStorage.removeItem(
-                getTinCanQueueInstance().TINCAN_LOCALSTORAGE_INDEXVAR);
-        localStorage.removeItem(
-                getTinCanQueueInstance().TINCAN_LOCALSTORAGE_PENDINGSTMTSVAR);
-        */
-       
         this.tincanQueueTransmitInterval = setInterval(function() {
             UstadMobileAppZone.getInstance().transmitTinCanQueue();
         }, this.tincanQueueWaitTime);
@@ -253,7 +248,6 @@ UstadMobileAppZone.prototype = {
      * 
      */
     loadCourseInfo: function(username, password, courseid, httpURL, callback) {
-        debugger;
         $.ajax({
             method : "POST",
             url : httpURL,
@@ -264,11 +258,9 @@ UstadMobileAppZone.prototype = {
                 "courseid" : encodeURIComponent(courseid)
             }
         }).done(function(data){
-            debugger;
             UstadMobileUtils.runCallback(callback, [data, null], this);
         }).fail(function(jqXHR, textStatus){
             console.log("REQUEST FAIL: "  + jqXHR.responseText);
-            debugger;
             UstadMobileUtils.runCallback(callback, [null, textStatus], this);
         });
     },

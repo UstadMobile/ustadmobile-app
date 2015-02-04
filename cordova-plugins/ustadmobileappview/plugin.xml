@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
+        id="com.ustadmobile.ustadmobileappview" version="0.1">
+    <name>UstadMobileAppView</name>
+    <description>Plugin to facilitate native/Javascript interaction</description>
+    <license>GPLv3</license>
+    <keywords>cordova,ustadmobile</keywords>
+    
+    <js-module src="www/ustadmobileappview.js" name="UstadMobileAppView">
+        <clobbers target="cordova.plugins.UstadMobileAppView" />
+    </js-module>
+    
+    <platform name="android">
+        <config-file target="config.xml" parent="/*">
+            <feature name="UstadMobileAppView">
+                <param name="android-package" value="com.ustadmobile.ustadmobileappview.UstadMobileAppViewPlugin"/>
+            </feature>
+        </config-file>
+        
+        <source-file src="platforms/android/src/com/ustadmobile/ustadmobileappview/UstadMobileAppViewPlugin.java" target-dir="src/com/ustadmobile/ustadmobileappview/" />
+    </platform>
+</plugin>
+

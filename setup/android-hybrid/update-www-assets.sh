@@ -23,7 +23,9 @@ cp $SRCDIR/res/umres/*.png $ASSETSDIR/res/umres/
 rm $ASSETSDIR/*.html
 cp $SRCDIR/*.html $ASSETSDIR/
 
-
+#Remove JQueryMobile header and footers we wont use in Droid
+perl -0777 -i -pe 's/#STARTUSTADJQMHEADER.*#ENDUSTADJQMHEADER/JQUERYMOBILE HEADER REMOVED FOR ANDROID/smg'  $ASSETSDIR/*.html
+perl -0777 -i -pe 's/#STARTUSTADJQMFOOTER.*#ENDUSTADJQMFOOTER/JQUERYMOBILE FOOTER REMOVED FOR ANDROID/smg'  $ASSETSDIR/*.html
 
 
 

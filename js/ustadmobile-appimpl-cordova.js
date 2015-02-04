@@ -368,7 +368,7 @@ UstadMobileAppImplCordova.prototype.showContainer = function(opdsFeedEntry, onsh
     
     
     UstadMobileBookList.getInstance().openContainerFromBaseURL(epubHREFBaseDir,
-        opdsFeedEntry, onshowCallback);
+        opdsFeedEntry, onshowCallback, show, onloadCallback, onerrorCallback);
 }
 
 /**

@@ -100,6 +100,7 @@ UstadMobileBookList.prototype = {
      */
     queueScan: function(queueCallback) {
         UstadMobile.getInstance().runAfterPathsCreated(function() {
+            debugger;
             UstadMobile.getInstance().systemImpl.scanCourses(queueCallback);
         });
     },
@@ -315,13 +316,34 @@ UstadMobileBookList.prototype = {
     },
 
 
+    /**
+     * Open the container given by the courseIndex parameter (relates to the feed
+     * of courses on this device)
+     * 
+     * @param {number} courseIndex
+     * @param {function} onshowCallback
+     * @param {boolean=true} show whether or not to actually show to the user
+     * @param {function=} onloadCallback
+     * @param {function=} onerrorCallback
+     */
     showContainer: function(courseIndex, onshowCallback, show, onloadCallback, onerrorCallback) {
+        show = (typeof show !== "undefined") ? show : true;
         var opdsEntry = this.deviceCourseFeed.entries[courseIndex];
         this.currentOPDSEntry = opdsEntry;
         UstadMobile.getInstance().systemImpl.showContainer(opdsEntry,
                 onshowCallback, show, onloadCallback, onerrorCallback);
     },
     
+    /**
+     * 
+     * @param {type} containerURL
+     * @param {type} opdsEntry
+     * @param {type} onshowCallback
+     * @param {type} show
+     * @param {type} onloadCallback
+     * @param {type} onerrorCallback
+     * @returns {undefined}
+     */
     openContainerFromBaseURL: function(containerURL, opdsEntry, onshowCallback, show, onloadCallback, onerrorCallback) {
         var containerXMLURL = UstadMobileUtils.joinPath([containerURL, 
             'META-INF/container.xml']);

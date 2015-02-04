@@ -14,7 +14,7 @@ fi
 ./update-www-assets.sh
 
 cd ustadmobileandroid
-ant clean $WHAT
+ant clean $WHAT $2 
 cd ..
 
 

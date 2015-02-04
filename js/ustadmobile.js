@@ -62,7 +62,12 @@ var ustadMobileInstance = null;
  * @constructor
  */
 UstadMobile = function() {
-    
+    /** 
+     * Main app controller for title, menu items etc.
+     * 
+     * @type {UstadMobileAppController} 
+     */
+    this.appController = null;
 };
 
 /**
@@ -503,6 +508,10 @@ UstadMobile.prototype = {
             umObj.initScriptsToLoad.push("ustadmobile-contentzone.js");
             umObj.initScriptsToLoad.push("ustadjs.js");
         }else {
+            umObj.initScriptsToLoad.push("js/ustadmobile-controllers.js");
+            umObj.initScriptsToLoad.push("js/ustadmobile-views.js");
+            umObj.initScriptsToLoad.push("js/ustadmobile-models.js");
+            
             umObj.initScriptsToLoad.push("lib/ustadjs.js");
             umObj.initScriptsToLoad.push("lib/tincan.js");
             umObj.initScriptsToLoad.push("lib/tincan_queue.js");
@@ -517,6 +526,8 @@ UstadMobile.prototype = {
                 "cordova" : null);
             if(implName !== null) {
                 umObj.initScriptsToLoad.push("js/ustadmobile-appimpl-" 
+                        + implName + ".js");
+                umObj.initScriptsToLoad.push("js/ustadmobile-views-" 
                         + implName + ".js");
             }
         }
@@ -1514,8 +1525,7 @@ UstadMobileAppImplementation.prototype = {
      */
     getSystemInfo: function(callback) {
         
-    }
-    
+    }    
 };
 
 

@@ -13,11 +13,15 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.app.ActionBarDrawerToggle;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
 import android.view.Display;
 import android.view.KeyEvent;
@@ -30,8 +34,10 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.ValueCallback;
 import android.webkit.WebViewClient;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 
 import org.apache.cordova.AuthenticationToken;
 import org.apache.cordova.Config;
@@ -58,6 +64,23 @@ public class UstadMobileActivity extends Activity implements CordovaInterface
 	private String TAG = "CORDOVA_ACTIVITY";
 	private final ExecutorService threadPool = Executors.newCachedThreadPool();
 	
+	/** The Main Menu Drawer */
+	private ListView mDrawerList;
+	
+	/** String array of the text menu items for the drawer */
+	private String[] mDrawerItemTitles;
+	
+	/** Drawer Layout */
+	private DrawerLayout mDrawerLayout;
+	
+	/** Action bar drawer toggle; using v4 support for older devices */
+	@SuppressWarnings("deprecation")
+	private ActionBarDrawerToggle mDrawerToggle;
+	
+	private CharSequence mDrawerTitle;
+    private CharSequence mTitle;
+	
+	
     // Plugin to call when activity result is received
     protected CordovaPlugin activityResultCallback = null;
     protected boolean activityResultKeepRunning;
@@ -71,6 +94,8 @@ public class UstadMobileActivity extends Activity implements CordovaInterface
     private static int ACTIVITY_RUNNING = 1;
     private static int ACTIVITY_EXITING = 2;
     private int activityState = 0;  // 0=starting, 1=running (after 1st resume), 2=shutting down
+    
+    
 
 
 	// Android Activity Life-cycle events
@@ -78,11 +103,113 @@ public class UstadMobileActivity extends Activity implements CordovaInterface
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
+		
+		mTitle = mDrawerTitle = getTitle();
+		
+		mDrawerLayout = (DrawerLayout)findViewById(R.id.drawer_layout);
+		mDrawerList = (ListView) findViewById(R.id.left_drawer);
+		
+		
+		// set a custom shadow that overlays the main content when the drawer opens
+        mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
+        
+        // populate menu items
+        /*
+        mDrawerItemTitles = getResources().getStringArray(R.array.maindrawer_items);
+		mDrawerList.setAdapter(new ArrayAdapter<String>(this, 
+				R.layout.drawer_list_item, mDrawerItemTitles));
+		*/
+		
+		mDrawerToggle = new ActionBarDrawerToggle(this,/*host activity*/ 
+				mDrawerLayout, /*DrawerLayout object*/ 
+				R.drawable.ic_drawer, /* nav drawer icon to replace 'Up' caret */
+				R.string.drawer_open, 
+				R.string.drawer_close
+				) {
+            public void onDrawerClosed(View view) {
+                getActionBar().setTitle(mTitle);
+                invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+            }
+
+            public void onDrawerOpened(View drawerView) {
+                getActionBar().setTitle(mDrawerTitle);
+                invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+            }
+        };
+			
+		
+        mDrawerLayout.setDrawerListener(mDrawerToggle);
+        
+        // enable ActionBar app icon to behave as action to toggle nav drawer
+        getActionBar().setDisplayHomeAsUpEnabled(true);
+        getActionBar().setHomeButtonEnabled(true);
+
+        
 		cordova_webview = (CordovaWebView) findViewById(R.id.cordova_web_view);
+		
 		// Config.init(this);
 		String url = "file:///android_asset/www/index.html";
 		cordova_webview.loadUrl(url, 5000);
 	}
+	
+	/**
+	 * Receive message from plugin to set menu item titles
+	 * 
+	 * @param menuItemTitles String array of titles to put in the side menu 
+	 */
+	public void setAppDrawerMenuItems(String[] menuItemTitles) {
+		this.mDrawerItemTitles = menuItemTitles;
+		mDrawerList.setAdapter(new ArrayAdapter<String>(this, 
+				R.layout.drawer_list_item, mDrawerItemTitles));
+	}
+	
+	/**
+	 * Close the drawer
+	 */
+	public void closeAppDrawer() {
+		mDrawerLayout.closeDrawer(mDrawerList);
+	}
+	
+	/**
+	 * Handle when the user has clicked on the navigation bar
+	 * Used by the plugin to attach itself.
+	 * 
+	 * @param listener
+	 */
+	public void setDrawerOnItemClickListener(ListView.OnItemClickListener listener) {
+		mDrawerList.setOnItemClickListener(listener);
+	}
+	
+	@Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Pass the event to ActionBarDrawerToggle, if it returns
+        // true, then it has handled the app icon touch event
+        if (mDrawerToggle.onOptionsItemSelected(item)) {
+          return true;
+        }
+        // Handle your other action bar items...
+
+        return super.onOptionsItemSelected(item);
+    }
+	
+	@Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        // Sync the toggle state after onRestoreInstanceState has occurred.
+        mDrawerToggle.syncState();
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        mDrawerToggle.onConfigurationChanged(newConfig);
+    }
+	
+	@Override
+    public void setTitle(CharSequence title) {
+        mTitle = title;
+        getActionBar().setTitle(mTitle);
+    }
 
 	/**
      * Called when the system is about to start resuming a previous activity.
