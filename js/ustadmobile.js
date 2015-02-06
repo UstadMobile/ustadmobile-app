@@ -634,7 +634,7 @@ UstadMobile.prototype = {
         //required to make sure exe created pages show correctly
         console.log("UstadMobile: Running Pre-Init");
         $("body").addClass("js");
-        this.loadPanel();
+        //this.loadPanel();
         
         if(UstadMobile.getInstance().getZone() === UstadMobile.ZONE_CONTENT) {
             this.loadRuntimeInfo();

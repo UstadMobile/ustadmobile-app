@@ -40,4 +40,7 @@
     <feature name="UstadMobileAppView">
         <param name="android-package" value="com.ustadmobile.ustadmobileappview.UstadMobileAppViewPlugin" />
     </feature>
+    <feature name="ContentViewPager">
+        <param name="android-package" value="com.ustadmobile.contentviewpager.ContentViewPagerPlugin" />
+    </feature>
 </widget>

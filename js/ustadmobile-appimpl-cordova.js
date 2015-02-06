@@ -366,9 +366,47 @@ UstadMobileAppImplCordova.prototype.showContainer = function(opdsFeedEntry, onsh
         UstadMobile.getInstance().systemImpl.cordovaHTTPURL,
         UstadMobile.CONTENT_DIRECTORY, epubCacheDirName]);
     
+    var containerXMLURL = UstadMobileUtils.joinPath(
+            [epubHREFBaseDir, "META-INF/container.xml"]);
     
+    $.ajax(containerXMLURL, {
+        dataType: "text"
+    }).done(function(containerXMLStr) {
+        var rootFiles = UstadJS.getContainerRootfilesFromXML(containerXMLStr);
+        var rootFile0 = rootFiles[0]['full-path'];
+        var opfURL = UstadMobileUtils.joinPath([epubHREFBaseDir, rootFile0]);
+        
+        $.ajax(opfURL, {
+            dataType: "text"
+        }).done(function(opfStr) {
+            var opfEntry = new UstadJSOPF();
+            opfEntry.loadFromOPF(opfStr);
+            
+            var urls = [];
+            
+            //get the path of where the opf file is 
+            var opfPath = rootFile0.substring(0, rootFile0.lastIndexOf("/"));
+            for(var i = 0; i < opfEntry.spine.length; i++) {
+                var thisURL = UstadMobileUtils.joinPath([
+                    epubHREFBaseDir, opfPath, opfEntry.spine[i].href
+                ]);
+                urls.push(thisURL);
+            }
+            
+            cordova.plugins.ContentViewPager.openPagerView(
+                urls, 
+                function() {
+                    console.log("contentviewpager success");
+                },function() {
+                    console.log("contentviewpager fail");
+                });
+        });
+    });
+    
+    /*
     UstadMobileBookList.getInstance().openContainerFromBaseURL(epubHREFBaseDir,
         opdsFeedEntry, onshowCallback, show, onloadCallback, onerrorCallback);
+    */
 }
 
 /**

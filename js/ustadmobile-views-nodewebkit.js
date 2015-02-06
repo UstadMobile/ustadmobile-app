@@ -48,6 +48,9 @@
  */
 var UstadMobileAppViewNodeWebKit = function(controller) {
     this.controller = controller;
+    
+    /** Container for the menu items as an array of strings */
+    this.menuItems = [];
 };
 
 UstadMobileAppViewNodeWebKit.prototype = Object.create(
@@ -66,5 +69,95 @@ UstadMobileAppView.makeView = function(controller) {
 };
 
 UstadMobileAppViewNodeWebKit.prototype.init = function() {
+    var thisNwView = this;
+    $(document).on('pagebeforecreate', function(evt, ui) {
+        thisNwView.initDrawerForJQMPage(evt, ui);
+    });
     
+    this.initDrawerForJQMPage();
+};
+
+UstadMobileAppViewNodeWebKit.prototype.initDrawerForJQMPage = function (evt, ui) {
+    var pgEl = null;
+
+    if(evt) {
+        pgEl = $(evt.target);
+    }else {
+        pgEl = $.mobile.activePage;
+    }
+
+    if(typeof pgEl === "undefined" || pgEl === null) {
+        //has not yet really loaded
+        return;
+    }
+
+    /*
+    if(UstadMobile.getInstance().panelHTML === null) {
+        UstadMobile.getInstance().loadPanel();
+        return;
+    }*/
+
+    
+    var thisPgId = pgEl.attr("id") || UstadMobile.getInstance().pageURLToID(
+            pgEl.attr('data-url'));
+    
+    var newPanelId = "ustad_panel_" + thisPgId;
+    
+    if(pgEl.children(".ustadpaneldiv").length === 0) {
+        var htmlToAdd = "<div id='" + newPanelId + "'>";
+        htmlToAdd += "<div class='panel-content'>";
+        
+        htmlToAdd += "<ul data-role='listview'>";
+        htmlToAdd += "<li>&nbsp;</li>";
+        htmlToAdd += "</ul>";
+        
+        htmlToAdd += "</div>";//end panel-content div
+        htmlToAdd += "</div>";//end panelId div
+
+        pgEl.prepend(htmlToAdd);
+
+        $("#"+newPanelId).trigger("create");
+        console.log("Appended panel to page");
+    }
+
+    $("#" + newPanelId).panel({
+        theme: 'b',
+        display: 'push'
+    }).trigger("create");
+    $("#" + newPanelId).addClass("ustadpaneldiv");
+
+    if(pgEl.find(".ustad_panel_href").length === 0) {
+        pgEl.find("[data-role='header']").prepend("<a href='#mypanel' "
+            + "data-role='button' data-inline='true' class='ustad_panel_href ui-btn ui-btn-left'>"
+            + "<i class='lIcon fa fa-bars'></i></a>");
+    }
+
+    pgEl.find(".ustad_panel_href").attr("href", "#" + newPanelId);
+
+    if(pgEl.children(".ustad_fb_popup") !== 0) {
+        pgEl.children(".ustad_fb_popup").attr("id", "ustad_fb_" + thisPgId);
+    }
+
+    var zoneObj = null;
+    try {
+        zoneObj = UstadMobile.getInstance().getZoneObj();
+    }catch (err) {
+        //do nothing
+    }
+
+    if(zoneObj) {
+        var currentUsername = zoneObj.getCurrentUsername();
+        if(currentUsername) {
+            pgEl.find("#ustad_user_button").text(currentUsername);
+        }
+    }
+};
+
+UstadMobileAppViewNodeWebKit.prototype._makePanelHTML = function(panelId) {
+    
+    
+};
+
+UstadMobileAppViewNodeWebKit.prototype.setMenuItems = function(menuItems) {
+    this.menuItems =  menuItems;
 };

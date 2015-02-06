@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
+        id="com.ustadmobile.contentviewpager" version="0.1">
+    <name>ContentViewPager</name>
+    <description>Plugin to setup a native swipe viewpager</description>
+    <license>GPLv3</license>
+    <keywords>cordova,ustadmobile</keywords>
+    
+    <js-module src="www/contentviewpager.js" name="ContentViewPager">
+        <clobbers target="cordova.plugins.ContentViewPager" />
+    </js-module>
+    
+    <platform name="android">
+        <config-file target="config.xml" parent="/*">
+            <feature name="ContentViewPager">
+                <param name="android-package" value="com.ustadmobile.contentviewpager.ContentViewPagerPlugin"/>
+            </feature>
+        </config-file>
+        
+        <source-file src="platforms/android/src/com/ustadmobile/contentviewpager/ContentViewPagerPlugin.java" target-dir="src/com/ustadmobile/contentviewpager/" />
+    </platform>
+</plugin>
+
