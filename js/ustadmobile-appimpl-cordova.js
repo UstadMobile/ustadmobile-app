@@ -306,36 +306,6 @@ UstadMobileAppImplCordova.prototype.getHTTPURLForAppFile = function(appFileName)
  */
 UstadMobileAppImplCordova.prototype.courseWinRef = null;
 
-
-/**
- * Shows the course represented by the UstadMobileCourseEntry object
- * courseObj in the correct way for this implementation.  Shows an iframe.
- * 
- * @param courseObj {UstadMobileCourseEntry} CourseEntry to be shown
- * @param onshowCallback function to run when course is on screen
- * @param show boolean whether or not to make the course itself visible
- * @param onloadCallback function to run when the course has loaded/displayed
- * @param onerrorCallback function to run when the course has failed to load
- */
-UstadMobileAppImplCordova.prototype.showCourse = function(courseObj, 
-    onshowCallback, show, onloadCallback, onerrorCallback) {
-    
-    var httpURL = this.cordovaHTTPURL + UstadMobile.CONTENT_DIRECTORY + 
-            "/" + courseObj.getHttpURI();
-    httpURL = UstadMobileAppZone.getInstance().appendTinCanParamsToURL(httpURL);
-        
-    var destURI = UstadMobile.getInstance().contentDirURI + courseObj.relativeURI;
-    
-    UstadMobileAppImplCordova.getInstance().courseWinRef = 
-        window.open(httpURL, "_blank", 
-            "location=no,toolbar=no,mediaPlaybackRequiresUserAction=no");
-
-        
-    copyJob.copyNextFile();
-    
-};
-
-
 /**
  * Return a JSON string with system information - e.g. for reporting with
  * bug reports etc.
@@ -683,34 +653,128 @@ UstadMobileAppImplCordova.prototype.modTimeDifference = function(fileEntry1, fil
     }, errFn);
 };
 
-UstadMobileAppImplCordova.prototype.makeCopyJob = function(fileDestMap, destDir, completeCallback) {
-    var copyJob = new UstadMobileAppToContentCopyJob(fileDestMap, destDir, 
-        completeCallback);
-        
-    copyJob.copyNextFile = function() {
-        //we will use filetransfer against our own http server
-        var ft = new FileTransfer();
-        var srcFile = this.fileList[this.currentFileIndex];
-        var srcURL = UstadMobile.getInstance(
-                ).systemImpl.getHTTPURLForAppFile(srcFile);
-        var destFileName = this.fileDestMap[srcFile];
-        var destPath = this.destDir + "/" + destFileName;
-        ft.download(encodeURI(srcURL),
-            destPath, function(entry) {
-                console.log("Copy job copied to : " + entry);
-                if(copyJob.currentFileIndex < (copyJob.fileList.length - 1)) {
-                    copyJob.currentFileIndex++;
-                    copyJob.copyNextFile();
-                }else {
-                    copyJob.completeCallback();
-                }
-            }, function(err) {
-                console.log("Error downloading " + srcURL);
-            });
-    };
-    
-    return copyJob;
+/**
+ * Read a string from a file
+ * 
+ * @param {FileEntry|string} src the source file to read from
+ * @param {Object} options misc options
+ * @param {string} [options.encoding=UTF-8] encoding to use to read string
+ * @param {readStringFromFileSuccess} successFn callback function when successful
+ * @param {UstadMobileFailCallback} failFn
+ * @returns {undefined}
+ */
+UstadMobileAppImplCordova.prototype.readStringFromFile = function(src, options, successFn, failFn) {
+    var txtEncoding = UstadMobileUtils.defaultVal(options.encoding, "UTF-8");
+    UstadMobileAppImplCordova.getInstance().ensureIsFileEntry(src, options, function(fileEntry) {
+        fileEntry.file(function(file) {
+            var reader = new FileReader();
+            reader.onloadend = function(e) {
+                var txtValue = this.result;
+                UstadMobileUtils.runCallback(successFn, [txtValue], this);
+            };
+            
+            reader.onerror = failFn;
+            
+            reader.readAsText(file, txtEncoding);
+        }, failFn)
+    }, failFn);
+};
 
+/**
+* Write a string to a file
+* 
+* @param {FileEntry|string} dest destination to save text in file to
+* @param {string} str String contents to be written to file
+* @param {Object} options general options
+* @param {boolean} [options.createfile=true] whether or not to autocreate if not already existing
+* @param {writeStringToFileSuccess} successFn success callback
+* @param failFn {writestringToFileFail} failure callback
+* 
+*/
+UstadMobileAppImplCordova.prototype.writeStringToFile = function(dest, str, options, successFn, failFn) {
+    options.createfile = UstadMobileUtils.defaultVal(options.createfile, true);
+        
+    UstadMobileAppImplCordova.getInstance().ensureIsFileEntry(dest, options, function(destEntry) {
+        try {
+            destEntry.createWriter(function(fileWriter) {
+                fileWriter.onwriteend = successFn;
+
+                fileWriter.onerror = failFn;
+
+                var textBlob = new Blob([str], { type: "text/plain"});
+                fileWriter.write(textBlob);  
+            }, failFn);
+        }catch(e2) {
+            UstadMobileUtils.runCallback(failFn, [e2,e2], this);
+        }
+    }, failFn);
+};
+
+
+
+/**
+ * Check to see if the given file exists as either a file or directory
+ * 
+ * @param {FileEntry|string} file the file entry to look for
+ * @param {fileExistsSuccessCB} successFn
+ */
+UstadMobileAppImplCordova.prototype.fileExists = function(file, successFn) {
+    UstadMobileAppImplCordova.getInstance().ensureIsFileEntry(file, {}, function(fileEntry) {
+        UstadMobileUtils.runCallback(successFn, [true], this);
+    }, function(err) {
+        UstadMobileUtils.runCallback(successFn, [false], this);
+    });
+}
+
+/**
+ * Remove the given file
+ * 
+ * @abstract
+ * @param {FileEntry|string} file file to be removed
+ * @param {function} successFn callback to run when successful
+ * @param {UstadMobileFailCallback} failFn callback when failed
+ */
+UstadMobileAppImplCordova.prototype.removeFile = function(file, successFn, failFn) {
+    UstadMobileAppImplCordova.getInstance().ensureIsFileEntry(file, {}, function(fileEntry) {
+        fileEntry.remove(successFn, failFn)
+    }, failFn);
+};
+
+
+/**
+ * @callback ensureIsFileEntryCB
+ * @param {FileEntry} result The FileEntry required
+ * @param {Object} [err] the error that occurred
+ */
+
+/**
+ * Ensure the given file parameter is a file URI.  If it's a string, treat
+ * this as a URI and use window.resolveFileSystemURI to turn it into a FileEntry
+ * 
+ * @param {FileEntry|string} fileObj object to ensure its a file uri
+ * @param {Object} options general options
+ * @param {Object} [options.createfile] if true when converting from string to 
+ * entry, autocreate as a file if not existing before
+ * @param {ensureIsFileEntryCB} successFn callback to run when done OK
+ * @param {ensureIsFileEntryFailCB}} failFn callback 
+ */
+UstadMobileAppImplCordova.prototype.ensureIsFileEntry= function(fileObj, options, successFn, failFn) {
+    if(typeof fileObj === "string") {
+        window.resolveLocalFileSystemURL(fileObj, successFn, function(err) {
+            if(options.createfile) {
+                var parentURL = fileObj.substring(0, fileObj.lastIndexOf("/"));
+                var fileName = fileObj.substring(fileObj.lastIndexOf("/")+1);
+                
+                window.resolveLocalFileSystemURL(parentURL, function(parentEntry) {
+                    parentEntry.getFile(fileName, {create: true, exclusive: true}, successFn, failFn);
+                }, failFn);
+            }else {
+                UstadMobileUtils.runCallback(failFn, [err], this);
+            }
+        });
+    }else {
+        UstadMobileUtils.runCallback(successFn, [fileObj], this);
+    }
 };
 
 //Set the implementation accordingly on UstadMobile object

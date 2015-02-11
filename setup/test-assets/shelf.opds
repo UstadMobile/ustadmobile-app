@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+    <feed xmlns="http://www.w3.org/2005/Atom" 
+      xmlns:dc="http://purl.org/dc/terms/" 
+      xmlns:opds="http://opds-spec.org/2010/catalog"><id>http://umcloud1.ustadmobile.com/opds/assigned_course/?userid=6</id><link rel="start"
+                href="/opds/"
+                type="application/atom+xml;profile=opds-catalog;kind=navigation"/>
+<link rel="self"
+		href="/opds/assigned_courses/"
+		type="application/atom+xml;profile=opds-catalog;kind=navigation"/><title>Mike Test4's (miketest04) assigned courses</title><updated>2015-02-09T21:00:57Z</updated><author>
+	<name>Mike Test4</name> 
+	<uri>/user/6</uri>
+	</author>
+<entry><title>Standards R Good</title><link rel="subsection"
+			href="/opds/course/?id=http://www.ustadmobile.com/um-tincan/course/33" 
+			type="application/atom+xml;profile=opds-catalog;kind=acquisition"/><id>http://www.ustadmobile.com/um-tincan/course/33</id><updated>2015-02-09T18:58:12Z</updated><author>
+	<name>Varuna Singh</name> 
+	<uri>/user/2</uri>
+	</author><content type="text">Standards are a good thing</content></entry>
+
+<entry><title>Standards R Important</title><link rel="subsection"
+			href="/opds/course/?id=http://www.ustadmobile.com/um-tincan/course/34" 
+			type="application/atom+xml;profile=opds-catalog;kind=acquisition"/><id>http://www.ustadmobile.com/um-tincan/course/33</id><updated>2015-02-09T18:58:12Z</updated><author>
+	<name>Varuna Singh</name> 
+	<uri>/user/2</uri>
+	</author><content type="text">Standards are a good thing</content></entry>
+
+
+<entry><title>Categories R Cool</title><link rel="subsection"
+			href="/opds/course/?id=http://www.ustadmobile.com/um-tincan/course/33" 
+			type="application/atom+xml;profile=opds-catalog;kind=navigation"/><id>http://www.ustadmobile.com/um-tincan/course/33</id><updated>2015-02-09T18:58:12Z</updated><author>
+	<name>Varuna Singh</name> 
+	<uri>/user/2</uri>
+	</author><content type="text">Categories are super good</content></entry>
+
+</feed>

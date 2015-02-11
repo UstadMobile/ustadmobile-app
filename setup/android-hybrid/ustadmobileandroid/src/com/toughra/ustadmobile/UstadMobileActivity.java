@@ -20,6 +20,9 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.ActionBarDrawerToggle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
@@ -32,12 +35,14 @@ import android.view.ViewGroup;
 import android.view.ViewParent;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.ViewGroup.LayoutParams;
 import android.webkit.ValueCallback;
 import android.webkit.WebViewClient;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import org.apache.cordova.AuthenticationToken;
 import org.apache.cordova.Config;
@@ -56,8 +61,15 @@ import org.apache.cordova.Whitelist;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.ustadmobile.contentviewpager.ContentViewPagerPageFragment;
 
-public class UstadMobileActivity extends Activity implements CordovaInterface
+import android.support.v4.app.FragmentStatePagerAdapter;
+import android.support.v4.view.PagerAdapter;
+import android.support.v4.view.ViewPager;
+import android.support.v4.app.FragmentActivity;
+
+
+public class UstadMobileActivity extends FragmentActivity implements CordovaInterface
 {
 	
 	private CordovaWebView cordova_webview;
@@ -80,7 +92,10 @@ public class UstadMobileActivity extends Activity implements CordovaInterface
 	private CharSequence mDrawerTitle;
     private CharSequence mTitle;
 	
-	
+	private ViewPager viewPager;
+	private ContentViewPagerAdapter mPagerAdapter;
+    private LinearLayout mainLinearLayout;
+    
     // Plugin to call when activity result is received
     protected CordovaPlugin activityResultCallback = null;
     protected boolean activityResultKeepRunning;
@@ -108,19 +123,12 @@ public class UstadMobileActivity extends Activity implements CordovaInterface
 		
 		mDrawerLayout = (DrawerLayout)findViewById(R.id.drawer_layout);
 		mDrawerList = (ListView) findViewById(R.id.left_drawer);
-		
+		mainLinearLayout = (LinearLayout) findViewById(R.id.main_linear_layout);
 		
 		// set a custom shadow that overlays the main content when the drawer opens
         mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
         
-        // populate menu items
-        /*
-        mDrawerItemTitles = getResources().getStringArray(R.array.maindrawer_items);
-		mDrawerList.setAdapter(new ArrayAdapter<String>(this, 
-				R.layout.drawer_list_item, mDrawerItemTitles));
-		*/
-		
-		mDrawerToggle = new ActionBarDrawerToggle(this,/*host activity*/ 
+        mDrawerToggle = new ActionBarDrawerToggle(this,/*host activity*/ 
 				mDrawerLayout, /*DrawerLayout object*/ 
 				R.drawable.ic_drawer, /* nav drawer icon to replace 'Up' caret */
 				R.string.drawer_open, 
@@ -151,6 +159,78 @@ public class UstadMobileActivity extends Activity implements CordovaInterface
 		String url = "file:///android_asset/www/index.html";
 		cordova_webview.loadUrl(url, 5000);
 	}
+	
+	public void showContentPager(String[] urlList) {
+		viewPager = new ViewPager(this);
+		viewPager.setId(110500);
+
+		mPagerAdapter = new ContentViewPagerAdapter(
+				getSupportFragmentManager(), urlList);
+        viewPager.setAdapter(mPagerAdapter);
+        
+        //1 is the default number of pages to keep offscreen
+        // see http://developer.android.com/reference/android/support/v4/view/ViewPager.html#setOffscreenPageLimit%28int%29
+        viewPager.setOffscreenPageLimit(1);
+        
+        mainLinearLayout.removeView(cordova_webview);
+        
+        LinearLayout.LayoutParams lpV = new LinearLayout.LayoutParams(
+        		LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+        
+        mainLinearLayout.addView(viewPager, lpV);
+	}
+	
+	public void hideContentPager() {
+		if(viewPager != null) {
+			mainLinearLayout.removeView(viewPager);
+			viewPager = null;
+			
+			mainLinearLayout.addView(cordova_webview);
+		}
+	}
+	
+	public void showCordovaView() {
+		
+	}
+	
+	
+	/**
+     * A simple pager adapter that uses an array of urls (as a string 
+     * array) to generate a fragment that has a webview showing that 
+     * URL
+     * 
+     * @see com.ustadmobile.contentviewpager.ContentViewPagerPageFragment
+     */
+    private class ContentViewPagerAdapter extends FragmentStatePagerAdapter {
+    	
+    	/**
+    	 * Array of pages to be shown
+    	 */
+    	private String[] pageList;
+    	
+        public ContentViewPagerAdapter(FragmentManager fm, String[] pageList) {
+            super(fm);
+            this.pageList = pageList;
+        }
+
+        @Override
+        /**
+         * Generate the Fragment for that position
+         * 
+         * @see com.ustadmobile.contentviewpager.ContentViewPagerPageFragment
+         * 
+         * @param position Position in the list of fragment to create
+         */
+        public Fragment getItem(int position) {
+        	Fragment frag = ContentViewPagerPageFragment.create(pageList[position]);
+            return frag;
+        }
+
+        @Override
+        public int getCount() {
+            return pageList.length;
+        }
+    }
 	
 	/**
 	 * Receive message from plugin to set menu item titles

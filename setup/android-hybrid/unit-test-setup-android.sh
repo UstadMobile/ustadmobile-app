@@ -35,6 +35,9 @@ TIMEOUT=240
 #Port to use to run node server to receive test results
 NODEPORT=8620
 
+#Port for serving test files
+NODEHTTPPORT=6821
+
 #one liner to find ip address
 IPADDR=$(/sbin/ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1' | head -n 1)
 
@@ -65,13 +68,17 @@ cd $WORKINGDIR
 echo "getting jscover"
 source ../jscover-get.sh
 
-echo "Instrumenting files for test"
-java -jar $JSCOVERJAR -fs --no-instrument-reg='(jquery\.min\.js|qunit-.*\.js|sha3.js)' $SRCDIR/js $FILEDEST/js
-echo "Completed JS instrumentation"
+if [ "$COVERAGE" != "0" ]; then
+    echo "Instrumenting files for test"
+    java -jar $JSCOVERJAR -fs --no-instrument-reg='(jquery\.min\.js|qunit-.*\.js|sha3.js)' $SRCDIR/js $FILEDEST/js
+    echo "Completed JS instrumentation"
+else
+    cp -r $SRCDIR/js/*.js $FILEDEST/js
+fi
 
-read
+echo "var testResultServer = 'http://$IPADDR:$NODEPORT/'; " > $FILEDEST/js/ustadmobile-test-settings.js
+echo "var testAssetsURL = 'http://$IPADDR:$NODEHTTPPORT/'; " >>$FILEDEST/js/ustadmobile-test-settings.js
 
-echo "var testResultServer = 'http://$IPADDR:$NODEPORT/';" > $FILEDEST/js/ustadmobile-test-settings.js
 
 #build the apk itself
 cd $TARGETDIR
@@ -81,6 +88,9 @@ ant clean debug
 cd $WORKINGDIR
 nodejs $WORKINGDIR/../node-qunit-server/node-qunit-server.js $NODEPORT &
 NODEPID=$!
+http-server $WORKINGDIR/../test-assets -p $NODEHTTPPORT &
+NODEHTTPPID=$!
+
 
 EMULATEPID=0
 
@@ -152,6 +162,7 @@ fi
 
 #Stop node server
 kill $NODEPID 
+kill $NODEHTTPPID
 
 if [ "$EMULATEPID" != "0" ]; then
     #pause to show results
@@ -162,7 +173,10 @@ fi
 echo "Generate Coverage Report"
 
 cd $WORKINGDIR
-source ../jscover-makereport.sh
+
+if [ "$COVERAGE" != "0" ]; then
+    source ../jscover-makereport.sh
+fi
 
 rm result
 

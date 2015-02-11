@@ -83,3 +83,7 @@ UstadMobileAppViewCordova.prototype.setMenuItems = function(menuItems) {
     });
 };
 
+UstadMobileAppViewCordova.prototype.showPublication = function(container) {
+    
+};
+

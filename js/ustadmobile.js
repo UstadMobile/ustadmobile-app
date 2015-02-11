@@ -1317,6 +1317,20 @@ UstadMobileUtils.getURLParent = function(url, seperator) {
 }
 
 /**
+ * Return the default value if the valProvided is undefined, otherwise
+ * the value itself
+ * 
+ * @return valProvided if defined, defaultVal otherwise
+ */
+UstadMobileUtils.defaultVal = function(valProvided, defaultVal) {
+    if(typeof valProvided === "undefined") {
+        return defaultVal;
+    }else {
+        return valProvided;
+    }
+};
+
+/**
  * Joins an array of Strings together with one and only one seperator between
  * them
  * 
@@ -1435,6 +1449,14 @@ UstadMobileUtils.playMediaElement = function(mediaEl, onPlayCallback) {
 
 
 /**
+ * 
+ * @callback UstadMobileFailCallback
+ * @param {Object} error object
+ * @param {string} errStr text of error if any
+ * 
+ */
+
+/**
  * Abstract class that defines what an implementation of the app needs to be 
  * able to do - e.g. get the default language of the system, file system scans, 
  * etc.  There will be an implementation for Cordova and NodeWebKit
@@ -1503,20 +1525,6 @@ UstadMobileAppImplementation.prototype = {
     },
     
     /**
-     * Shows the course represented by the UstadMobileCourseEntry object
-     * courseObj in the correct way for this implementation
-     * 
-     * @param courseObj {UstadMobileCourseEntry} CourseEntry to be shown
-     * @param onshowCallback function to run when the course element (eg iframe) is out
-     * @param show boolean whether or not to make the course itself visible
-     * @param onloadCallback function to run when the course has loaded/displayed
-     * @parma onerrorCallback function to run when the course has failed to load
-     */
-    showCourse: function(courseObj, onshowCallback, show, onloadCallback, onerrorCallback) {
-       
-    },
-    
-    /**
      * Return a JSON string with system information - e.g. for reporting with
      * bug reports etc.
      * 
@@ -1525,7 +1533,88 @@ UstadMobileAppImplementation.prototype = {
      */
     getSystemInfo: function(callback) {
         
-    }    
+    },
+    
+    /**
+     * Callback when writing string to disk was successful
+     * @callback writeStringToFileSuccess
+     * @param result {Object} misc result properties
+     */
+    
+    /**
+     * 
+     * @callback writeStringToFileFail
+     * @param errStr {string} error as a string
+     * @param err {Object} error as an object
+     */
+    
+    /**
+     * Write a string to a file
+     * 
+     * @abstract
+     * @param dest {FileEntry|string} destination to save text in file to
+     * @param str {string} String contents to be written to file
+     * @param options {Object} options
+     * @param successFn {writeStringToFileSuccess} success callback
+     * @param failFn {writestringToFileFail} failure callback
+     * 
+     */
+    writeStringToFile: function(dest, str, options, successFn, failFn) {
+        
+    },
+    
+    
+    readStringFromFile: function(src, options, successFn, failFn) {
+        
+    },
+    
+    /**
+     * 
+     * @callback fileExistsSuccessCB
+     * @param {boolean} exists true/false if file exists
+     */
+    
+    /**
+     * Check to see if the given file exists as either a file or directory
+     * 
+     * @abstract
+     * @param {FileEntry|string} file the file entry to look for
+     * @param {fileExistsSuccessCB} successFn
+     * @param {type} failFn
+     */
+    fileExists: function(file, successFn, failFn) {
+        
+    },
+    
+    /**
+     * Remove the given file
+     * 
+     * @abstract
+     * @param {FileEntry|string} file file to be removed
+     * @param {function} successFn callback to run when successful
+     * @param {UstadMobileFailCallback} failFn callback when failed
+     */
+    removeFile: function(file, successFn, failFn) {
+        
+    },
+    
+    /**
+     * Delete a file if it exists; if it does not exist, do nothing
+     * 
+     * @param {FileEntry|string} file FileEntry object or URI string to file
+     * @param {function} successFn called when the file is removed OK or does not exist
+     * @param {function} failFn called when something goes wrong
+     */
+    removeFileIfExists: function(file, successFn, failFn) {
+        UstadMobile.getInstance().systemImpl.fileExists(file, function(fileFound) {
+            if(fileFound) {
+                UstadMobile.getInstance().systemImpl.removeFile(file, successFn, 
+                    failFn);
+            }else {
+                UstadMobileUtils.runCallback(successFn, [], this);
+            }
+        }, failFn);
+    }
 };
 
 

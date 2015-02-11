@@ -100,7 +100,6 @@ UstadMobileBookList.prototype = {
      */
     queueScan: function(queueCallback) {
         UstadMobile.getInstance().runAfterPathsCreated(function() {
-            debugger;
             UstadMobile.getInstance().systemImpl.scanCourses(queueCallback);
         });
     },

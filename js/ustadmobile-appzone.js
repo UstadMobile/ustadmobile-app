@@ -139,7 +139,6 @@ UstadMobileAppZone.prototype = {
             
             var systemImpl = UstadMobile.getInstance().systemImpl;
             systemImpl.startHTTPServer();
-            UstadMobileAppZone.getInstance().updateAssignedCourses();
             UstadMobile.getInstance().displayUsername();
             
             //UstadMobile.getInstance().systemImpl.getSystemLang(function(lang){
@@ -151,22 +150,7 @@ UstadMobileAppZone.prototype = {
         }, this.tincanQueueWaitTime);
     },
     
-    /**
-     * Check the courses that the user is assigned to via the server, start
-     * downloads etc. where needed
-     * 
-     */
-    updateAssignedCourses: function() {
-        if(this.getCurrentUsername()) {
-            var umApp = UstadMobileAppZone.getInstance();
-            umApp.loadAssignedCoursesFromServerDefault(function(coursesObj, err) {
-                if(coursesObj) {
-                    umApp.cacheAssignedCourses(umApp.getCurrentUsername(),
-                        coursesObj);
-                }
-            });
-        }
-    },
+   
     
     
     /**
@@ -263,125 +247,6 @@ UstadMobileAppZone.prototype = {
             console.log("REQUEST FAIL: "  + jqXHR.responseText);
             UstadMobileUtils.runCallback(callback, [null, textStatus], this);
         });
-    },
-    
-    /**
-     * Cache information about the course and save when it was last modified
-     * 
-     * @param {type} courseInfo
-     * @returns {undefined}
-     */
-    
-    cacheCourseInfo: function(courseInfo) {
-        localStorage.setItem(UstadMobileAppZone.STORAGE_PREFIX_COURSEINFO 
-            + courseInfo.id, JSON.stringify(courseInfo));
-        var timeNow = Math.floor((new Date().getTime())/1000);
-        localStorage.setItem(UstadMobileAppZone.STORAGE_PREFIX_COURSEINFOTIME
-            + courseInfo.id, ""+timeNow);
-    },
-    
-    /**
-     * Get the course info (blocks, id, etc) that we have cached if available
-     * 
-     * @return cached info about course, or null if we don't have it
-     */
-    loadCachedCourseInfo: function(courseID) {
-        var courseVal = localStorage.getItem(
-            UstadMobileAppZone.STORAGE_PREFIX_COURSEINFO + courseID);
-        if(courseVal) {
-            return JSON.parse(courseVal);
-        }else {
-            return null;
-        }
-    },
-    
-    
-    /**
-     * Load the assigned courses from the named server for the given username
-     * and password
-     * 
-     * @param String username
-     * @param String password
-     * @param String httpURL URL to load from (e.g. assigned_courses)
-     * @param function callback to run when courses are loaded - take two params 
-     * (courses and err).  
-     * 
-     */
-    loadAssignedCoursesFromServer: function(username, password, httpURL, callback) {
-        $.ajax({
-            method: "POST",
-            url: httpURL,
-            data: {
-                "username" : username,
-                "password" : password
-            },
-            dataType: "json"
-        }).done(function(data){
-            UstadMobileUtils.runCallback(callback, [data, null], this);
-        }).fail(function(jqXHR, textStatus){
-            console.log("REQUEST FAIL: "  + jqXHR.responseText);
-            UstadMobileUtils.runCallback(callback, [null, textStatus], this);
-        });
-    },
-    
-    /**
-     * Load assigned courses from the server for the current user against the 
-     * current default UMCLOUD server
-     * 
-     * @param callback function callback to run when loaded
-     */
-    loadAssignedCoursesFromServerDefault: function(callback) {
-        var url = this.getUMCloudEndpoint() + "assigned_courses/";
-        this.loadAssignedCoursesFromServer(this.getCurrentUsername(),
-            this.getCurrentPass(), url, callback);
-    },
-    
-    /**
-     * Update the user assigned courses display
-     * 
-     * @param coursesObj Assigned courses object (optional) - otherwise use cached version
-     */
-    updateAssignedCoursesDisplay: function(coursesObj) {
-        if(!this.getCurrentUsername()) {
-            return;
-        }
-        
-        if(typeof coursesObj === "undefined") {
-            coursesObj = this.loadCachedAssignedCourses(
-                    this.getCurrentUsername());
-        }
-        
-        if($("#UMAssignedCoursesList").length > 0 && coursesObj) {
-            $("#UMAssignedCoursesList").html(this.makeUserCourseListHTML(
-                    coursesObj));
-        }
-    },
-    
-    /**
-     * Cache the assigned courses for a user to localStorage
-     * 
-     * @param username String Username to save courses for
-     * @param courses Object The assigned courses object as it comes back from cloud
-     */
-    cacheAssignedCourses: function(username, courses) {
-        localStorage.setItem(UstadMobileAppZone.STORAGE_PREFIX_COURSES 
-            + username, JSON.stringify(courses))
-    },
-    
-    /**
-     * Get the list of courses for the given user from the cache
-     * 
-     * @param username String the username to load courses for
-     * @returns Object of assigned courses as returned from server or null if we don't have it
-     */
-    loadCachedAssignedCourses: function(username) {
-        var retVal = localStorage.getItem(UstadMobileAppZone.STORAGE_PREFIX_COURSES 
-            + username);
-        if(retVal) {
-            return JSON.parse(retVal);
-        }else {
-            return null;
-        }
     },
     
     /**

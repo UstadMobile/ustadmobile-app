@@ -58,6 +58,15 @@ var ustad_version = '';
 
 var testPageChangeWait = 400;
 
+/**
+ * Options used during testing
+ * @type Object
+ */
+var UstadMobileTest = {
+    cachedFeedID : null,
+    savedOpdsFeedObj : null
+};
+
 
 /**
  * Function used for testing to see if a page change took place, and then
@@ -87,6 +96,8 @@ var containerChangeFn = function() {
 
     QUnit.module("UstadMobile");
     
+    testUstadMobileControllerGetCatalogByURL();
+    
     testISO8601Format();
     
     testLoadScript();
@@ -101,11 +112,7 @@ var containerChangeFn = function() {
     QUnit.testTimeout = 75000;
     testUstadMobileCourseLoad();
     
-    
-    testLoadAndCacheAssignedCourses();
-    
-    //testLoadCourseInfo();
-    
+        
     var audioEl = document.createElement("audio");
     audioEl.preload = "auto";
     
@@ -140,63 +147,181 @@ var containerChangeFn = function() {
     //make sure courses open
     testBookOpen();
     
+    testUstadMobileAppImplEnsureIsFileEntry();
     
+    testUstadCatalogControllerCacheCatalog();
+    
+    testFileSavingAndRemoving();
 }());
 
-/**
- * Test that we can load course info JSON through the API
- */
-function testLoadCourseInfo() {
-    asyncTest("Test loading course info by ID", function() {
-        UstadMobile.getInstance().runWhenImplementationReady(function() {
-            var theURL = UstadMobileAppZone.getInstance().getUMCloudEndpoint()
-                + "get_course_blocks/";
-            UstadMobileAppZone.getInstance().loadCourseInfo(validUsername,
-                validPassword, validCourseID, theURL, function(data, err) {
-                    ok(!err, "No error comes back loading course info");
-                    ok(data.title, "Course has title");
-                    ok(data.description, "Course has description");
-                    ok(data.blocks.length > 0, "Course has blocks");
-                    
-                    UstadMobileAppZone.getInstance().cacheCourseInfo(data);
-                    
-                    var cachedCourseInfo = UstadMobileAppZone.getInstance(
-                            ).loadCachedCourseInfo(validCourseID);
-                    ok(cachedCourseInfo !== null, "Apparently loaded cached info");
-                    
-                    start();
-                });
+function testFileSavingAndRemoving() {
+    QUnit.test("Test autocreate new file", function(assert) {
+        var testDoneFn = assert.async();
+        assert.expect(2);
+        var testFileURI = UstadMobileUtils.joinPath([
+                UstadMobile.getInstance().contentDirURI,
+                "sometestfile.txt"]);
+        var failFn = function(err) {
+            console.log("oh shit: " + err);
+        };
+        
+        var testFileStrVal = "The answer to the meaning of life = 6x7=42.";
+        
+        UstadMobile.getInstance().systemImpl.removeFileIfExists(testFileURI, function() {
+            UstadMobile.getInstance().systemImpl.writeStringToFile(testFileURI, 
+                testFileStrVal, {}, function() {
+                    //should have been written - therefor should exist
+                    UstadMobile.getInstance().systemImpl.fileExists(testFileURI, function(fileFound) {
+                        assert.equal(fileFound, true, "Found file created");
+                        
+                        UstadMobile.getInstance().systemImpl.readStringFromFile(testFileURI, {},
+                            function(strValInFile) {
+                                assert.equal(strValInFile, testFileStrVal, 
+                                    "Read the same value back from file");
+                                testDoneFn();
+                            }, failFn);
+                    });
+                }, failFn);
+        }, failFn);
+    });
+    
+    QUnit.test("Test callback on removeFileIfExists for non-existing file", function(assert) {
+        assert.expect(1);
+        var nonexistDoneFn = assert.async();
+        UstadMobile.getInstance().systemImpl.removeFileIfExists("/this/file/does/not/exist", function() {
+            assert.ok(true, "Hit callback on removeFileIfExists for non existent file");
+            nonexistDoneFn();
         });
+    });
+
+    
+}
+
+
+
+function testUstadCatalogControllerCacheCatalog() {
+    QUnit.test("Can cache catalog", function(assert) {
+        assert.expect(1);
+        var cacheDoneFn = assert.async();
+        var validFeedURL = testAssetsURL + "shelf.opds";
+        UstadCatalogController.getCatalogByURL(validFeedURL, {}, 
+            function(feedObj, result) {
+                UstadCatalogController.cacheCatalogEntry(feedObj, {}, function(feedRet) {
+                    assert.ok(feedRet, "Feed object comes back afer writing");
+                    UstadMobileTest.cachedFeedID =feedObj.id;
+                    UstadMobileTest.savedOpdsFeedObj = feedObj;
+                    cacheDoneFn();
+                }, function(err) {
+                    debugger;
+                    console.log("wtf error is : " + err);
+                });
+            });
+    });
+    
+    QUnit.test("Can retrieve catalog from cache by ID", function(assert) {
+        assert.expect(1);
+        var cacheAnswerDoneFn = assert.async();
+        UstadCatalogController.getCachedCatalogEntryByID(
+            UstadMobileTest.cachedFeedID, {}, function(feedObj, result) {
+                assert.ok(feedObj.id === UstadMobileTest.savedOpdsFeedObj.id);
+                cacheAnswerDoneFn();
+            }, function(err) {
+                console.log(err);
+            });
+    });
+    
+    QUnit.test("Can retrieve catalog from cache by URL", function(assert) {
+       assert.expect(1);
+       var cacheByURLDoneFn = assert.async();
+       var validFeedURL = testAssetsURL + "shelf.opds";
+       UstadCatalogController.getCachedCatalogEntryByURL(validFeedURL, {},
+           function(feedObj, result) {
+               assert.ok(feedObj.id === UstadMobileTest.savedOpdsFeedObj.id);
+               cacheByURLDoneFn();
+           });
+       
     });
 }
 
-function testLoadAndCacheAssignedCourses() {
-    asyncTest("Test loading assigned courses", function() {
-        UstadMobile.getInstance().runWhenImplementationReady(function() {
-            var theURL = UstadMobileAppZone.getInstance().getUMCloudEndpoint()
-                + "assigned_courses/";
-            UstadMobileAppZone.getInstance().loadAssignedCoursesFromServer(
-                   validUsername, validPassword, theURL, function(coursesObj, err) {
-                       ok(!err, "No error loading assigned courses");
-                       ok(coursesObj.length > 0, "Found assigned courses");
-                       for(var i = 0; i < coursesObj.length; i++) {
-                           ok(coursesObj[i].id, "Course has ID");
-                           ok(coursesObj[i]['last-modified'], 
-                              "Course has last modified");
-                           ok(coursesObj[i]['title'], "Course has title");
-                       }
-                       
-                       //now try and cache them and try getting them back
-                       UstadMobileAppZone.getInstance().cacheAssignedCourses(
-                               validUsername, coursesObj);
-                       //ok(UstadMobileAppZone.getInstance().loadCachedAssignedCourses(
-                       //        validUsername) == coursesObj, 
-                       //         "Courses obj loads back from lcoal storage");
-                       start();
-                   });
+function testUstadMobileAppImplEnsureIsFileEntry() {
+    QUnit.test("AppImpl ensure file is entry converts", function(assert) {
+        assert.expect(2);
+        var convertDone = assert.async();
+        UstadMobile.getInstance().systemImpl.ensureIsFileEntry(
+            UstadMobile.getInstance().contentDirURI, {}, function(entry) {
+                assert.ok(typeof entry === "object", "Object comes back");
+                assert.ok(entry, "Result is not fals-ish");
+                convertDone();
+            });
+    });
+    
+    QUnit.test("AppImpl ensure file entry when file entry provided", function(assert) {
+        assert.expect(2);
+        var passThroughDoneFn = assert.async();
+        window.resolveLocalFileSystemURL(UstadMobile.getInstance().contentDirURI, function(entry){
+            UstadMobile.getInstance().systemImpl.ensureIsFileEntry(entry, {}, function(res) {
+                assert.ok(entry, "Got an entry back");
+                assert.ok(typeof res === "object", "get an object back when object provided");
+                passThroughDoneFn();
+            }); 
         });
     });
+    
+    QUnit.test("AppImpl ensure file entry null when invalid URI provided", {}, function(assert) {
+        assert.expect(1);
+        var failDoneFn = assert.async();
+        
+        UstadMobile.getInstance().systemImpl.ensureIsFileEntry("/some/files/does/notexistatall", {},
+            function(){},//success function will not be called
+            function(err) {
+                assert.ok(err, "Got an error object back when file does not exist");
+                failDoneFn();
+            }); 
+        
+    });
+    
+}   
+
+function testUstadMobileControllerGetCatalogByURL() {
+    QUnit.test("Test Download valid catalog", function(assert) {
+        assert.expect(1);
+        var validDoneFn = assert.async();
+        var validFeedURL = testAssetsURL + "shelf.opds";
+        UstadCatalogController.getCatalogByURL(validFeedURL, {}, 
+            function(feedObj, result) {
+                assert.ok(feedObj.entries.length > 0,
+                    "Found feed object with entries");
+                validDoneFn();
+            });
+    });
+    
+    QUnit.test("Test download invalid catalog", function(assert) {
+        assert.expect(1);
+        var invalidCatalogURL = testAssetsURL + "invalid-feed.opds";
+        var invalidCatalogDoneFn = assert.async();
+        
+        UstadCatalogController.getCatalogByURL(invalidCatalogURL, {},
+            //success fn should not be called
+            function(feedObj, result) {},
+            function(errStr, err) {
+                assert.ok(true, "Loading invalid feed calls fail fn");
+                invalidCatalogDoneFn();
+            });
+    });
+    
+    QUnit.test("Test download catalog with nonexisitng url", function (assert) {
+        assert.expect(1);
+        var nonExistingCatalogURL = testAssetsURL + "this-does-not-exist.opds";
+        var nonExistingDoneFn = assert.async();
+        UstadCatalogController.getCatalogByURL(nonExistingCatalogURL, {},
+            function() {},
+            function(errStr, err) {
+                assert.ok(true, "Loading 404 calls fail fn");
+                nonExistingDoneFn();
+            });
+    });
 }
+
 
 /**
  * Define tests to check that 8601 duration formatting for TinCan works

@@ -9,6 +9,17 @@ import android.view.ViewGroup.LayoutParams;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+/**
+ * A fragment that contains a webview that loads a given url to be used
+ * with ContentViewPagerDialog 
+ * 
+ * The URL is set via Fragment arguments with the ARG_PAGE key
+ * 
+ * @see com.ustadmobile.contentviewpager.ContentViewPagerDialog
+ * 
+ * @author Mike Dawson <mike@ustadmobile.com>
+ *
+ */
 public class ContentViewPagerPageFragment extends Fragment {
 	
 	/**
@@ -16,10 +27,20 @@ public class ContentViewPagerPageFragment extends Fragment {
      */
     public static final String ARG_PAGE = "page";
     
+    /** 
+     * The url of the page to be loaded
+     */
     private String mPageURL;
     
+    /**
+     * The webView for the given URL
+     */
     private WebView webView;
     
+    /**
+     * Construct a new contentviewpagefragment
+     * empty constructor
+     */
     public ContentViewPagerPageFragment() {
     	
     }
@@ -30,6 +51,13 @@ public class ContentViewPagerPageFragment extends Fragment {
         mPageURL = getArguments().getString(ARG_PAGE);
     }
     
+    /**
+     * Create a new ContentViewPagerPageFragment and set the URL
+     * 
+     * @param pageURL the URL the webview should load
+     * 
+     * @return ContentViewPagerFragment for the given page
+     */
     public static ContentViewPagerPageFragment create(String pageURL) {
     	ContentViewPagerPageFragment fragment = new ContentViewPagerPageFragment();
     	Bundle args = new Bundle();
@@ -39,10 +67,13 @@ public class ContentViewPagerPageFragment extends Fragment {
     }
     
     @Override
+    /**
+     * Create the webview and return it
+     */
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
     	//TODO: is this right?  implement onDestroy?
-    	WebView webView = new WebView(getActivity());
+    	this.webView = new WebView(getActivity());
     	webView.loadUrl(mPageURL);
     	
     	webView.setWebViewClient(new WebViewClient());
@@ -50,5 +81,12 @@ public class ContentViewPagerPageFragment extends Fragment {
     	webView.setHorizontalScrollBarEnabled(false);
     	webView.getSettings().setJavaScriptEnabled(true);
         return webView; 
+    }
+    
+    @Override
+    public void onDestroy() {
+    	// TODO Auto-generated method stub
+    	super.onDestroy();
+    	this.webView = null;
     }
 }
