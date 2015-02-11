@@ -166,7 +166,7 @@ UstadCatalogController.getCatalogByURL = function(url, options, successFn, failF
     options.cache = (typeof options.cache === "undefined") ? true : options.cache;
     $.ajax(url, {
         dataType: "text",
-        cache: options.cache
+        cache: false
     }).done(function(opdsStr) {
         try {
             var opdsFeedObj = UstadJSOPDSFeed.loadFromXML(opdsStr, url);
@@ -175,7 +175,12 @@ UstadCatalogController.getCatalogByURL = function(url, options, successFn, failF
             UstadMobileUtils.runCallback(failFn, [e, e], this);
         }
     }).fail(function(textStatus, err) {
-        UstadMobileUtils.runCallback(failFn, [textStatus, err], this);
+        if(options.cache) {
+            UstadCatalogController.getCachedCatalogEntryByURL(url, options,
+                successFn, failFn);
+        }else {
+            UstadMobileUtils.runCallback(failFn, [textStatus, err], this);
+        }
     });
 };
 

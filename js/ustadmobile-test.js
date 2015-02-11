@@ -64,7 +64,21 @@ var testPageChangeWait = 400;
  */
 var UstadMobileTest = {
     cachedFeedID : null,
-    savedOpdsFeedObj : null
+    savedOpdsFeedObj : null,
+    
+    /**
+     * Turn the http test asset server on or off
+     * @param {string} doWhat "stop" or "start"
+     * @param {function} opDoneCallback callback to run once op is complete
+     */
+    httpServerControl: function(doWhat, opDoneCallback) {
+        var httpControlURL = UstadMobileUtils.joinPath(
+            [testResultServer, "http", doWhat]);
+        $.ajax(httpControlURL, {
+            dataType: "text"
+        }).done(opDoneCallback);
+    }
+    
 };
 
 
@@ -96,7 +110,7 @@ var containerChangeFn = function() {
 
     QUnit.module("UstadMobile");
     
-    testUstadMobileControllerGetCatalogByURL();
+    
     
     testISO8601Format();
     
@@ -149,9 +163,15 @@ var containerChangeFn = function() {
     
     testUstadMobileAppImplEnsureIsFileEntry();
     
+    testUstadMobileControllerGetCatalogByURL();
+    
     testUstadCatalogControllerCacheCatalog();
     
     testFileSavingAndRemoving();
+    
+    
+    
+    testUstadCatalogControllerCacheFallback();
 }());
 
 function testFileSavingAndRemoving() {
@@ -197,6 +217,19 @@ function testFileSavingAndRemoving() {
     
 }
 
+function testUstadCatalogControllerCacheFallback() {
+    QUnit.test("Will fallback to using the cache when offline", function(assert) {
+        debugger;
+        var validFeedURL = testAssetsURL + "shelf.opds";
+        var cacheFallbackDoneFn = assert.async();
+        UstadMobileTest.httpServerControl("stop", function() {
+            UstadCatalogController.getCatalogByURL(validFeedURL, {}, function(opdsObj) {
+                assert.ok(opdsObj, "Fell back to cached copy of feed by URL");
+                UstadMobileTest.httpServerControl("start", cacheFallbackDoneFn);
+            });
+        });
+    })
+}
 
 
 function testUstadCatalogControllerCacheCatalog() {
