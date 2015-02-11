@@ -218,17 +218,38 @@ function testFileSavingAndRemoving() {
 }
 
 function testUstadCatalogControllerCacheFallback() {
+    
+    //Stop the HTTP Server, then see that we get a cached reply
     QUnit.test("Will fallback to using the cache when offline", function(assert) {
-        debugger;
+        assert.expect(2);
         var validFeedURL = testAssetsURL + "shelf.opds";
         var cacheFallbackDoneFn = assert.async();
         UstadMobileTest.httpServerControl("stop", function() {
-            UstadCatalogController.getCatalogByURL(validFeedURL, {}, function(opdsObj) {
+            UstadCatalogController.getCatalogByURL(validFeedURL, {}, function(opdsObj, result) {
                 assert.ok(opdsObj, "Fell back to cached copy of feed by URL");
-                UstadMobileTest.httpServerControl("start", cacheFallbackDoneFn);
+                assert.ok(result.cached, "Result came from cached copy");
+                cacheFallbackDoneFn();
             });
         });
-    })
+    });
+    
+    //test that if we disable the cache looking up the entry will fail
+    QUnit.test("Will fail when offline and cache is off", function(assert) {
+        assert.expect(1);
+        var validFeedURL = testAssetsURL + "shelf.opds";
+        var cacheFailDoneFn = assert.async();
+        
+        UstadCatalogController.getCatalogByURL(validFeedURL, {cache: false}, 
+            function(opdsObj, result) {}, 
+            function(err) {
+                assert.ok(true, 
+                    "fail callback called in event of being offline");
+                    UstadMobileTest.httpServerControl("start", cacheFailDoneFn);
+            });
+        
+        });
+    
+    
 }
 
 
@@ -245,7 +266,6 @@ function testUstadCatalogControllerCacheCatalog() {
                     UstadMobileTest.savedOpdsFeedObj = feedObj;
                     cacheDoneFn();
                 }, function(err) {
-                    debugger;
                     console.log("wtf error is : " + err);
                 });
             });
@@ -317,13 +337,15 @@ function testUstadMobileAppImplEnsureIsFileEntry() {
 
 function testUstadMobileControllerGetCatalogByURL() {
     QUnit.test("Test Download valid catalog", function(assert) {
-        assert.expect(1);
+        assert.expect(2);
         var validDoneFn = assert.async();
         var validFeedURL = testAssetsURL + "shelf.opds";
         UstadCatalogController.getCatalogByURL(validFeedURL, {}, 
             function(feedObj, result) {
                 assert.ok(feedObj.entries.length > 0,
                     "Found feed object with entries");
+                assert.ok(!result.cached,
+                    "From fresh download and not from cache");
                 validDoneFn();
             });
     });
@@ -555,7 +577,6 @@ function testBookOpen() {
                 var deviceCourseFeed = 
                         UstadMobileBookList.getInstance().deviceCourseFeed;
                 var currentCourse = 0;
-                debugger;
                 var checkBookLoadFn = function() {
                     UstadMobileBookList.getInstance().showContainer(
                         currentCourse,
