@@ -1543,7 +1543,7 @@ UstadMobileAppImplementation.prototype = {
     
     /**
      * 
-     * @callback writeStringToFileFail
+     * @callback UstadMobileAppImplementation~writeStringToFileFail
      * @param errStr {string} error as a string
      * @param err {Object} error as an object
      */
@@ -1556,7 +1556,7 @@ UstadMobileAppImplementation.prototype = {
      * @param str {string} String contents to be written to file
      * @param options {Object} options
      * @param successFn {writeStringToFileSuccess} success callback
-     * @param failFn {writestringToFileFail} failure callback
+     * @param failFn {UstadMobileAppImplementation~writeStringToFileFail} failure callback
      * 
      */
     writeStringToFile: function(dest, str, options, successFn, failFn) {
@@ -1614,7 +1614,32 @@ UstadMobileAppImplementation.prototype = {
                 UstadMobileUtils.runCallback(successFn, [], this);
             }
         }, failFn);
+    },
+    
+    /**
+     * @callback UstadMobileAppImplementation~downloadSuccessCB
+     * @param 
+     */
+    
+    /**
+     * Downloads a file or part of a file to a given fileURI.  Makes only one 
+     * attempt at download.
+     * 
+     * @abstract
+     * @param {string} url Absolute url to be downloaded
+     * @param {string} fileURI Local File URI where this file is to be downloaded
+     * @param {Object} options misc options
+     * @param {number} [options.frombyte=0] Range to start downloading from 
+     * requires range support on the server
+     * @param {number} [options.tobyte] Range to download until - requires range
+     * support from the server
+     * @param 
+     * @returns {undefined}
+     */
+    downloadUrlToFileURI: function(url, fileURI, options, successFn, failFn) {
+        
     }
+    
 };
 
 

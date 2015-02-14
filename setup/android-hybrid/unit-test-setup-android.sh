@@ -87,11 +87,8 @@ ant clean debug
 #start the qunit server
 cd $WORKINGDIR
 cd $WORKINGDIR/../node-qunit-server/
-nodejs node-qunit-server.js $NODEPORT $WORKINGDIR &
+nodejs node-qunit-server.js $NODEPORT $NODEHTTPPORT $WORKINGDIR ../test-assets/ &
 NODEPID=$!
-
-#run the http server for test assets
-./http-start.sh
 
 
 EMULATEPID=0
@@ -164,9 +161,6 @@ fi
 
 #Stop node server
 kill $NODEPID 
-
-cd $WORKINGDIR/../node-qunit-server/
-./http-stop.sh
 
 if [ "$EMULATEPID" != "0" ]; then
     #pause to show results

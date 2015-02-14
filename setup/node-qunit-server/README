@@ -1,0 +1,6 @@
+NODE QUNIT SERVER
+
+Install Slow Stream:
+
+npm install git+https://github.com/rvagg/node-slow-stream.git
+

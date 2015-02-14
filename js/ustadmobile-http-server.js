@@ -323,6 +323,8 @@ UstadMobileHTTPServer.prototype = {
                 if(start <= fileSize && end <= fileSize) {
                     var contentLength = start === end ? 0 : (end - start + 1);
                     response.setHeader("Content-Length", contentLength);
+                    response.setHeader('Content-Range', 'bytes ' + start
+                            + '-' + end + '/' + fileSize);
                     response.setHeader("Content-Type", mimeType);
                     response.setHeader("Accept-Ranges", "bytes");
                     response.writeHead(206);

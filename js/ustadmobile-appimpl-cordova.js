@@ -742,6 +742,36 @@ UstadMobileAppImplCordova.prototype.removeFile = function(file, successFn, failF
 
 
 /**
+ * Downloads a file or part of a file to a given fileURI.  Makes only one 
+ * attempt at download.
+ * 
+ * Relies on the Cordova FileTransfer plugin
+ * 
+ * @param {string} url Absolute url to be downloaded
+ * @param {string} fileURI Local File URI where this file is to be downloaded
+ * @param {Object} options misc options
+ * @param {number} [options.frombyte=0] Range to start downloading from 
+ * requires range support on the server
+ * @param {number} [options.tobyte] Range to download until - requires range
+ * support from the server
+ * @param {progress_callback} [options.onprogress] call the onprogress handler 
+ * when downloading
+ * @param {successFn} success callback as per filetransfer (provides FileEntry object)
+ * @returns {undefined}
+ */
+UstadMobileAppImplCordova.prototype.downloadUrlToFileURI = function(url, fileURI, options, successFn, failFn) {
+    var ft = new FileTransfer();
+    
+    //set headers in here
+    var ftOptions = {};
+    if(options.onprogress) {
+        ft.onprogress = options.onprogress;
+    }
+    
+    ft.download(encodeURI(url), fileURI, successFn, failFn, false, ftOptions);
+};
+
+/**
  * @callback ensureIsFileEntryCB
  * @param {FileEntry} result The FileEntry required
  * @param {Object} [err] the error that occurred

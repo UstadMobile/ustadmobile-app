@@ -73,7 +73,7 @@ var UstadMobileTest = {
      */
     httpServerControl: function(doWhat, opDoneCallback) {
         var httpControlURL = UstadMobileUtils.joinPath(
-            [testResultServer, "http", doWhat]);
+            [testResultServer, "http?action=" + doWhat]);
         $.ajax(httpControlURL, {
             dataType: "text"
         }).done(opDoneCallback);
@@ -169,10 +169,53 @@ var containerChangeFn = function() {
     
     testFileSavingAndRemoving();
     
-    
-    
     testUstadCatalogControllerCacheFallback();
+    
+    testAppImplDownload();
 }());
+
+
+function testAppImplDownload() {
+    QUnit.test("Test downloading entire file from test assets", function(assert) {
+        var testDoneFn = assert.async();
+        assert.expect(2);
+        
+        var fileURL = testAssetsURL +"phonepicture.png";
+        var uriDest = UstadMobileUtils.joinPath(
+            [UstadMobile.getInstance().contentDirURI, "phonepicture.png"]);
+        var progressCalledCount = 0;
+        
+        var downloadOptions = {
+            onprogress: function(evt) {
+                progressCalledCount++;
+            }
+        };
+        
+        UstadMobile.getInstance().systemImpl.downloadUrlToFileURI(fileURL,
+            uriDest, downloadOptions, function(entry) {
+                assert.ok(entry, "we have an entry from download");
+                assert.ok(progressCalledCount > 0, "Progress callback ran");
+                UstadMobile.getInstance().systemImpl.removeFile(entry,
+                    testDoneFn);
+            });
+    });
+    
+    QUnit.test("Downloading invalid URL will fail", function(assert) {
+        var invalidTestDone = assert.async();
+        var invalidURL = testAssetsURL + "thisfiledoesnotexist.png";
+        var uriDest = UstadMobileUtils.joinPath(
+            [UstadMobile.getInstance().contentDirURI, "phonepicture_invalid.png"]);
+        UstadMobile.getInstance().systemImpl.downloadUrlToFileURI(invalidURL,
+            uriDest, {}, function(entry) {},//success fn will not run here
+            function(err) {
+                assert.ok(err, "Reached fail callback downloading invalid URL");
+                UstadMobile.getInstance().systemImpl.removeFileIfExists(uriDest,
+                    invalidTestDone);
+            });
+    });
+    
+}
+
 
 function testFileSavingAndRemoving() {
     QUnit.test("Test autocreate new file", function(assert) {
@@ -218,7 +261,6 @@ function testFileSavingAndRemoving() {
 }
 
 function testUstadCatalogControllerCacheFallback() {
-    
     //Stop the HTTP Server, then see that we get a cached reply
     QUnit.test("Will fallback to using the cache when offline", function(assert) {
         assert.expect(2);
@@ -253,6 +295,8 @@ function testUstadCatalogControllerCacheFallback() {
 }
 
 
+
+
 function testUstadCatalogControllerCacheCatalog() {
     QUnit.test("Can cache catalog", function(assert) {
         assert.expect(1);
@@ -260,7 +304,7 @@ function testUstadCatalogControllerCacheCatalog() {
         var validFeedURL = testAssetsURL + "shelf.opds";
         UstadCatalogController.getCatalogByURL(validFeedURL, {}, 
             function(feedObj, result) {
-                UstadCatalogController.cacheCatalogEntry(feedObj, {}, function(feedRet) {
+                UstadCatalogController.cacheCatalog(feedObj, {}, function(feedRet) {
                     assert.ok(feedRet, "Feed object comes back afer writing");
                     UstadMobileTest.cachedFeedID =feedObj.id;
                     UstadMobileTest.savedOpdsFeedObj = feedObj;
@@ -274,7 +318,7 @@ function testUstadCatalogControllerCacheCatalog() {
     QUnit.test("Can retrieve catalog from cache by ID", function(assert) {
         assert.expect(1);
         var cacheAnswerDoneFn = assert.async();
-        UstadCatalogController.getCachedCatalogEntryByID(
+        UstadCatalogController.getCachedCatalogByID(
             UstadMobileTest.cachedFeedID, {}, function(feedObj, result) {
                 assert.ok(feedObj.id === UstadMobileTest.savedOpdsFeedObj.id);
                 cacheAnswerDoneFn();
@@ -287,7 +331,7 @@ function testUstadCatalogControllerCacheCatalog() {
        assert.expect(1);
        var cacheByURLDoneFn = assert.async();
        var validFeedURL = testAssetsURL + "shelf.opds";
-       UstadCatalogController.getCachedCatalogEntryByURL(validFeedURL, {},
+       UstadCatalogController.getCachedCatalogByURL(validFeedURL, {},
            function(feedObj, result) {
                assert.ok(feedObj.id === UstadMobileTest.savedOpdsFeedObj.id);
                cacheByURLDoneFn();

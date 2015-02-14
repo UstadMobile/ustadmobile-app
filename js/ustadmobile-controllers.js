@@ -176,28 +176,13 @@ UstadCatalogController.getCatalogByURL = function(url, options, successFn, failF
         }
     }).fail(function(textStatus, err) {
         if(options.cache) {
-            UstadCatalogController.getCachedCatalogEntryByURL(url, options,
+            UstadCatalogController.getCachedCatalogByURL(url, options,
                 successFn, failFn);
         }else {
             UstadMobileUtils.runCallback(failFn, [textStatus, err], this);
         }
     });
 };
-
-
-/**
- * 
- * @param {type} id
- * @param {type} options
- * @param {type} successFn
- * @param {type} failFn
- * @returns {UstadJSOPDSFeed} catalog of the given id
- */
-UstadCatalogController.getCatalogByID = function(id, options, successFn, failFn) {
-    
-};
-
-
 
 /**
  * Get the Feed ID of a catalog according to a URL it is known to have been
@@ -345,7 +330,7 @@ UstadCatalogController._getCacheCatalogCacheDir = function() {
  * @param {string} [options.user="nobody"] If this entry is tied to an 
  * authenticated user provide this so it does not get confused with another user
  */
-UstadCatalogController.cacheCatalogEntry = function(opdsObj, options, successFn, failFn) {
+UstadCatalogController.cacheCatalog = function(opdsObj, options, successFn, failFn) {
     var opdsFilename = UstadCatalogController._getFileNameForOPDSFeedId(
             opdsObj.id, options);
     var fileURIDest = UstadMobileUtils.joinPath([
@@ -379,7 +364,7 @@ UstadCatalogController.cacheCatalogEntry = function(opdsObj, options, successFn,
  * @param {UstadMobileFailCallback} failFn failure callback
  * @returns {undefined}
  */
-UstadCatalogController.getCachedCatalogEntryByID = function(catalogId, options, successFn, failFn) {
+UstadCatalogController.getCachedCatalogByID = function(catalogId, options, successFn, failFn) {
     var opdsFilename = UstadCatalogController._getFileNameForOPDSFeedId(
         catalogId, options);
     var opdsFileURI = UstadMobileUtils.joinPath([
@@ -393,25 +378,88 @@ UstadCatalogController.getCachedCatalogEntryByID = function(catalogId, options, 
     }, failFn);
 };
 
-UstadCatalogController.getCachedCatalogEntryByURL = function(catalogURL, options, successFn, failFn) {
+UstadCatalogController.getCachedCatalogByURL = function(catalogURL, options, successFn, failFn) {
     var catalogID = UstadCatalogController.getCatalogIDByURL(catalogURL, options);
     if(catalogID) {
-        UstadCatalogController.getCachedCatalogEntryByID(catalogID, options, 
+        UstadCatalogController.getCachedCatalogByID(catalogID, options, 
             successFn, failFn);
     }else {
         UstadMobileUtils.runCallback(failFn, ["Catalog URL not in cache"], this);
     }
 };
-
+ 
 
 var UstadContainerController = function(appController) {
     this.appController = appController;
 };
 
-UstadContainerController.getContainerFileURIByEntryID = function(entryId, successFn, failFn) {
+/**
+ * Gets the local storage key to find info about a container that has been
+ * acquired and where it's local fileURI where it has been acquired to
+ * 
+ * Maps in the form of
+ * 
+ * entryid-to-acquiredcontainer:userid:entryID ->
+ *  { containeruri : '/path/to/file.epub', srcHrefs: [href1, href2] }
+ * 
+ * ContainerID is the ID from the OPDS entry feed AND should be the same ID
+ * used in the ID element of the manifest
+ * 
+ * @param {string} entryID the ID of the entry being requested
+ * @param {Object} options misc options
+ * @param {string} [options.user=nobody] the current user
+ * 
+ * @returns {string} key to user for local storage
+ */
+UstadContainerController._getStorageKeyForAcquiredEntryID = function(containerID, options) {
+    var username = UstadMobileUtils.defaultVal(options.user, "nobody");
+    return "com.ustadmobile.epub-ids-to-acquired-uri:" + username + ":" + containerID;
+};
+
+/**
+ * Gets the local storage key for the map of URLs from which content has been
+ * acquired (e.g. absolute url it was downloaded from - epub file etc) to the
+ * entryIDs contained (note: an entry ID might refer to container for acquisition
+ * which in turn may contain multiple entries).
+ * 
+ * acquisition-url-to-entryids:userid:URL -> [entryID1, entryID2]
+ * 
+ * @param {string} url the url from which a container was downloaded
+ * @param {Object} options misc options
+ * @param {string} [options.user=nobody] the currently active user
+ * 
+ * @returns {string} the storage key to use for this url -> entry id map
+ */
+UstadContainerController._getStorageKeyForContainerURL = function(url, options) {
+    var username = UstadMobileUtils.defaultVal(options.user, "nobody");
+    return "com.ustadmobile.epub-url-to-id:" + username + ":" + url;
+};
+
+
+
+UstadContainerController.getAcquiredContainerFileURIByID = function(entryId, options, successFn, failFn) {
     
 };
 
-UstadContainerController.downloadContainer = function(url, options, successFn, failFn) {
+UstadContainerController.getContainerStatusByID = function(entryId, options, successFn, failFn) {
+    
+};
+
+/**
+ * Fetch and download the given container
+ * 
+ * @param {type} url
+ * @param {Object} options
+ * @param {string} [options,destdir=UstadMobile.ContentDirURI] destination 
+ * directory to save container to
+ * @param {string} [options.destname] destination filename to use, defaults to
+ * the end of the URL (e.g. file.epub from http://server/some/dir/file.epub).
+ * @param {string} [options.autodeleteprev=true] When true delete previously
+ * acquired containers that provide the same entryIDs
+ * 
+ * @param {type} failFn
+ * @returns {undefined}
+ */
+UstadContainerController.acquireContainer = function(url, options, successFn, failFn) {
     
 };
