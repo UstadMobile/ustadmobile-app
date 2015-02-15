@@ -771,6 +771,59 @@ UstadMobileAppImplCordova.prototype.downloadUrlToFileURI = function(url, fileURI
     ft.download(encodeURI(url), fileURI, successFn, failFn, false, ftOptions);
 };
 
+UstadMobileAppImplCordova.prototype.concatenateFiles = function(files, destFile, options, successFn, failFn) {
+    var numFiles = files.length;
+    
+    if(files.length < 1) {
+        UstadMobileUtils.runCallback(failFn, 
+            ["concatenateFiles Failed: no src files!"], this);
+        return;
+    }
+    
+    var fileEntries = [];
+    var fileStats = [];
+    UstadMobileUtils.waterfall([
+        function(successFnW, failFnW) {
+            var getEntryFileInputs = [];
+            for(var i = 0; i < files.length; i++) {
+                getEntryFileInputs.push([files[i], {}]);
+            }
+            UstadMobileUtils.asyncMap(
+                UstadMobileAppImplCordova.getInstance().ensureIsFileEntry,    
+                    getEntryFileInputs, successFnW, failFnW);
+        },
+        function(entryResult, successFnW, failFnW) {
+            fileEntries = UstadMobileUtils.flattenArray(entryResult);
+            var metaDataFns = [];
+            for(var i = 0; i < files.length; i++) {
+                metaDataFns.push(fileEntries[i].getMetadata.bind(
+                    fileEntries[i]));
+            }
+            UstadMobileUtils.asyncMap(metaDataFns, [], successFnW, failFnW);
+        },
+        function(statResult, successFnW, failFnW) {
+            fileStats = UstadMobileUtils.flattenArray(statResult);
+            UstadMobileAppImplCordova.getInstance().ensureIsFileEntry(destFile, 
+                {"createfile" : true}, successFnW, failFnW);
+        },
+        function(destFileEntry, successFnW, failFnW) {
+            destFileEntry.createWriter(successFnW, failFnW);
+        },function(destFileWriter, successFnW, failFnW) {
+            destFileWriter.onerrror = failFnW;
+            
+            var readAndAppend = function(fileEntry, successW, failW) {
+                destFileWriter.onwriteend = successW;
+                fileEntry.file(function(srcFile) {
+                    destFileWriter.write(srcFile);
+                });
+            };
+            
+            UstadMobileUtils.asyncMap(readAndAppend, fileEntries,
+                successFnW, failFnW);
+        }
+    ], successFn, failFn);
+};
+
 /**
  * @callback ensureIsFileEntryCB
  * @param {FileEntry} result The FileEntry required
@@ -805,6 +858,10 @@ UstadMobileAppImplCordova.prototype.ensureIsFileEntry= function(fileObj, options
     }else {
         UstadMobileUtils.runCallback(successFn, [fileObj], this);
     }
+};
+
+UstadMobileAppImplCordova.prototype.ensureListIsFileEntry = function(fileArr, options, successFn, failFn) {
+    
 };
 
 //Set the implementation accordingly on UstadMobile object

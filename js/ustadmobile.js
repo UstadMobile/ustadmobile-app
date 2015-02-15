@@ -1244,7 +1244,7 @@ UstadMobileUtils.runCallback = function(fn, args, thisObj) {
     if(typeof fn !== "undefined" && fn !== null) {
         fn.apply(thisObj, args);
     }
-}
+};
 
 /**
  * Utility method to run a function if a property is true, if not apppend to
@@ -1258,8 +1258,118 @@ UstadMobileUtils.runOrWait = function(runNow, fn, args, thisObj, waitingList) {
     }else {
         waitingList.push(fn);
     }
-}
+};
 
+/**
+ * Simplify callback hell situation; run each function in the array.  
+ * Each function must have it's successFn and failFn as the last two arguments
+ * 
+ * When a function succeed all the arguments that it provided to the success callback
+ * will be passed in the same order to the next function in the array,
+ * 
+ * When any part fails the final failFn will be called
+ *  
+ *    
+ * @param {type} fnList
+ * @param {type} successFn
+ * @param {type} failFn
+ * @returns {undefined}
+ */
+UstadMobileUtils.waterfall = function(fnList, successFn, failFn) {
+    if(fnList.length < 1) {
+        UstadMobileUtils.runCallback(successFn, [], this);
+        return;
+    }
+    
+    var lastResultArgs = [];
+    var runItFn = function(index) {       
+        //success function
+        lastResultArgs.push(function() {
+            lastResultArgs = Array.prototype.slice.call(arguments);
+            if(index < (fnList.length - 1)) {
+                runItFn(index+1);
+            }else {
+                UstadMobileUtils.runCallback(successFn, lastResultArgs, this);
+            }
+        });
+        lastResultArgs.push(failFn);
+        fnList[index].apply(this, lastResultArgs);
+    };
+    
+    runItFn(0);
+};
+
+/**
+ * For each item in arg array call the given function.  
+ * It will be assumed that the last arguments will be the successFn and failFn
+ * 
+ */
+UstadMobileUtils.asyncMap = function(fn, argArr, successFn, failFn) {
+    var resultMap = [];
+    
+    var numFns = (fn.constructor === Array) ? fn.length : argArr.length;
+    
+    if(fn.constructor === Array && fn.length === 0) {
+        UstadMobileUtils.runCallback(successFn, [], this);
+        return;
+    }
+    
+    var runItFn = function(index) {
+        var thisArgArr = argArr[index] ? UstadMobileUtils.ensureIsArray(
+                argArr[index]) : [];
+        thisArgArr.push(function() {
+            var successArgArr = Array.prototype.slice.call(arguments);
+            resultMap.push(successArgArr);
+            if(index < (numFns-1)) {
+                runItFn(index+1);
+            }else {
+                UstadMobileUtils.runCallback(successFn, [resultMap], this);
+            }
+        });
+        thisArgArr.push(failFn);
+        var fn2Apply = fn.constructor === Array ? fn[index] : fn;
+        fn2Apply.apply(this, thisArgArr);
+    };
+    
+    runItFn(0);
+};
+
+/**
+ * Make sure that the given arg is an array so it can be used in function.apply
+ * etc.
+ * 
+ * If it's already an array - return as is, otherwise return a new single item
+ * array
+ * 
+ * @param {Object|Array} arg
+ * @returns {Array} original array if that was provided, or array with one entry otherwise
+ */
+UstadMobileUtils.ensureIsArray = function(arg) {
+    if(arg.constructor === Array) {
+        return arg;
+    }else {
+        return [arg];
+    }
+};
+
+/**
+ * Used to flatten the result of asyncMap - e.g. when asyncResult returns
+ * it will provide an array for each entry.  If the callback provided one value
+ * then it will be an array of arrays each with one entry.
+ * 
+ * flattenArray will turn this into a single array.
+ * 
+ * @param {Array} arr - Array which contains arrays with one entry each
+ * @returns {Array}
+ */
+UstadMobileUtils.flattenArray = function(arr) {
+    var retVal = [];
+    for(var i = 0; i < arr.length; i++) {
+        retVal.push(arr[i].length >= 1 ? arr[i][0] : null);
+    }
+    
+    return retVal;
+};
 
 /**
  * If parameter seperator is specified; use it; otherwise use /
@@ -1614,6 +1724,16 @@ UstadMobileAppImplementation.prototype = {
                 UstadMobileUtils.runCallback(successFn, [], this);
             }
         }, failFn);
+    },
+    
+    /**
+     * Concatenate multiple files in order into one file
+     * 
+     * @param {Array} array of type FileEntry or URI strings
+     * @param 
+     */
+    concatenateFiles: function(files, options, successFn, failFn) {
+        
     },
     
     /**

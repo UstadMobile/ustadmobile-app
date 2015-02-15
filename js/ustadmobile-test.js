@@ -172,8 +172,73 @@ var containerChangeFn = function() {
     testUstadCatalogControllerCacheFallback();
     
     testAppImplDownload();
+    
+    testConcatenateFiles();
+    
+    testAsyncUtilEdgeCases();
 }());
 
+function testAsyncUtilEdgeCases() {
+    QUnit.test("Waterfall with zero length array runs callback", function(assert) {
+        var waterfallDoneFn = assert.async();
+        assert.expect(1);
+        UstadMobileUtils.waterfall([], function(val) {
+            assert.ok(typeof val === "undefined", 
+                "Empty waterfall runs success function without any arguments");
+            waterfallDoneFn();
+        });
+    });
+    
+    QUnit.test("Asyncmap with zero length arrays runs callback", function(assert) {
+        var mapDoneFn = assert.async();
+        assert.expect(1);
+        UstadMobileUtils.asyncMap([], [], function(val) {
+            assert.ok(typeof val === "undefined", 
+                "Empty asyncmap runs success function without any arguments");
+            mapDoneFn();
+        });
+    });
+};
+
+function testConcatenateFiles() {
+    QUnit.test("Can concatenate multiple files", function(assert) {
+        var concatDoneFn = assert.async();
+        var fileBase = UstadMobileUtils.joinPath(
+                [UstadMobile.getInstance().contentDirURI, "testconcatin"]);
+        var fileContents = "----this is some file content ----";
+        
+        var testFailFn = function(e) {
+            console.log("testconcatenateFiles failed: " + e);
+        };
+        
+        var fileNames = [fileBase + "-1.txt", fileBase + "-2.txt"];
+        
+        UstadMobile.getInstance().systemImpl.writeStringToFile(fileNames[0],
+            fileContents + "-1\n", {}, function(entry1) {
+                UstadMobile.getInstance().systemImpl.writeStringToFile(fileNames[1],
+                    fileContents + "-2\n", {}, function(entry2) {
+                        UstadMobile.getInstance().systemImpl.concatenateFiles(fileNames,
+                            fileBase + "-concatenated.txt", {}, function(concatEntry) {
+                                assert.ok(concatEntry, "Got entry for concatenated file");
+                                concatDoneFn();
+                            }, testFailFn);
+                    }, testFailFn);
+            }, testFailFn);
+            
+    });
+    
+    QUnit.test("Attempting to concatenate 0 files runs fail fn", function(assert) {
+        var concatFailDoneFn = assert.async();
+        assert.expect(1);
+        UstadMobile.getInstance().systemImpl.concatenateFiles([], 
+            UstadMobile.contentDirURI + "/neverwriteme", {}, function(concatEntry) {},
+            function(err) {
+                assert.ok(err, "Failed with error on concatenating 0 files: " +
+                        err);
+                concatFailDoneFn();
+            }); 
+    });
+}
 
 function testAppImplDownload() {
     QUnit.test("Test downloading entire file from test assets", function(assert) {
