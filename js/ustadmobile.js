@@ -1413,6 +1413,15 @@ UstadMobileUtils.splitPath = function(path, seperator) {
 };
 
 /**
+ * Chop off the last part of the filename 
+ * 
+ */
+UstadMobileUtils.getFilename = function(path, seperator) {
+    var pathParts = UstadMobileUtils.splitPath(path, seperator);
+    return pathParts[pathParts.length-1];
+};
+
+/**
  * Chop off the last part of the URL
  * 
  * e.g. file://localhost/some/dir/file - file://localhost/some/dir
@@ -1753,15 +1762,136 @@ UstadMobileAppImplementation.prototype = {
      * requires range support on the server
      * @param {number} [options.tobyte] Range to download until - requires range
      * support from the server
+     * @param {boolean} [options.keepIncompleteFile] - if a download fails, leave it
      * @param 
      * @returns {undefined}
      */
     downloadUrlToFileURI: function(url, fileURI, options, successFn, failFn) {
         
+    },
+    
+    renameFile : function(srcFile, newName, options, successFn, failFn) {
+        
+    },
+    
+    fileSize: function(file, successFn, failFn) {
+        
     }
     
 };
 
+var UstadMobileResumableDownload = function() {
+    this.srcURL = null;
+    
+    this._onprogress = null;
+    
+    //the number of bytes we have got so far
+    this.bytesDownloadedOK = 0;
+    
+    //the size of this file
+    this.fileSize = "";
+    
+    //file etag if provided
+    this.etag = "";
+    
+    this.srcURL = "";
+    
+    //the destination file where this eventually be written
+    this.destURI = "";
+    
+    this.tryCount = 0;
+    
+    this.maxRetries = 20;
+};
+
+UstadMobileResumableDownload.prototype.getInfo = function(successFn, failFn) {
+    var thatDownload = this;
+    $.ajax(this.srcURL, {
+        type: "HEAD"
+    }).done(function(data, textStatus, jqXHR) {
+        if(jqXHR.getResponseHeader('Content-Length')) {
+            thatDownload.fileSize = parseInt(jqXHR.getResponseHeader(
+                'Content-Length'));
+        }
+        
+        UstadMobileUtils.runCallback(successFn, [thatDownload], this);
+    }).fail(failFn);
+};
+
+UstadMobileResumableDownload.prototype.download = function(url, destFileURI, options, successFn, failFn) {
+    UstadMobileUtils.waterfall([
+        this.getInfo.bind(this),
+        function(successFnW, failFnW) {
+            
+        }], successFn, failFn);
+};
+
+UstadMobileResumableDownload.prototype.continueDownload = function(successFn, failFn) {
+    var inProgressFileURI = this.destURI + ".inprogress";
+    var partFileURI = this.destURI + ".part";
+    var destFileURI = this.destURI;
+    var destFileName = UstadMobileUtils.getFilename(this.destURI);
+    var srcURL = this.srcURL;
+    
+    var downloadOptions = {
+        frombyte : this.bytesDownloadedOK,
+        keepIncompleteFile : true
+    };
+    var downloadedResultFile = null;
+    var thatDownload = this;
+    
+    UstadMobileUtils.waterfall([
+        function(successFnW, failFnW) {
+            thatDownload.tryCount++;
+            UstadMobile.getInstance().systemImpl.downloadUrlToFileURI(srcURL,
+                inProgressFileURI, downloadOptions, successFnW, failFnW);
+        }, 
+        function(downloadedResultFileVal, successFnW, failFnW) {
+            downloadedResultFile = downloadedResultFileVal;
+            UstadMobile.getInstance().systemImpl.fileExists(
+                partFileURI, successFnW, failFnW);
+        }, 
+        function(downloadedPartExists, successFnW, failFnW) {
+            if(downloadedPartExists) {
+                //concatenate and finish
+                UstadMobile.getInstance().systemImpl.concatenateFiles(
+                    [partFileURI, inProgressFileURI], destFileURI, {},
+                    successFnW, failFnW);
+            }else {
+                //move and finish
+                UstadMobile.getInstance().systemImpl.renameFile(
+                    downloadedResultFile, destFileName, {},
+                    successFnW, failFnW);
+            }
+        }
+    ], successFn, (function(err) {
+        //TODO: logic to see if we should retry...
+        if(this.tryCount < this.maxRetries) {
+            //concatenate the results of the last attempt into the .part file
+            UstadMobileUtils.waterfall([
+                function(successFnW, failFnW) {
+                    UstadMobile.getInstance().systemImpl.concatenateFiles(
+                        [inProgressFileURI], partFileURI, {append : true},
+                        successFnW, failFnW);
+                },
+                function(writeFinishEvt, successFnW, failFnW) {
+                    UstadMobile.getInstance().systemImpl.fileSize(
+                        partFileURI, successFnW, failFnW);
+                },
+                (function(downloadedSize, successFnW, failFnW) {
+                    this.bytesDownloadedOK = downloadedSize;
+                    UstadMobile.getInstance().systemImpl.removeFile(
+                        this.destURI + ".inprogress", successFnW, failFnW);
+                }).bind(this),
+                this.continueDownload.bind(this)
+                ], successFn, failFn);
+                
+        }else {
+            //we have exceeded the maximum number of retries 
+           UstadMobileUtils.runCallback(failFn, [err], this);
+        }
+    }).bind(this));
+};
 
 // Put this in a central location in case we don't manage to load it
 var messages = [];

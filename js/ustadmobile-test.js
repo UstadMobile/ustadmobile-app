@@ -146,6 +146,8 @@ var containerChangeFn = function() {
     testPageLoad(UstadMobile.PAGE_SETTINGS, "Test opening settings page");
     
     testPageLoad(UstadMobile.PAGE_ABOUT, "Test opening about page");
+    
+    testResumableDownload();
         
     //Set timeout to 60seconds (download a course)
     QUnit.testTimeout = 60000;
@@ -176,7 +178,71 @@ var containerChangeFn = function() {
     testConcatenateFiles();
     
     testAsyncUtilEdgeCases();
+    
+    
 }());
+
+
+function testResumableDownload() {
+    /*
+    QUnit.test("Resumable download can determine filesize", function(assert) {
+        assert.expect(2);
+        var gotSizeFn = assert.async();
+        var bigPicURL = testAssetsURL + "phonepic-large.png";
+        var rd = new UstadMobileResumableDownload();
+        rd.srcURL = bigPicURL;
+        rd.getInfo(function(dlObj) {
+            assert.ok(typeof rd.fileSize === "number", "Got numeric file size");
+            assert.ok(rd.fileSize > 0, "Got positive int file size");
+            gotSizeFn();
+        });
+    });
+    
+    QUnit.test("Resumable download can download file successfully in one go", function(assert) {
+        var downloadDoneFn = assert.async();
+        var bigPicURL = testAssetsURL + "phonepic-large.png";
+        var rd = new UstadMobileResumableDownload();
+        rd.srcURL = bigPicURL;
+        rd.destURI = UstadMobileUtils.joinPath(
+                [UstadMobile.getInstance().contentDirURI, "phonepic-large.png"]);
+        rd.getInfo(function(dlObj) {
+            rd.continueDownload(function(dlEntry) {
+                assert.ok(dlEntry, "Seems to have downloaded an entry");
+                downloadDoneFn();
+            }, function(err) {
+                console.log("something nicht gut!! shisse." +err);
+            });
+        });
+    });
+    */
+    QUnit.test("Resumable download can download file successfully in multiple attempts", function(assert) {
+        var resumedFileDoneFn = assert.async();
+        assert.expect(1);
+        var forceHTTPBreakURL = UstadMobileUtils.joinPath([testResultServer,
+            "http?action=slowdownon&maxspeed=128&forceerrorafter=500"]);
+        $.ajax(forceHTTPBreakURL,{
+            dataType: "text"
+        }).done(function(data) {
+            var downloadDoneFn = assert.async();
+            var bigPicURL = testAssetsURL + "phonepic-large.png";
+            var rd = new UstadMobileResumableDownload();
+            rd.srcURL = bigPicURL;
+            rd.destURI = UstadMobileUtils.joinPath(
+                    [UstadMobile.getInstance().contentDirURI, "phonepic-large-resumed.png"]);
+            rd.getInfo(function(dlObj) {
+                rd.continueDownload(function(dlEntry) {
+                    debugger;
+                    assert.ok(dlEntry, "Seems to have downloaded an entry");
+                    resumedFileDoneFn();
+                }, function(err) {
+                    debugger;
+                    console.log("something nicht gut!! shisse." +err);
+                });
+            });
+        });
+    });
+    
+};
 
 function testAsyncUtilEdgeCases() {
     QUnit.test("Waterfall with zero length array runs callback", function(assert) {
@@ -238,7 +304,7 @@ function testConcatenateFiles() {
                 concatFailDoneFn();
             }); 
     });
-}
+};
 
 function testAppImplDownload() {
     QUnit.test("Test downloading entire file from test assets", function(assert) {

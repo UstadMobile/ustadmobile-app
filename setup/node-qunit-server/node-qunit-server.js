@@ -180,13 +180,18 @@ function startAssetServer() {
                     response.setHeader("Content-Length", fileSize);
                     response.setHeader("Accept-Ranges", "bytes");
                     response.writeHead(200, httpHeaders);
-                    var fsReadable = fs.createReadStream(fileURI, 
-                        { bufferSize: assetServer.bufferSize });
-                    fsReadable.pipe(passThroughStream).on('error', function(err) {
-                        console.log("found error");
-                        fsReadable.destroy();
-                        response.destroy();
-                    }).pipe(response);
+                    if(request.method !== "HEAD") {
+                        var fsReadable = fs.createReadStream(fileURI, 
+                            { bufferSize: assetServer.bufferSize });
+                        fsReadable.pipe(passThroughStream).on('error', function(err) {
+                            console.log("found error");
+                            fsReadable.destroy();
+                            response.destroy();
+                        }).pipe(response);
+                    }else {
+                        response.end();
+                    }
+                    
                 }
              });
         }else {
@@ -200,16 +205,19 @@ function startAssetServer() {
                 response.setHeader("Accept-Ranges", "bytes");
 
                 response.writeHead(206);
-                console.log("partial response: from " + start + " to " + end + " bytes ");
-                var fsReadable = fs.createReadStream(fileURI, 
-                    {'start' : start, 'end' : end, bufferSize: assetServer.bufferSize });
+                if(request.method !== "HEAD") {
+                    console.log("partial response: from " + start + " to " + end + " bytes ");
+                    var fsReadable = fs.createReadStream(fileURI, 
+                        {'start' : start, 'end' : end, bufferSize: assetServer.bufferSize });
 
-                fsReadable.pipe(passThroughStream).on('error', function(err) {
-                        console.log("Error on partial response stream");
-                        fsReadable.destroy();
-                        response.destroy();
-                    }).pipe(response);
-               
+                    fsReadable.pipe(passThroughStream).on('error', function(err) {
+                            console.log("Error on partial response stream");
+                            fsReadable.destroy();
+                            response.destroy();
+                        }).pipe(response);
+                }else {
+                    response.end();
+                }
             }else {
                 response.writeHead(416);
                 response.end("Range request cannot be satisfied on this file");
