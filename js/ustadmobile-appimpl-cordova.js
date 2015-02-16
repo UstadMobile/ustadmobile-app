@@ -744,7 +744,11 @@ UstadMobileAppImplCordova.prototype.dirExists = function(dirURI, successFn, fail
  */
 UstadMobileAppImplCordova.prototype.removeFile = function(file, successFn, failFn) {
     UstadMobileAppImplCordova.getInstance().ensureIsFileEntry(file, {}, function(fileEntry) {
-        fileEntry.remove(successFn, failFn)
+        //Note: Though the spec implies the remove method success should callback
+        //with no parameters - it appears on Android it gives the argument "OK"
+        fileEntry.remove(function() { 
+            UstadMobileUtils.runCallback(successFn,[], this)
+        }, failFn)
     }, failFn);
 };
 
@@ -801,6 +805,7 @@ UstadMobileAppImplCordova.prototype.concatenateFiles = function(files, destFile,
     
     var fileEntries = [];
     var fileStats = [];
+    var thatDestFileEntry = null;
     UstadMobileUtils.waterfall([
         function(successFnW, failFnW) {
             var getEntryFileInputs = [];
@@ -826,6 +831,7 @@ UstadMobileAppImplCordova.prototype.concatenateFiles = function(files, destFile,
                 {"createfile" : true}, successFnW, failFnW);
         },
         function(destFileEntry, successFnW, failFnW) {
+            thatDestFileEntry = destFileEntry;
             destFileEntry.createWriter(successFnW, failFnW);
         },function(destFileWriter, successFnW, failFnW) {
             destFileWriter.onerrror = failFnW;
@@ -842,6 +848,8 @@ UstadMobileAppImplCordova.prototype.concatenateFiles = function(files, destFile,
             
             UstadMobileUtils.asyncMap(readAndAppend, fileEntries,
                 successFnW, failFnW);
+        },function(resultMap, successFnW, failFnW) {
+            UstadMobileUtils.runCallback(successFnW, [thatDestFileEntry],this);
         }
     ], successFn, failFn);
 };

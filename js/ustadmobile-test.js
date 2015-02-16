@@ -184,7 +184,7 @@ var containerChangeFn = function() {
 
 
 function testResumableDownload() {
-    /*
+    
     QUnit.test("Resumable download can determine filesize", function(assert) {
         assert.expect(2);
         var gotSizeFn = assert.async();
@@ -201,44 +201,37 @@ function testResumableDownload() {
     QUnit.test("Resumable download can download file successfully in one go", function(assert) {
         var downloadDoneFn = assert.async();
         var bigPicURL = testAssetsURL + "phonepic-large.png";
-        var rd = new UstadMobileResumableDownload();
-        rd.srcURL = bigPicURL;
-        rd.destURI = UstadMobileUtils.joinPath(
+        var destFileURI = UstadMobileUtils.joinPath(
                 [UstadMobile.getInstance().contentDirURI, "phonepic-large.png"]);
-        rd.getInfo(function(dlObj) {
-            rd.continueDownload(function(dlEntry) {
+        var rd = new UstadMobileResumableDownload();
+        rd.download(bigPicURL, destFileURI, {},
+            function(dlEntry) {
                 assert.ok(dlEntry, "Seems to have downloaded an entry");
                 downloadDoneFn();
-            }, function(err) {
-                console.log("something nicht gut!! shisse." +err);
             });
-        });
     });
-    */
+    
     QUnit.test("Resumable download can download file successfully in multiple attempts", function(assert) {
         var resumedFileDoneFn = assert.async();
         assert.expect(1);
         var forceHTTPBreakURL = UstadMobileUtils.joinPath([testResultServer,
-            "http?action=slowdownon&maxspeed=128&forceerrorafter=500"]);
+            "http?action=slowdownon&maxspeed=128&forceerrorafter=1500"]);
         $.ajax(forceHTTPBreakURL,{
             dataType: "text"
         }).done(function(data) {
-            var downloadDoneFn = assert.async();
             var bigPicURL = testAssetsURL + "phonepic-large.png";
             var rd = new UstadMobileResumableDownload();
-            rd.srcURL = bigPicURL;
-            rd.destURI = UstadMobileUtils.joinPath(
-                    [UstadMobile.getInstance().contentDirURI, "phonepic-large-resumed.png"]);
-            rd.getInfo(function(dlObj) {
-                rd.continueDownload(function(dlEntry) {
-                    debugger;
-                    assert.ok(dlEntry, "Seems to have downloaded an entry");
-                    resumedFileDoneFn();
-                }, function(err) {
-                    debugger;
-                    console.log("something nicht gut!! shisse." +err);
-                });
-            });
+            var destFileURI = UstadMobileUtils.joinPath(
+                [UstadMobile.getInstance().contentDirURI, 
+                "phonepic-large-resumed.png"]);
+            rd.download(bigPicURL, destFileURI, {}, function(dlEntry) {
+                assert.ok(dlEntry, "Seems to have downloaded an entry");
+                var slowDownOffURL = UstadMobileUtils.joinPath([testResultServer,
+                    "http?action=slowdownoff"]);
+                $.ajax(slowDownOffURL, {
+                    dataType : "text"
+                }).done(resumedFileDoneFn);
+            }); 
         });
     });
     

@@ -1818,12 +1818,29 @@ UstadMobileResumableDownload.prototype.getInfo = function(successFn, failFn) {
     }).fail(failFn);
 };
 
+/**
+ * 
+ * @param {type} url
+ * @param {type} destFileURI
+ * @param {Object} options 
+ * @param {number} [options.maxRetries=20]
+ * @param {progresscallback} [options.onprogress] onprogress handler
+ * @param {fileEntryCallback} successFn success function with the resulting fileentry
+ * @param {errorCallback} failFn failfunction called with error info
+ */
 UstadMobileResumableDownload.prototype.download = function(url, destFileURI, options, successFn, failFn) {
+    this.destURI = destFileURI;
+    this.srcURL = url;
+    
+    this.retryCount = 0;
+    this.maxRetries = UstadMobileUtils.defaultVal(options.maxRetries, 20);
+    
     UstadMobileUtils.waterfall([
         this.getInfo.bind(this),
-        function(successFnW, failFnW) {
-            
-        }], successFn, failFn);
+        (function(dlObj, successFnW, failFnW) {
+            this.continueDownload(successFnW, failFnW);
+        }).bind(this)
+    ], successFn, failFn);
 };
 
 UstadMobileResumableDownload.prototype.continueDownload = function(successFn, failFn) {
@@ -1853,10 +1870,25 @@ UstadMobileResumableDownload.prototype.continueDownload = function(successFn, fa
         }, 
         function(downloadedPartExists, successFnW, failFnW) {
             if(downloadedPartExists) {
-                //concatenate and finish
-                UstadMobile.getInstance().systemImpl.concatenateFiles(
-                    [partFileURI, inProgressFileURI], destFileURI, {},
-                    successFnW, failFnW);
+                //concatenate and finish - here we need to return a file entry,
+                var thatDestFile = null;
+                UstadMobileUtils.waterfall([
+                    function(successFnW2, failFnW2) {
+                        UstadMobile.getInstance().systemImpl.concatenateFiles(
+                            [partFileURI, inProgressFileURI], destFileURI, {},
+                            successFnW2, failFnW2);
+                    },function(destFileEntry, successFnW2, failFnW2) {
+                        thatDestFile = destFileEntry;
+                        UstadMobileUtils.asyncMap(
+                            UstadMobile.getInstance().systemImpl.removeFileIfExists,
+                            [inProgressFileURI, partFileURI], 
+                            successFnW2, failFnW2);
+                    },function(removeFileResultMap, successFnW2, failFnW2) {
+                        UstadMobileUtils.runCallback(successFnW2, [thatDestFile],
+                            this);
+                    }
+                ], successFnW, failFnW);
+                
             }else {
                 //move and finish
                 UstadMobile.getInstance().systemImpl.renameFile(

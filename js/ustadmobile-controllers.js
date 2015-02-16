@@ -140,6 +140,13 @@ var UstadCatalogController = function(appController) {
 };
 
 /**
+ * OPDS Navigation feed of courses that are on this device
+ * 
+ * @type UstadJSOPDSFeed 
+ */
+UstadCatalogController.deviceAcquiredFeeds = null;
+
+/**
  * 
  * @callback {downloadCatalogSuccessFn}
  * @param {UstadJSOPDSFeed} the catalog
@@ -387,6 +394,38 @@ UstadCatalogController.getCachedCatalogByURL = function(catalogURL, options, suc
         UstadMobileUtils.runCallback(failFn, ["Catalog URL not in cache"], this);
     }
 };
+
+/**
+ * 
+ * @callback opdsCallback
+ * @param {UstadJSOPDSFeed} opdsObj the Object representing this catalog
+ * @param {Object} resultinfo misc info (e.g. if it was cached or not)
+ */
+
+/**
+ * 
+ * CatalogController.scanDir logic:
+ *
+ *  1. Go through all .opds files - load them and make a dictionary in the form of 
+ *     catalogid -> opds object.  These are acquisition feeds (courses)
+ *  
+ * 2. Make another new empty OPDS object - looseContainers
+ * 
+ * 3. Go through all .epub files - are they present in any of the catalogs (check using ID)?
+ *   No: Add them to the looseContainers object
+ *   Yes: Do nothing
+ *
+ * 4. Make a new OPDS navigation feed with an entry for each acquisition feed
+ * 
+ * 
+ * @param {FileEntry|String} dir the directory to scan
+ * @param {type} options misc options
+ * @param {opdsCallback} successFn success callback
+ * @param {function} failure callback - takes one error argument back
+ */
+UstadCatalogController.scanDir = function(dir, options, successFn, failFn) {
+    
+};
  
 
 var UstadContainerController = function(appController) {
@@ -438,7 +477,7 @@ UstadContainerController._getStorageKeyForContainerURL = function(url, options) 
 
 
 UstadContainerController.getAcquiredContainerFileURIByID = function(entryId, options, successFn, failFn) {
-    
+    //Query 
 };
 
 UstadContainerController.getContainerStatusByID = function(entryId, options, successFn, failFn) {
