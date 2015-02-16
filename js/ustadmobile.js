@@ -1776,6 +1776,27 @@ UstadMobileAppImplementation.prototype = {
     
     fileSize: function(file, successFn, failFn) {
         
+    },
+    
+    mkBlob: function(arrParts, contentType) {
+        var blobResult = null;
+        try {
+            blobResult = new Blob(arrParts, contentType);
+        }catch(e) {
+            var ourBlobBuilder = window.BlobBuilder || 
+                         window.WebKitBlobBuilder || 
+                         window.MozBlobBuilder || 
+                         window.MSBlobBuilder;
+            if(ourBlobBuilder) {
+                var bb = new ourBlobBuilder();
+                for(var i = 0; i < arrParts.length; i++) {
+                    bb.append(arrParts[i]);
+                }
+                blobResult = bb.getBlob(contentType.type);
+            }
+        }
+        
+        return blobResult;
     }
     
 };
@@ -1802,6 +1823,8 @@ var UstadMobileResumableDownload = function() {
     this.tryCount = 0;
     
     this.maxRetries = 20;
+    
+    this.onprogress = null;
 };
 
 UstadMobileResumableDownload.prototype.getInfo = function(successFn, failFn) {
@@ -1834,6 +1857,9 @@ UstadMobileResumableDownload.prototype.download = function(url, destFileURI, opt
     
     this.retryCount = 0;
     this.maxRetries = UstadMobileUtils.defaultVal(options.maxRetries, 20);
+    if(options.onprogress) {
+        this.onprogress = options.onprogress;
+    }
     
     UstadMobileUtils.waterfall([
         this.getInfo.bind(this),
@@ -1841,6 +1867,24 @@ UstadMobileResumableDownload.prototype.download = function(url, destFileURI, opt
             this.continueDownload(successFnW, failFnW);
         }).bind(this)
     ], successFn, failFn);
+};
+
+UstadMobileResumableDownload.prototype._handleProgressUpdate = function(evt) {
+    if(evt.lengthComputable) {
+        //how many bytes we want from this request in total
+        var bytesRemaining = this.fileSize - this.bytesDownloadedOK;
+        var bytesInRequest = (evt.loaded / evt.total) * bytesRemaining;
+        var bytesComplete = this.bytesDownloadedOK + bytesInRequest;
+        var ourProgEvt = {
+            lengthComputable : true,
+            total: this.fileSize,
+            loaded : Math.round(bytesComplete)
+        };
+        
+        if(this.onprogress) {
+            this.onprogress.apply(this, [ourProgEvt]);
+        }
+    }
 };
 
 UstadMobileResumableDownload.prototype.continueDownload = function(successFn, failFn) {
@@ -1852,7 +1896,8 @@ UstadMobileResumableDownload.prototype.continueDownload = function(successFn, fa
     
     var downloadOptions = {
         frombyte : this.bytesDownloadedOK,
-        keepIncompleteFile : true
+        keepIncompleteFile : true,
+        onprogress: this._handleProgressUpdate.bind(this)
     };
     var downloadedResultFile = null;
     var thatDownload = this;
@@ -1879,11 +1924,12 @@ UstadMobileResumableDownload.prototype.continueDownload = function(successFn, fa
                             successFnW2, failFnW2);
                     },function(destFileEntry, successFnW2, failFnW2) {
                         thatDestFile = destFileEntry;
-                        UstadMobileUtils.asyncMap(
+                        thatDownload.removePartialFiles(successFnW2, failFnW2);
+                        /*UstadMobileUtils.asyncMap(
                             UstadMobile.getInstance().systemImpl.removeFileIfExists,
                             [inProgressFileURI, partFileURI], 
-                            successFnW2, failFnW2);
-                    },function(removeFileResultMap, successFnW2, failFnW2) {
+                            successFnW2, failFnW2);*/
+                    },function(successFnW2, failFnW2) {
                         UstadMobileUtils.runCallback(successFnW2, [thatDestFile],
                             this);
                     }
@@ -1923,6 +1969,16 @@ UstadMobileResumableDownload.prototype.continueDownload = function(successFn, fa
            UstadMobileUtils.runCallback(failFn, [err], this);
         }
     }).bind(this));
+};
+
+UstadMobileResumableDownload.prototype.removePartialFiles = function(successFn, failFn) {
+    var destURI = this.destURI;
+    UstadMobileUtils.asyncMap(
+        UstadMobile.getInstance().systemImpl.removeFileIfExists,
+            [destURI + ".inprogress", destURI + ".part"], 
+            function(mapResult) { 
+                UstadMobileUtils.runCallback(successFn, [], this);
+            }, failFn);
 };
 
 // Put this in a central location in case we don't manage to load it

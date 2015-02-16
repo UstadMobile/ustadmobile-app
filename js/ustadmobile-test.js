@@ -213,7 +213,7 @@ function testResumableDownload() {
     
     QUnit.test("Resumable download can download file successfully in multiple attempts", function(assert) {
         var resumedFileDoneFn = assert.async();
-        assert.expect(1);
+        assert.expect(3);
         var forceHTTPBreakURL = UstadMobileUtils.joinPath([testResultServer,
             "http?action=slowdownon&maxspeed=128&forceerrorafter=1500"]);
         $.ajax(forceHTTPBreakURL,{
@@ -224,8 +224,22 @@ function testResumableDownload() {
             var destFileURI = UstadMobileUtils.joinPath(
                 [UstadMobile.getInstance().contentDirURI, 
                 "phonepic-large-resumed.png"]);
-            rd.download(bigPicURL, destFileURI, {}, function(dlEntry) {
+            var lastOnProgCompleteVal = -1;
+            var onprogCallCount = 0
+            var dlOptions = {
+                onprogress : function(evt) {
+                    //console.log("onprogress: DL Completed " + evt.loaded + "/" + evt.total);
+                    lastOnProgCompleteVal = evt.loaded;
+                    onprogCallCount++;
+                }
+            };
+            
+            rd.download(bigPicURL, destFileURI, dlOptions, function(dlEntry) {
                 assert.ok(dlEntry, "Seems to have downloaded an entry");
+                assert.ok(onprogCallCount > 10, 
+                    "On progress was called more than ten times");
+                assert.ok(lastOnProgCompleteVal > 0, 
+                    "Progress completion value was +ve");
                 var slowDownOffURL = UstadMobileUtils.joinPath([testResultServer,
                     "http?action=slowdownoff"]);
                 $.ajax(slowDownOffURL, {
@@ -235,6 +249,32 @@ function testResumableDownload() {
         });
     });
     
+    QUnit.test("Resumable download will fail if max retry attempts exceeded", function(assert) {
+        var resumedFailedDoneFn = assert.async();
+        assert.expect(1);
+        var forceHTTPBreakURL = UstadMobileUtils.joinPath([testResultServer,
+            "http?action=slowdownon&maxspeed=128&forceerrorafter=250"]);
+        $.ajax(forceHTTPBreakURL,{
+            dataType: "text"
+        }).done(function() {
+            var bigPicURL = testAssetsURL + "phonepic-large.png";
+            var rd = new UstadMobileResumableDownload();
+            var destFileURI = UstadMobileUtils.joinPath(
+                [UstadMobile.getInstance().contentDirURI, 
+                "phonepic-large-failed.png"]);
+            var dlOptions = {maxRetries: 2};
+            rd.download(bigPicURL, destFileURI, dlOptions, function(entryFn) {}, function(err) {
+                assert.ok(true, "Hit fail function for file after exceeding retry attempts");
+                var slowDownOffURL = UstadMobileUtils.joinPath([testResultServer,
+                    "http?action=slowdownoff"]);
+                $.ajax(slowDownOffURL, {
+                    dataType : "text"
+                }).done(function() {
+                    rd.removePartialFiles(resumedFailedDoneFn);
+                });
+            });
+        });
+    });
 };
 
 function testAsyncUtilEdgeCases() {

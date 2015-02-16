@@ -701,7 +701,9 @@ UstadMobileAppImplCordova.prototype.writeStringToFile = function(dest, str, opti
 
                 fileWriter.onerror = failFn;
 
-                var textBlob = new Blob([str], { type: "text/plain"});
+                //var textBlob = new Blob([str], { type: "text/plain"});
+                var textBlob = UstadMobile.getInstance().systemImpl.mkBlob(
+                    [str], {"type" : "text/plain"});
                 fileWriter.write(textBlob);  
             }, failFn);
         }catch(e2) {
