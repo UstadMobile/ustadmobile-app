@@ -1825,20 +1825,104 @@ var UstadMobileResumableDownload = function() {
     this.maxRetries = 20;
     
     this.onprogress = null;
+    
+    /** 
+     * If we found a previous attempt, where that started from
+     */
+    this.startedFrom = 0;
+};
+
+UstadMobileResumableDownload.prototype.info2JSON = function() {
+    return {
+        "fileSize" : this.fileSize,
+        "srcURL" : this.srcURL,
+        "destURI" : this.destURI
+    };
 };
 
 UstadMobileResumableDownload.prototype.getInfo = function(successFn, failFn) {
     var thatDownload = this;
-    $.ajax(this.srcURL, {
-        type: "HEAD"
-    }).done(function(data, textStatus, jqXHR) {
-        if(jqXHR.getResponseHeader('Content-Length')) {
-            thatDownload.fileSize = parseInt(jqXHR.getResponseHeader(
-                'Content-Length'));
-        }
+    UstadMobileUtils.waterfall([
+        function(successFnW, failFnW) {
+            $.ajax(thatDownload.srcURL, {
+                type: "HEAD"
+            }).done(successFnW).fail(failFnW);
+        },
+        function(data, textStatus, jqXHR, successFnW, failFnW) {
+            if(jqXHR.getResponseHeader('Content-Length')) {
+                thatDownload.fileSize = parseInt(jqXHR.getResponseHeader(
+                    'Content-Length'));
+            }
+            UstadMobile.getInstance().systemImpl.writeStringToFile(
+                thatDownload.destURI + ".dlinfo", 
+                JSON.stringify(thatDownload.info2JSON()), {},
+                successFnW, failFnW);
+        }], 
+        function() {
+            UstadMobileUtils.runCallback(successFn, [thatDownload], this);
+        }, failFn);
+};
+
+/**
+ * Check and see if there was a previous attempt - look for a .dlinfo file.
+ * 
+ * If found look for a .inprogress file, append this to to the .part file
+ * 
+ * @param {type} successFn
+ * @param {type} failFn
+ * @returns {undefined}
+ */
+UstadMobileResumableDownload.prototype.checkPreviousAttempt = function(successFn, failFn) {
+    var thatDownload = this;
+    var dlInfoURI = this.destURI + ".dlinfo";
+    var inprogURI = this.destURI + ".inprogress";
+    var partFileURI = this.destURI + ".part";
+    var dlInfoJSON = null;
+    
         
-        UstadMobileUtils.runCallback(successFn, [thatDownload], this);
-    }).fail(failFn);
+    UstadMobile.getInstance().systemImpl.fileExists(dlInfoURI, function(dlInfoExists) {
+        if(!dlInfoExists) {
+            UstadMobileUtils.runCallback(successFn, [], this);
+        }else {
+            UstadMobileUtils.waterfall([
+                function(successFnW2, failFnW2) {
+                    UstadMobile.getInstance().systemImpl.readStringFromFile(
+                        dlInfoURI, {}, successFnW2, failFnW2);
+                },function(jsonInfoStr, successFnW2, failFnW2) {
+                    dlInfoJSON = JSON.parse(jsonInfoStr);
+                    UstadMobile.getInstance().systemImpl.fileExists(inprogURI, 
+                        successFnW2, failFnW2);
+                },
+                function(inprogexists, successFnW2, failFnW2) {
+                    if(inprogexists) {
+                        UstadMobile.getInstance().systemImpl.concatenateFiles(
+                            [inprogURI], partFileURI, {"append" : true},
+                            successFnW2, failFnW2);
+                    }else {
+                        UstadMobileUtils.runCallback(successFnW2, 
+                            [partFileURI], this);
+                    }
+                },function(partFile, successFnW2, failFnW2) {
+                    UstadMobile.getInstance().systemImpl.removeFileIfExists(
+                        inprogURI, successFnW2, failFnW2);
+                },function(successFnW2, failFnW2) {
+                    UstadMobile.getInstance().systemImpl.fileExists(partFileURI,
+                        successFnW2, failFnW2);
+                },function(partFileExists, successFnW2, failFnW2) {
+                    if(partFileExists) {
+                        UstadMobile.getInstance().systemImpl.fileSize(partFileURI,
+                            successFnW2, failFnW2);
+                    }else {
+                        UstadMobileUtils.runCallback(successFnW2, [0], this);
+                    }
+                },function(bytesDownloaded, successFnW2, failFnW2) {
+                    thatDownload.bytesDownloadedOK = bytesDownloaded;
+                    thatDownload.startedFrom = bytesDownloaded;
+                    UstadMobileUtils.runCallback(successFnW2, [], this);
+                }
+            ], successFn, failFn);
+        }
+    }, failFn);
 };
 
 /**
@@ -1862,6 +1946,7 @@ UstadMobileResumableDownload.prototype.download = function(url, destFileURI, opt
     }
     
     UstadMobileUtils.waterfall([
+        this.checkPreviousAttempt.bind(this),
         this.getInfo.bind(this),
         (function(dlObj, successFnW, failFnW) {
             this.continueDownload(successFnW, failFnW);
@@ -1925,10 +2010,6 @@ UstadMobileResumableDownload.prototype.continueDownload = function(successFn, fa
                     },function(destFileEntry, successFnW2, failFnW2) {
                         thatDestFile = destFileEntry;
                         thatDownload.removePartialFiles(successFnW2, failFnW2);
-                        /*UstadMobileUtils.asyncMap(
-                            UstadMobile.getInstance().systemImpl.removeFileIfExists,
-                            [inProgressFileURI, partFileURI], 
-                            successFnW2, failFnW2);*/
                     },function(successFnW2, failFnW2) {
                         UstadMobileUtils.runCallback(successFnW2, [thatDestFile],
                             this);
@@ -1941,6 +2022,10 @@ UstadMobileResumableDownload.prototype.continueDownload = function(successFn, fa
                     downloadedResultFile, destFileName, {},
                     successFnW, failFnW);
             }
+        },function(destFile, successFnW, failFnW) {
+            thatDownload.removeDLInfoFile(function() {
+                UstadMobileUtils.runCallback(successFnW, [destFile], this);
+            }, failFnW);
         }
     ], successFn, (function(err) {
         //TODO: logic to see if we should retry...
@@ -1969,6 +2054,13 @@ UstadMobileResumableDownload.prototype.continueDownload = function(successFn, fa
            UstadMobileUtils.runCallback(failFn, [err], this);
         }
     }).bind(this));
+};
+
+UstadMobileResumableDownload.prototype.removeDLInfoFile = function(successFn, failFn) {
+    var dlInfoFileURI = this.destURI + ".dlinfo";
+    UstadMobile.getInstance().systemImpl.removeFileIfExists(dlInfoFileURI, function() {
+        UstadMobileUtils.runCallback(successFn, [], this);
+    }, failFn);
 };
 
 UstadMobileResumableDownload.prototype.removePartialFiles = function(successFn, failFn) {

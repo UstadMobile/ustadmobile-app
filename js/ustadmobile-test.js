@@ -191,6 +191,9 @@ function testResumableDownload() {
         var bigPicURL = testAssetsURL + "phonepic-large.png";
         var rd = new UstadMobileResumableDownload();
         rd.srcURL = bigPicURL;
+        rd.destURI = UstadMobileUtils.joinPath(
+            [UstadMobile.getInstance().contentDirURI, 
+            "phonepic-large-infotest.png"]);
         rd.getInfo(function(dlObj) {
             assert.ok(typeof rd.fileSize === "number", "Got numeric file size");
             assert.ok(rd.fileSize > 0, "Got positive int file size");
@@ -275,6 +278,78 @@ function testResumableDownload() {
             });
         });
     });
+    
+    QUnit.test("Resumable download can resume from previous files", function(assert) {
+        var recoverDoneFn = assert.async();
+        assert.expect(1);
+        
+        var rd = null;
+        var wholeFileURL = UstadMobileUtils.joinPath([testAssetsURL, 
+            "phonepic-large.png"]);
+        var wholeFileFileURI = UstadMobileUtils.joinPath([
+            UstadMobile.getInstance().contentDirURI, 
+            "continue-phonepic-large.png"]);
+        
+        var partFileURL = UstadMobileUtils.joinPath([testAssetsURL, 
+            "phonepic-large.png.part"]);
+        var partFileLocalURI = UstadMobileUtils.joinPath([
+            UstadMobile.getInstance().contentDirURI,
+            "continue-phonepic-large.png.part"
+        ]);
+        var progressFileURL = UstadMobileUtils.joinPath([testAssetsURL,
+            "phonepic-large.png.inprogress"]);
+        var progressFileLocalURI = UstadMobileUtils.joinPath([
+            UstadMobile.getInstance().contentDirURI, 
+            "continue-phonepic-large.png.inprogress"
+        ]);
+        
+        var dlInfoURI = UstadMobileUtils.joinPath([
+            UstadMobile.getInstance().contentDirURI,
+            "continue-phonepic-large.png.dlinfo"
+        ]);
+        
+        UstadMobileUtils.waterfall([
+            function(successFnW, failFnW) {
+                UstadMobile.getInstance().systemImpl.downloadUrlToFileURI(
+                    partFileURL, partFileLocalURI, {}, successFnW, failFnW);
+            },function(partFile, successFnW, failFnW) {
+                UstadMobile.getInstance().systemImpl.downloadUrlToFileURI(
+                    progressFileURL, progressFileLocalURI, {}, successFnW, 
+                    failFnW);
+            },function(inProgressFile, successFnW, failFnW) {
+                $.ajax(wholeFileURL, {
+                    "method" : "HEAD"
+                }).done(successFnW).fail(failFnW);
+            },function(data, textStatus, jqXHR, successFnW, failFnW) {
+                var fileSize = parseInt(
+                    jqXHR.getResponseHeader('Content-Length'));
+                var dlInfoObj = {
+                    "fileSize" : fileSize,
+                    "srcURL" : wholeFileURL,
+                    "destURI" : wholeFileFileURI
+                };
+                UstadMobile.getInstance().systemImpl.writeStringToFile(
+                    dlInfoURI, JSON.stringify(dlInfoObj), {}, successFnW, 
+                    failFnW);
+            },function(dlInfoFinishedEvt, successFnW, failFnW) {
+                rd = new UstadMobileResumableDownload();
+                rd.download(wholeFileURL, wholeFileFileURI, {}, 
+                    successFnW, failFnW);
+            }, function(downloadedEntry, successFnW, failFnW) {
+                assert.ok(rd.startedFrom > 0, "Download resumed from " + 
+                    rd.startedFrom);
+                UstadMobileUtils.asyncMap(
+                    UstadMobile.getInstance().systemImpl.removeFileIfExists,
+                        [wholeFileFileURI, partFileLocalURI, 
+                            progressFileLocalURI, dlInfoURI],
+                        successFnW, failFnW);
+            }
+        ], recoverDoneFn, function(err) {
+            debugger;
+            console.log("shisse: ")
+        });
+    });
+    
 };
 
 function testAsyncUtilEdgeCases() {
