@@ -59,7 +59,7 @@ var UstadMobileAppController = function() {
     this.model = new UstadMobileAppModel(this);
 };
 
-UstadMobileAppController.MENUITEMS = ["Library", "Download", "Logout", "About"];
+UstadMobileAppController.MENUITEMS = ["Library", "Download", "Logout", "About", "Catalog"];
 
 /**
  * Menu Item constant for the library / my courses page
@@ -85,6 +85,9 @@ UstadMobileAppController.MENUITEM_USERAUTH = 2;
  * @type Number
  */
 UstadMobileAppController.MENUITEM_ABOUT = 3;
+
+UstadMobileAppController.MENUITEM_CATALOG = 4;
+
 
 UstadMobileAppController.prototype = {
     
@@ -123,6 +126,9 @@ UstadMobileAppController.prototype = {
             case UstadMobileAppController.MENUITEM_ABOUT:
                 UstadMobile.getInstance().goPage(UstadMobile.PAGE_ABOUT);
                 break;
+            case UstadMobileAppController.MENUITEM_CATALOG:
+                new UstadCatalogController(
+                    UstadMobile.getInstance().appController).view.show();
         }
     }
     
@@ -133,9 +139,17 @@ UstadMobileAppController.prototype = {
 /**
  * Catalog View controller - shows a catalog
  * 
+ * @param appController {UstadAppController} the main app controller
+ * @param [catalog] {UstadJSOPDSFeed} the catalog to be displayed here
+ * 
  * @class
  */
-var UstadCatalogController = function(appController) {
+var UstadCatalogController = function(appController, catalog) {
+    this.appController = appController;
+    
+    this.catalog = catalog ? catalog : null;
+    
+    this.view = UstadCatalogView.makeView(this);
     
 };
 
@@ -426,7 +440,103 @@ UstadCatalogController.getCachedCatalogByURL = function(catalogURL, options, suc
 UstadCatalogController.scanDir = function(dir, options, successFn, failFn) {
     
 };
- 
+
+/**
+ * Fetch and download the given container, save required information about it to
+ * disk
+ * 
+ * 1. Download the given srcURL to disk (see options.destdir and destname) to 
+ * override destination
+ * 
+ * 2. Generate a .<filename>.container file that will contains an OPDS acquisition feed
+ * with one entry in it.
+ * 
+ * 3. Update the localstorage map of EntryID -> containerURI 
+ * 
+ * @param {type} url
+ * @param {Object} options
+ * @param {string} [options,destdir=UstadMobile.ContentDirURI] destination 
+ * directory to save container to
+ * @param {string} [options.autodeleteprev=true] When true delete previously
+ * @param {Array<UstadJSOPDSEntry>} [options.opdsEntries]
+ * @param {function} [options.onprogress] onprogres event handler
+ * 
+ * acquired containers that provide the same entryIDs
+ * 
+ * @param {type} failFn
+ * @returns {undefined}
+ */
+UstadCatalogController.acquireCatalogEntries = function(entryIDs, srcURLs, options, successFn, failFn) {
+    var destURIs = [];
+    var downloadDir = options.destdir ? 
+        options.destdir : UstadMobile.getInstance().contentDirURI;
+    var dlList = null;
+    options.opdsEntries = options.opdsEntries ? options.opdsEntries : [];
+    
+    UstadMobileUtils.waterfall([
+        function(successFnW, failFnW) {
+            for(var i = 0; i < srcURLs.length; i++) {
+                destURIs[i] = UstadMobileUtils.joinPath([
+                    downloadDir, UstadMobileUtils.getFilename(srcURLs[i])]);
+            }
+            dlList = new UstadMobileResumableDownloadList();
+            var dlOptions = {};
+            if(options.onprogress) {
+                dlOptions.onprogress = options.onprogress;
+            }
+            
+            dlList.downloadList(srcURLs, destURIs, dlOptions, successFnW, 
+                failFnW);
+        }, function(dlListResult, successFnW, failFnW) {
+            //now make a .container for each entry we have obtained
+            var containerFeedsToWrite = [];
+            for(var i = 0; i < srcURLs.length; i++) {
+                var opdsEntryObj = options.opdsEntries[i] ? options.opdsEntries[i] 
+                    : null;
+                var thisFilename = UstadMobileUtils.getFilename(srcURLs[i]);
+                var containerFeedDestURI = UstadMobileUtils.joinPath([
+                    UstadMobileUtils.getPath(destURIs[i]), 
+                    "." + thisFilename + ".container"
+                ]);
+                
+                var thisOPDSFeed = new UstadJSOPDSFeed("Container Feed for" +
+                    thisFilename, entryIDs[i] + "/com.ustadmobile.containerfeed");
+                var thisItem = new UstadJSOPDSEntry(null, thisOPDSFeed);
+                thisItem.setupEntry({
+                    "id" : entryIDs[i], 
+                    "title" : opdsEntryObj ? opdsEntryObj.title : thisFilename
+                });
+                containerFeedsToWrite.push([containerFeedDestURI, 
+                    thisOPDSFeed.toString(), {}]);
+            }
+            
+            UstadMobileUtils.asyncMap(
+                UstadMobile.getInstance().systemImpl.writeStringToFile,
+                containerFeedsToWrite, successFnW, failFnW);
+        }
+    ], successFn, failFn);
+};
+
+/**
+ * 
+ * @param {type} entryId
+ * @param {type} options
+ * @param {type} successFn
+ * @param {type} failFn
+ * @returns {undefined}
+ */
+UstadCatalogController.getAcquiredContainerURIByEntryId = function(entryId, options, successFn, failFn) {
+    //Query 
+};
+
+UstadCatalogController.getAcquisitionStatusByEntryId = function(entryId, options, successFn, failFn) {
+    
+};
+
+UstadCatalogController.getAcquiredContainerSrcURLByEntryId = function(urcURL) {
+    
+};
+
 
 var UstadContainerController = function(appController) {
     this.appController = appController;
@@ -476,29 +586,6 @@ UstadContainerController._getStorageKeyForContainerURL = function(url, options) 
 
 
 
-UstadContainerController.getAcquiredContainerFileURIByID = function(entryId, options, successFn, failFn) {
-    //Query 
-};
 
-UstadContainerController.getContainerStatusByID = function(entryId, options, successFn, failFn) {
-    
-};
 
-/**
- * Fetch and download the given container
- * 
- * @param {type} url
- * @param {Object} options
- * @param {string} [options,destdir=UstadMobile.ContentDirURI] destination 
- * directory to save container to
- * @param {string} [options.destname] destination filename to use, defaults to
- * the end of the URL (e.g. file.epub from http://server/some/dir/file.epub).
- * @param {string} [options.autodeleteprev=true] When true delete previously
- * acquired containers that provide the same entryIDs
- * 
- * @param {type} failFn
- * @returns {undefined}
- */
-UstadContainerController.acquireContainer = function(url, options, successFn, failFn) {
-    
-};
+

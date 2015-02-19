@@ -83,7 +83,25 @@ UstadMobileAppViewCordova.prototype.setMenuItems = function(menuItems) {
     });
 };
 
+UstadMobileAppViewCordova.prototype.setTitle = function(title) {
+    this.ustadAppViewPlugin.setTitle(title, function() {},
+        function(err) {
+            console.log("Plugin error: " + err);
+        });
+}
+
 UstadMobileAppViewCordova.prototype.showPublication = function(container) {
     
+};
+
+var UstadCatalogViewCordova = function(controller) {
+    this.controller = controller;
+};
+
+UstadCatalogViewCordova.prototype = Object.create(
+    UstadCatalogView.prototype);
+
+UstadCatalogView.makeView = function(controller) {
+    return new UstadCatalogViewCordova(controller);
 };
 

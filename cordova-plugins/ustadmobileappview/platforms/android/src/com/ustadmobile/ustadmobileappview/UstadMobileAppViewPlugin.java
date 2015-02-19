@@ -31,6 +31,12 @@ public class UstadMobileAppViewPlugin extends CordovaPlugin implements ListView.
 			"setMenuListener";
 
 	/**
+	 * Action to set thet title of the app
+	 */
+	public static final String ACTION_SETTITLE = "setTitle";
+	
+	
+	/**
 	 * The callback context for menu clicks
 	 */
 	private CallbackContext menuClickListenerContext;
@@ -58,6 +64,16 @@ public class UstadMobileAppViewPlugin extends CordovaPlugin implements ListView.
 			activity.setDrawerOnItemClickListener(this);
 			this.menuClickListenerContext = callbackContext;
 			return true;
+		}else if(ACTION_SETTITLE.equals(action)) {
+			final Activity activity = cordova.getActivity();
+			final String title = args.getString(0);
+			
+			activity.runOnUiThread(new Runnable() {
+                public void run() {
+                	activity.setTitle(title);
+                	callbackContext.success();
+                }
+			});
 		}
 		
 		return false;
@@ -77,6 +93,10 @@ public class UstadMobileAppViewPlugin extends CordovaPlugin implements ListView.
     	res.setKeepCallback(true);
     	if(this.menuClickListenerContext != null) {
     		this.menuClickListenerContext.sendPluginResult(res);
+    		final UstadMobileActivity activity = 
+    				(UstadMobileActivity)cordova.getActivity();
+    		activity.closeAppDrawer();
+    		activity.hideContentPager();
     	}
     }
 }

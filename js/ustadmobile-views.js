@@ -89,3 +89,21 @@ UstadMobileAppView.prototype = {
         
     }
 };
+
+var UstadCatalogView = function() {
+    
+};
+
+UstadCatalogView.makeView = function(controller) {
+    
+};
+
+UstadCatalogView.prototype.show = function() {
+    this.controller.appController.view.setTitle("Catalog");
+    $.mobile.changePage("catalogview.html", { 
+        changeHash: true,
+        transition: "slide"
+    });
+};
+
+

@@ -31,9 +31,6 @@
     <feature name="Zip">
         <param name="android-package" value="org.apache.cordova.Zip" />
     </feature>
-    <feature name="UstadMobileAppView">
-        <param name="android-package" value="com.ustadmobile.ustadmobileappview.UstadMobileAppViewPlugin" />
-    </feature>
     <feature name="ContentViewPager">
         <param name="android-package" value="com.ustadmobile.contentviewpager.ContentViewPagerPlugin" />
     </feature>
@@ -42,5 +39,8 @@
     </feature>
     <feature name="FileTransfer">
         <param name="android-package" value="org.apache.cordova.filetransfer.FileTransfer" />
+    </feature>
+    <feature name="UstadMobileAppView">
+        <param name="android-package" value="com.ustadmobile.ustadmobileappview.UstadMobileAppViewPlugin" />
     </feature>
 </widget>

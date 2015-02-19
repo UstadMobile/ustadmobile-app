@@ -1299,6 +1299,42 @@ UstadMobileUtils.waterfall = function(fnList, successFn, failFn) {
     runItFn(0);
 };
 
+UstadMobileUtils.asyncMapAdvanced = function(fn, argArr, options, successFn, failFn) {
+    var resultMap = [];
+    
+    var numFns = (fn.constructor === Array) ? fn.length : argArr.length;
+    
+    if(fn.constructor === Array && fn.length === 0) {
+        UstadMobileUtils.runCallback(successFn, [], this);
+        return;
+    }
+    
+    var runItFn = function(index) {
+        var thisArgArr = argArr[index] ? UstadMobileUtils.ensureIsArray(
+                argArr[index]) : [];
+        if(options.beforerun) {
+            options.beforerun(index, argArr, resultMap);
+        }
+        
+        thisArgArr.push(function() {
+            var successArgArr = Array.prototype.slice.call(arguments);
+            resultMap.push(successArgArr);
+            if(index < (numFns-1)) {
+                runItFn(index+1);
+            }else {
+                UstadMobileUtils.runCallback(successFn, [resultMap], this);
+            }
+        });
+        thisArgArr.push(failFn);
+        var fn2Apply = fn.constructor === Array ? fn[index] : fn;
+        
+        var fnContext = options.context ? options.context : this;
+        fn2Apply.apply(fnContext, thisArgArr);
+    };
+    
+    runItFn(0);
+};
+
 /**
  * For each item in arg array call the given function.  
  * It will be assumed that the last arguments will be the successFn and failFn
@@ -1419,6 +1455,20 @@ UstadMobileUtils.splitPath = function(path, seperator) {
 UstadMobileUtils.getFilename = function(path, seperator) {
     var pathParts = UstadMobileUtils.splitPath(path, seperator);
     return pathParts[pathParts.length-1];
+};
+
+/**
+ * Get everything except the last part of the path
+ */
+UstadMobileUtils.getPath = function(completePath, seperator) {
+    seperator = UstadMobileUtils.getSeperator(seperator);
+    
+    //in case the last character is a trailing slash
+    if(completePath.lastIndexOf(seperator) === completePath.length-1) {
+        completePath = completePath.substring(0, completePath.length-1);
+    }
+    
+    return completePath.substring(0, completePath.lastIndexOf("/"));
 };
 
 /**
@@ -1963,7 +2013,8 @@ UstadMobileResumableDownload.prototype._handleProgressUpdate = function(evt) {
         var ourProgEvt = {
             lengthComputable : true,
             total: this.fileSize,
-            loaded : Math.round(bytesComplete)
+            loaded : Math.round(bytesComplete),
+            target: this
         };
         
         if(this.onprogress) {
@@ -2071,6 +2122,95 @@ UstadMobileResumableDownload.prototype.removePartialFiles = function(successFn, 
             function(mapResult) { 
                 UstadMobileUtils.runCallback(successFn, [], this);
             }, failFn);
+};
+
+var UstadMobileResumableDownloadList = function() {
+    this.resumableDownloads = [];
+    
+    this.totalSize = 0;
+    
+    this.retryCount = 0;
+    
+    this.fileBytesCompleted = 0;
+    
+    this.currentDownloadIndex = 0;
+    
+    this.onprogress = null;
+};
+
+UstadMobileResumableDownloadList.prototype.downloadList = function(urlList, destFileURIList, options, successFn, failFn) {
+    
+    var prepArguments = [];
+    for(var i = 0; i < urlList.length; i++) {
+        prepArguments[i] = [i, urlList[i], destFileURIList[i]];
+    }
+    
+    if(options.onprogress) {
+        this.onprogress = options.onprogress;
+    }
+    
+    UstadMobileUtils.waterfall([
+        (function(successFnW, failFnW) {
+            UstadMobileUtils.asyncMap((function(index, url, destURI, successFnM, failFnM) {
+                var resumableDownload = new UstadMobileResumableDownload();
+                resumableDownload.srcURL = url;
+                resumableDownload.destURI = destURI;
+                this.resumableDownloads.push(resumableDownload);
+                resumableDownload.getInfo(successFnM, failFnM);
+            }).bind(this), prepArguments, successFnW, failFnW);
+        }).bind(this),
+        (function(infoResults, successFnW, failFnW) {
+            var sizeCounter = 0;
+            var fnList = [];//functions to be called -always the download function
+            var argList = [];//arg list - array of srcURL, destURI
+            for(var i = 0; i < this.resumableDownloads.length; i++) {
+                sizeCounter += this.resumableDownloads[i].fileSize;
+                fnList.push(this.resumableDownloads[i].download.bind(
+                    this.resumableDownloads[i]));
+                argList.push([this.resumableDownloads[i].srcURL,
+                    this.resumableDownloads[i].destURI,
+                    {
+                        onprogress : this._handleProgress.bind(this)
+                    }]);
+            }
+            this.totalSize = sizeCounter;
+            
+            var advMapArgs = {
+                beforerun: (function(index, args, result) {
+                    if(index > 0) {
+                        this.fileBytesCompleted  += 
+                            this.resumableDownloads[index-1].fileSize;
+                    }
+                    this.currentDownloadIndex = index;
+                }).bind(this)
+            };
+            
+            UstadMobileUtils.asyncMapAdvanced(fnList, argList, advMapArgs, 
+                successFnW, failFnW);
+        }).bind(this)
+        
+    ], successFn, failFn);
+};
+
+UstadMobileResumableDownloadList.prototype._handleProgress = function(evt) {
+    var thisDlBytesDone = 0;
+    if(evt.lengthComputable) {
+        thisDlBytesDone = evt.loaded;
+    }
+    var loadedSize = this.fileBytesCompleted + thisDlBytesDone;
+    
+    var progressEvt = {
+        lengthComputable: true,
+        loaded: loadedSize,
+        total: this.totalSize
+    };
+    
+    console.log("Download list : progress : " + loadedSize / + 
+        this.totalSize);
+    
+    if(this.onprogress) {
+        this.onprogress(progressEvt);
+    }
 };
 
 // Put this in a central location in case we don't manage to load it

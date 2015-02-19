@@ -148,7 +148,9 @@ var containerChangeFn = function() {
     testPageLoad(UstadMobile.PAGE_ABOUT, "Test opening about page");
     
     testResumableDownload();
-        
+    
+    testResumableDownloadList();
+    
     //Set timeout to 60seconds (download a course)
     QUnit.testTimeout = 60000;
     //testUstadMobileCourseDownloadById(5);
@@ -179,8 +181,78 @@ var containerChangeFn = function() {
     
     testAsyncUtilEdgeCases();
     
-    
+    testAcquireEntries();
 }());
+
+function testAcquireEntries() {
+    QUnit.test("Acquire entries from a catalog", function(assert) {
+        assert.expect(2);
+        var acquireDoneFn = assert.async();
+        var acquireFeedURL = testAssetsURL + "acquire.opds";
+        $.ajax(acquireFeedURL, {
+            dataType : "text"
+        }).done(function(opdsStr) {
+            var opdsFeedObj = UstadJSOPDSFeed.loadFromXML(opdsStr, 
+                acquireFeedURL);
+            var entryIds = [];
+            var acquireURLs = [];
+            for(var i = 0; i< opdsFeedObj.entries.length; i++) {
+                var urlToGet = UstadJS.resolveURL(testAssetsURL,
+                    opdsFeedObj.entries[i].getAcquisitionLinks(
+                    UstadJSOPDSEntry.LINK_ACQUIRE, 
+                    UstadJSOPDSEntry.TYPE_EPUBCONTAINER, true));
+                entryIds.push(opdsFeedObj.entries[i].id);
+                acquireURLs.push(urlToGet);
+            }
+            
+            var onProgCallCount = 0;
+            var acquireOpts = {
+                opdsEntries : opdsFeedObj.entries,
+                onprogress: function(evt) {
+                    onProgCallCount++;
+                }
+            };
+            
+            UstadCatalogController.acquireCatalogEntries(entryIds, acquireURLs,
+                acquireOpts, function(result) {
+                    assert.ok(result, "Hit success fn");
+                    assert.ok(onProgCallCount > 0, "Progress event ran");
+                    acquireDoneFn();
+                }, function(err) {
+                    console.log("shisse " + err);
+                });
+        });
+        
+    });
+}
+
+function testResumableDownloadList() {
+    QUnit.test("Download list downloads entire list of files", function(assert) {
+        var dlListDoneFn = assert.async();
+        assert.expect(1);
+        var rdList = new UstadMobileResumableDownloadList();
+        var srcURLs = [
+            UstadMobileUtils.joinPath([testAssetsURL, "phonepic-large.png"]),
+            UstadMobileUtils.joinPath([testAssetsURL, "phonepictest.png"]),
+            UstadMobileUtils.joinPath([testAssetsURL, "phonepicture.png"])
+        ];
+        
+        var contentDir = UstadMobile.getInstance().contentDirURI;
+        
+        var destURIs = [
+            UstadMobileUtils.joinPath([contentDir, "list-phonepic-large.png"]),
+            UstadMobileUtils.joinPath([contentDir, "list-phonepictest.png"]),
+            UstadMobileUtils.joinPath([contentDir, "list-phonepicture.png"])
+        ];
+        
+        rdList.downloadList(srcURLs, destURIs, {}, function(listResult) {
+            assert.ok(listResult, "We seem to have a list result");
+            dlListDoneFn();
+        }, function(err) {
+            
+        });
+    });
+}
 
 
 function testResumableDownload() {
@@ -345,7 +417,6 @@ function testResumableDownload() {
                         successFnW, failFnW);
             }
         ], recoverDoneFn, function(err) {
-            debugger;
             console.log("shisse: ")
         });
     });

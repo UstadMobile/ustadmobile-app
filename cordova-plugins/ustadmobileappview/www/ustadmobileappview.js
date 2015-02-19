@@ -38,6 +38,10 @@ ustadmobileappview_exports.setMenuListener = function(successCallback, errorCall
         "setMenuListener", []);
 };
 
+ustadmobileappview_exports.setTitle = function(title, successCallback, errorCallback) {
+    cordova.exec(successCallback, errorCallback, "UstadMobileAppView", 
+        "setTitle", [title]);
+};
 
 module.exports = ustadmobileappview_exports;
 
