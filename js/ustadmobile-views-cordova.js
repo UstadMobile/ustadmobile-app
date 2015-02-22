@@ -105,3 +105,73 @@ UstadCatalogView.makeView = function(controller) {
     return new UstadCatalogViewCordova(controller);
 };
 
+var UstadContainerViewCordova = function(controller) {
+    UstadContainerView.apply(this, [controller]);
+};
+
+UstadContainerView.makeView = function(controller) {
+    return new UstadContainerViewCordova(controller);
+};
+
+UstadContainerViewCordova.prototype.show = function() {
+    //TODO: check the mime type
+    //For now : assume we are talking about an epub file 
+    
+    
+    //TODO Here: check the container is expanded
+    
+    var pageList = [];
+    var epubFilename = UstadMobileUtils.getFilename(
+        this.controller.model.fileURI);
+    var epubCacheDirName = encodeURI(epubFilename + "_cache");
+    var opfURL = "";
+    
+    var epubHttpURL = UstadMobileUtils.joinPath([
+        UstadMobile.getInstance().systemImpl.cordovaHTTPURL,
+        UstadMobile.CONTENT_DIRECTORY, epubCacheDirName
+    ]);
+    
+    var containerXMLURL = UstadMobileUtils.joinPath(
+            [epubHttpURL, "META-INF/container.xml"]);
+    
+    UstadMobileUtils.waterfall([
+        function(successFnW, failFnW) {
+            $.ajax(containerXMLURL, {
+                dataType: "text"
+            }).done(successFnW).fail(failFnW);
+        }, function(containerXMLStr, textStatus, jqXHR, successFnW, failFnW) {
+            try {
+                var rootFiles = UstadJS.getContainerRootfilesFromXML(containerXMLStr);
+                var rootFile0 = rootFiles[0]['full-path'];
+                opfURL = UstadMobileUtils.joinPath([epubHttpURL, rootFile0]);
+                $.ajax(opfURL, {
+                    dataType : "text"
+                }).done(successFnW).fail(failFnW);
+            }catch(err){
+                //in case XML is invalid or such like
+                UstadMobileUtils.runCallback(failFnW, [err, err], this);
+            }
+        },function(opfStr, textStatus, jqXHR, successFnW, failFnW) {
+            var opfEntry = new UstadJSOPF();
+            opfEntry.loadFromOPF(opfStr);
+            
+            pageList = [];
+            
+            //get the path of where the opf file is 
+            for(var i = 0; i < opfEntry.spine.length; i++) {
+                var thisURL = UstadJS.resolveURL(opfURL, 
+                    opfEntry.spine[i].href);
+                pageList.push(thisURL);
+            }
+            
+            cordova.plugins.ContentViewPager.openPagerView(
+                pageList, successFnW ,failFnW);
+        }
+    ],function(success) {
+        console.log("opened content item OK for container : " + containerXMLURL);
+    },function(err) {
+        UstadMobile.getInstance().appController.view.showAlertPopup("Error",
+                "Sorry: something went wrong trying to download that. " + err);
+    });
+};
+

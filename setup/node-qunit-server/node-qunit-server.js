@@ -128,7 +128,8 @@ function startAssetServer() {
         
         var endOfFilePos = queryPos === -1 ? url.length : queryPos;
         
-        var httpHeaders = {};
+        var httpHeaders = {
+        };
         
         
         if(filePath.indexOf("?") !== -1) {

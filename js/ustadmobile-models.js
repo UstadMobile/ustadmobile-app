@@ -67,3 +67,44 @@ var UstadMobileAppModel = function(controller) {
     this.menuItems = [];
 };
 
+var UstadCatalogModel = function(controller) {
+    this.controller = controller;
+    
+    /**
+     * The catalog feeds that should be shown on screen
+     * 
+     * @type {Array<UstadJSOPDSFeed}
+     */
+    this.opdsFeeds = [];
+};
+
+UstadCatalogModel.prototype.addFeed = function(opdsFeed) {
+    this.opdsFeeds.push(opdsFeed);
+};
+
+var UstadContainerModel = function(controller) {
+    this.controller = controller;
+    
+    /**
+     * The catalog entry that we are referring to
+     * @type {UstadJSOPDSEntry}
+     */
+    this.entry = null;
+    
+    /**
+     * The URI of this container on the local filesystem
+     */
+    this.fileURI = null;
+    
+    this.view = UstadContainerView.makeView();
+};
+
+UstadContainerModel.prototype.setEntry = function(entry) {
+    this.entry = entry;
+};
+
+UstadContainerModel.prototype.setFileURI = function(fileURI) {
+    this.fileURI = fileURI;
+};
+
+

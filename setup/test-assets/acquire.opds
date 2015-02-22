@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom" 
   xmlns:dc="http://purl.org/dc/terms/" 
   xmlns:opds="http://opds-spec.org/2010/catalog">
-    <id>http://umcloud1.ustadmobile.com/opds/courseid/6></id>
+    <id>http://umcloud1.ustadmobile.com/opds/courseid/6C</id>
     
     <link rel="start"
                 href="/opds/"
@@ -10,7 +10,7 @@
     <link rel="self"
 		href="/acquire.opds"
 		type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
-    <title>Mike Test4's (miketest04) assigned courses</title>
+    <title>Hills and Such</title>
     <updated>2015-02-09T21:00:57Z</updated>
     <author>
 	<name>Mike Test4</name> 

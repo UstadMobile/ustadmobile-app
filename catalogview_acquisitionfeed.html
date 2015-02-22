@@ -40,7 +40,8 @@ If you need a commercial license to remove these restrictions please contact us 
 -->
 
 <!-- 
-    This is the page that shows all the books/packages available in different locations on different platforms with the help of its javascript and its functions and callbacks.
+  This page is used by the CatalogView to show entries from an acquisition
+  feed so the user can select them to be opened.
 -->
 <!DOCTYPE html>
 <html>
@@ -61,32 +62,18 @@ If you need a commercial license to remove these restrictions please contact us 
     </head>
     <body data-zone="app">  
         <!-- cache this page because when viewing an entry we want to be able to come straight back -->
-        <div data-role="page" id="ustadmobile_catalog_page" data-theme="b" data-dom-cache="true">
+        <div data-role="page" id="ustadmobile_catalog_acquisitionfeed" data-theme="b" data-dom-cache="true">
             
             <!-- #STARTUSTADJQMHEADER -->
             <div data-role="header" data-position="fixed" data-theme="b">
                 <a data-theme="b" href="#mypanel" data-role='button' data-inline='true' class="ustad_panel_href"><i class='lIcon fa fa-bars'></i></a>            
-                <h3><span id="abouttext2" class="exeTranslated" data-exe-translation="About">Catalog</span></h3>
+                <h3><span id="acquired_feed_header" class="exeTranslated" data-exe-translation="">Catalog</span></h3>
                 <a data-theme="b" href="#" data-role="button" data-icon="user" id="ustad_user_button" class="ui-btn-right">&nbsp;</a>
             </div>
             <!-- #ENDUSTADJQMHEADER -->
             
             <div data-role="content" data-theme="b">          
-                
-                <div data-role="popup" id="ustad_acquirecontent_popup"  data-theme="b" data-dismissible="false" data-overlay-theme="b" style="max-width:400px;">
-                    <div data-role="header" data-theme="b">
-                        <h1 class="um_popup_header"></h1>
-                    </div>
-                    
-                    <div role="main" class="ui-content">
-                        <h3 class="ui-title" id="ustad_acquirecontent_dialog_text"></h3>
-
-                        <a href="#" id="ustad_acquirecontent_popup_cancel" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" data-transition="flow">Cancel</a>
-                        <a href="#" id="ustad_acquirecontent_popup_ok" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" data-transition="flow">OK</a>
-                    </div>
-                </div>
-                
-                <div class="um_catalog_container">
+                <div class="um_acquisitionfeed_container">
                     
                 </div>
                 

@@ -127,8 +127,14 @@ UstadMobileAppController.prototype = {
                 UstadMobile.getInstance().goPage(UstadMobile.PAGE_ABOUT);
                 break;
             case UstadMobileAppController.MENUITEM_CATALOG:
-                new UstadCatalogController(
-                    UstadMobile.getInstance().appController).view.show();
+                /*new UstadCatalogController(
+                    UstadMobile.getInstance().appController).view.show();*/
+                UstadCatalogController.makeControllerByURL(
+                    "http://192.168.0.6:6821/shelf.opds",
+                    UstadMobile.getInstance().appController, {}, function(ctrl){
+                        ctrl.view.show();
+                    });
+                
         }
     }
     
@@ -140,18 +146,99 @@ UstadMobileAppController.prototype = {
  * Catalog View controller - shows a catalog
  * 
  * @param appController {UstadAppController} the main app controller
- * @param [catalog] {UstadJSOPDSFeed} the catalog to be displayed here
+ * @param [model] {UstadCatalogModel} the catalog to be displayed here
  * 
  * @class
  */
-var UstadCatalogController = function(appController, catalog) {
+var UstadCatalogController = function(appController) {
     this.appController = appController;
-    
-    this.catalog = catalog ? catalog : null;
     
     this.view = UstadCatalogView.makeView(this);
     
+    this.model = new UstadCatalogModel(this);
+    
+    this.userSelectedEntry = null;
+    
 };
+
+/**
+ * Handles when the user clicks (or taps) on an entry representing an
+ * acquisition feed.
+ * 
+ * @param {type} evt
+ * @param {type} data
+ * @returns {undefined}
+ */
+UstadCatalogController.prototype.handleClickAcquisitionFeedEntry = function(evt, data) {
+    var entryId = data.entry.id;
+    var entryStatus = UstadCatalogController.getAcquisitionStatusByEntryId(
+        entryId, {});
+    if(entryStatus === $UstadJSOPDSBrowser.NOT_ACQUIRED) {
+        //confirm that the user wants to do this
+        this.userSelectedEntry = data.entry;
+        var dialogTitle = "Download?";
+        var dialogText = data.entry.title;
+        this.view.showConfirmAcquisitionDialog(dialogTitle, dialogText);
+    }else if(entryStatus === $UstadJSOPDSBrowser.ACQUIRED) {
+        var options = {};
+        UstadCatalogController.getCachedCatalogByID(entryId, options, 
+            (function(opdsObj) {
+                this.view.showAcquisitionFeed(opdsObj);
+            }).bind(this),function (err) {
+                UstadMobile.getInstance().appController.view.showAlertPopup("Error",
+                "Sorry: seems like that was downloaded but now its not accessible" + err);
+            });
+    }
+};
+
+UstadCatalogController.prototype.handleConfirmEntryAcquisition = function(evt, data) {
+    this.view.hideConfirmAcquisitionDialog();
+    //the source feed that this acquisition feed came from
+    var feedId = this.userSelectedEntry.parentFeed.id;
+    var entryId = this.userSelectedEntry.id;
+    
+    var dlOptions = {
+        onprogress : (function(evt) {
+            this.view.updateEntryProgress(feedId, entryId, evt);
+        }).bind(this)
+    };
+    
+    this.view.setEntryStatus(feedId, entryId, 
+        $UstadJSOPDSBrowser.ACQUISITION_IN_PROGRESS, 
+        {"loaded" : 0, "total" : 100});
+    
+    UstadCatalogController.downloadEntireAcquisitionFeed(this.userSelectedEntry,
+        dlOptions, (function(result) {
+            this.view.setEntryStatus(feedId, entryId, 
+            $UstadJSOPDSBrowser.ACQUIRED);
+        }).bind(this), function(err) {
+            UstadMobile.getInstance().appController.view.showAlertPopup("Error",
+                "Sorry: something went wrong trying to download that. " + err);
+        });
+};
+
+UstadCatalogController.prototype.handleClickContainerEntry = function(evt, data) {
+    //here it is time to open the container entry
+    var entry = data.entry;
+    var containerController = UstadContainerController.makeFromEntry(this.appController,
+        entry, {});
+    containerController.view.show();
+};
+
+
+
+UstadCatalogController.makeControllerByURL = function(url, appController, options, successFn, failFn) {
+    UstadMobileUtils.waterfall([
+        function(successFnW, failFnW) {
+            UstadCatalogController.getCatalogByURL(url, options, successFnW, 
+                failFnW);
+        },function(opdsFeedObj, result, successFnW, failFnW) {
+            var newController = new UstadCatalogController(appController);
+            newController.model.addFeed(opdsFeedObj);
+            UstadMobileUtils.runCallback(successFnW, [newController], this);
+        }], successFn, failFn);
+};
+
 
 /**
  * OPDS Navigation feed of courses that are on this device
@@ -187,20 +274,17 @@ UstadCatalogController.getCatalogByURL = function(url, options, successFn, failF
     options.cache = (typeof options.cache === "undefined") ? true : options.cache;
     $.ajax(url, {
         dataType: "text",
-        cache: false
     }).done(function(opdsStr) {
-        try {
-            var opdsFeedObj = UstadJSOPDSFeed.loadFromXML(opdsStr, url);
+        var opdsFeedObj = UstadJSOPDSFeed.loadFromXML(opdsStr, url);
+        UstadCatalogController.cacheCatalog(opdsFeedObj, options, function(cacheResult) {
             UstadMobileUtils.runCallback(successFn, [opdsFeedObj, {}], this);
-        }catch(e) {
-            UstadMobileUtils.runCallback(failFn, [e, e], this);
-        }
-    }).fail(function(textStatus, err) {
+        }, failFn);
+    }).fail(function(jqXHR, textStatus, errorThrown) {
         if(options.cache) {
             UstadCatalogController.getCachedCatalogByURL(url, options,
                 successFn, failFn);
         }else {
-            UstadMobileUtils.runCallback(failFn, [textStatus, err], this);
+            UstadMobileUtils.runCallback(failFn, [textStatus, errorThrown], this);
         }
     });
 };
@@ -254,21 +338,44 @@ UstadCatalogController.getCatalogURLSByID = function(id, options) {
  */
 
 /**
+ * Acquire all the items that are in a given feed
  * 
- * @param {string} url The URL to download from
- * @param {Object} options Parameters controlling the download
- * @param {boolean} [options.cache=true] Whether or not to use a cached copy
- * @param {string} [options.saveDirURI] If present save a copy of the opds feed 
- * in the given directory as a .opds file
- * @param {downloadCatalogFromURLSuccessCallback} successFn the success callback
- * @param {downloadCatalogFromURLFailCallback} failFn the failure callback
+ * @param {UstadJSOPDSEntry|string} src the feed to get: either a URL or an OPDSEntry object
+ * @param {type} options misc options used by downstream functions (e.g. username etc)
+ * @param {type} successFn success callback: array of results
+ * @param {type} failFn fail callback
  */
-UstadCatalogController.downloadCatalogFromURL = function(url, options, successFn, failFn) {
-    
-};
-
-UstadCatalogController.downloadEntireAcquisitionFeed = function(url, options, successFn, failFn) {
-    
+UstadCatalogController.downloadEntireAcquisitionFeed = function(src, options, successFn, failFn) {
+    var opdsSrc = null;
+    var srcURL = "";
+    UstadMobileUtils.waterfall([
+        function(successFnW, failFnW) {
+            if(src instanceof UstadJSOPDSEntry) {
+                var entryLink = src.getAcquisitionLinks(null, 
+                    UstadJSOPDSEntry.TYPE_ACQUISITIONFEED);
+                srcURL = UstadJS.resolveURL(src.parentFeed.href,
+                    entryLink);
+            }else {
+                srcURL = src;
+            }
+            
+            UstadCatalogController.getCatalogByURL(srcURL, options, 
+                successFnW, failFnW);
+        },function(opdsFeedObj, resultInfo, successFnW, failFnW) {
+            opdsSrc = opdsFeedObj;
+            UstadCatalogController.acquireCatalogEntries(opdsFeedObj.entries,
+                [], options, successFnW, failFnW);
+        }
+    ], function(resultInfo) {
+        //when the whole feed has downloaded OK
+        var entryInfo = {
+            status : $UstadJSOPDSBrowser.ACQUIRED,
+            srcHrefs : [srcURL]
+        };
+        UstadCatalogController._saveAcquiredEntryInfo(opdsSrc.id, entryInfo, 
+            options);
+        UstadMobileUtils.runCallback(successFn, [resultInfo], this);
+    }, failFn)
 };
 
 
@@ -453,11 +560,22 @@ UstadCatalogController.scanDir = function(dir, options, successFn, failFn) {
  * 
  * 3. Update the localstorage map of EntryID -> containerURI 
  * 
- * @param {type} url
+ * There are two ways to use this method:
+ * call with an array of UstadJSOPDSEntry :
+ *  acquireCatalogEntries(entryArr, [], options, successFn, failFn)
+ *  
+ * OR 
+ *  acquireCatalogEntries(entries
+ * 
+ * @param {Array<String|UstadJSOPDSEntry>} entries either as an array of entry 
+ * ids as strings or of UstadJSOPDSEntry objects
+ * @param srcURLs {Array<string>} if not using opdsEntry objects that know thier
+ * url - specify srcURLs
  * @param {Object} options
  * @param {string} [options,destdir=UstadMobile.ContentDirURI] destination 
  * directory to save container to
  * @param {string} [options.autodeleteprev=true] When true delete previously
+ * @param {Array<string>} [options.acquiremimetypes] Array in order of preference of acceptable mime types
  * @param {Array<UstadJSOPDSEntry>} [options.opdsEntries]
  * @param {function} [options.onprogress] onprogres event handler
  * 
@@ -466,12 +584,37 @@ UstadCatalogController.scanDir = function(dir, options, successFn, failFn) {
  * @param {type} failFn
  * @returns {undefined}
  */
-UstadCatalogController.acquireCatalogEntries = function(entryIDs, srcURLs, options, successFn, failFn) {
+UstadCatalogController.acquireCatalogEntries = function(entries, srcURLs, options, successFn, failFn) {
+    if(entries.length === 0) {
+        UstadMobileUtils.runCallback(successFn, [[]], this);
+    }
+    
+    var entryIDs = [];
     var destURIs = [];
+    options.opdsEntries = options.opdsEntries ? options.opdsEntries : [];
+    
+    if(entries[0] instanceof UstadJSOPDSEntry) {
+        //setup from the entries themselves
+        var mimeTypes = options.acquiremimetypes ? options.acquiremimetypes : [UstadJSOPDSEntry.TYPE_EPUBCONTAINER];
+        options.opdsEntries = entries;
+        
+        
+        for(var i = 0; i < entries.length; i++) {
+            entryIDs.push(entries[i].id);
+            var thisEntryHref = entries[i].getAcquisitionLinks(
+                    UstadJSOPDSEntry.LINK_ACQUIRE, 
+                    mimeTypes[0], true);
+            var thisEntrySrcURL = UstadJS.resolveURL(entries[i].parentFeed.href,
+                thisEntryHref);
+            srcURLs.push(thisEntrySrcURL);
+        }
+    }
+    
+    
     var downloadDir = options.destdir ? 
         options.destdir : UstadMobile.getInstance().contentDirURI;
     var dlList = null;
-    options.opdsEntries = options.opdsEntries ? options.opdsEntries : [];
+    
     
     UstadMobileUtils.waterfall([
         function(successFnW, failFnW) {
@@ -513,9 +656,27 @@ UstadCatalogController.acquireCatalogEntries = function(entryIDs, srcURLs, optio
             UstadMobileUtils.asyncMap(
                 UstadMobile.getInstance().systemImpl.writeStringToFile,
                 containerFeedsToWrite, successFnW, failFnW);
+        },function(writeResult, successFnW, failFnW) {
+            var containerResults = [];
+            for(var i = 0; i < entryIDs.length; i++) {
+                var containerInfo = {
+                    srcHrefs : [srcURLs[i]],
+                    acquiredFileURI : destURIs[i],
+                    status: $UstadJSOPDSBrowser.ACQUIRED
+                };
+                
+                debugger;
+                UstadCatalogController._saveAcquiredEntryInfo(entryIDs[i],
+                    containerInfo, options);
+                containerResults.push(containerInfo);
+            }
+            
+            UstadMobileUtils.runCallback(successFnW, [containerResults], 
+                successFnW);
         }
     ], successFn, failFn);
 };
+
 
 /**
  * 
@@ -526,21 +687,44 @@ UstadCatalogController.acquireCatalogEntries = function(entryIDs, srcURLs, optio
  * @returns {undefined}
  */
 UstadCatalogController.getAcquiredContainerURIByEntryId = function(entryId, options, successFn, failFn) {
-    //Query 
-};
-
-UstadCatalogController.getAcquisitionStatusByEntryId = function(entryId, options, successFn, failFn) {
+    //var entryObj = 
     
 };
 
-UstadCatalogController.getAcquiredContainerSrcURLByEntryId = function(urcURL) {
-    
+/**
+ * Gets information about a catalog entry that has been acquired - this can be
+ * a container (e.g. epub file etc) or an acquisition feed.  Returns null if the
+ * item is not acquired
+ * 
+ * Returns
+ * { acquiredFileURI : '/path/to/file.epub', srcHrefs: [href1, href2], status : STATUSFLAG}
+ * 
+ * STATUSFLAG is according to $UstadJSOPDSBrowser.STATUS flags e.g. "acquired" etc.
+ * 
+ * @param {string} entryId The entryID to lookup
+ * @param {Object} options standard options including username of the current user
+ * @returns {Object}
+ */
+UstadCatalogController.getAcquiredEntryInfoById = function(entryId, options) {
+    var storageKey = UstadCatalogController._getStorageKeyForAcquiredEntryID(entryId, options);
+    var result = localStorage.getItem(storageKey);
+    if(result) {
+        return JSON.parse(result);
+    }else {
+        return null;
+    }
 };
 
-
-var UstadContainerController = function(appController) {
-    this.appController = appController;
+UstadCatalogController.getAcquisitionStatusByEntryId = function(entryId, options) {
+    var entryObj = UstadCatalogController.getAcquiredEntryInfoById(entryId,
+        options);
+    if(entryObj) {
+        return entryObj.status;
+    }else {
+        return $UstadJSOPDSBrowser.NOT_ACQUIRED;
+    }
 };
+
 
 /**
  * Gets the local storage key to find info about a container that has been
@@ -548,8 +732,8 @@ var UstadContainerController = function(appController) {
  * 
  * Maps in the form of
  * 
- * entryid-to-acquiredcontainer:userid:entryID ->
- *  { containeruri : '/path/to/file.epub', srcHrefs: [href1, href2] }
+ * entryid-to-acquired-fileuri:userid:entryID ->
+ *  { acquiredFileURI : '/path/to/file.epub', srcHrefs: [href1, href2], status : STATUSFLAG}
  * 
  * ContainerID is the ID from the OPDS entry feed AND should be the same ID
  * used in the ID element of the manifest
@@ -560,9 +744,38 @@ var UstadContainerController = function(appController) {
  * 
  * @returns {string} key to user for local storage
  */
-UstadContainerController._getStorageKeyForAcquiredEntryID = function(containerID, options) {
+UstadCatalogController._getStorageKeyForAcquiredEntryID = function(entryID, options) {
     var username = UstadMobileUtils.defaultVal(options.user, "nobody");
-    return "com.ustadmobile.epub-ids-to-acquired-uri:" + username + ":" + containerID;
+    return "com.ustadmobile.entryid-to-acquired-fileuri:" + username + ":" + 
+        entryID;
+};
+
+UstadCatalogController._saveAcquiredEntryInfo = function(entryID, entryInfo, options) {
+    var storageKey = UstadCatalogController._getStorageKeyForAcquiredEntryID(
+        entryID, options);
+    localStorage.setItem(storageKey, JSON.stringify(entryInfo));
+};
+
+
+var UstadContainerController = function(appController) {
+    this.appController = appController;
+    
+    this.model = new UstadContainerModel(this);
+    this.view = UstadContainerView.makeView(this);
+};
+
+UstadContainerController.makeFromEntry = function(appController, opdsEntry, options) {
+    var entryInfo = UstadCatalogController.getAcquiredEntryInfoById(opdsEntry.id, 
+        options);
+    if(entryInfo === null) {
+        throw "ERROR: Entry no longer present";
+    }
+    
+    var newController = new UstadContainerController(appController);
+    newController.model.setEntry(opdsEntry);
+    newController.model.setFileURI(entryInfo.acquiredFileURI);
+    
+    return newController;
 };
 
 /**

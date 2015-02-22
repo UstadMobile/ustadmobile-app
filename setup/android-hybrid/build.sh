@@ -17,7 +17,7 @@ cd ustadmobileandroid
 ant clean $WHAT $2 
 cd ..
 
-
+adb shell am start -a android.intent.action.MAIN -n com.toughra.ustadmobile/.UstadMobileActivity
 
 
 

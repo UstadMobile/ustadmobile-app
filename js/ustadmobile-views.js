@@ -87,6 +87,72 @@ UstadMobileAppView.prototype = {
      */
     setMenuItems: function(menuItems) {
         
+    },
+    
+    /**
+     * Show a simple JQueryMobile alert popup on the current page
+     * 
+     * @param {string} title
+     * @param {string} content
+     * @returns {undefined}
+     */
+    showAlertPopup: function(title, textContent) {
+        var activePage = $(":mobile-pagecontainer").pagecontainer(
+            "getActivePage");
+        var pageAlertPopup = activePage.find(".umalertpopup");
+        if(pageAlertPopup.length < 1) {
+            pageAlertPopup = $("<div/>", {
+                "class" : "umalertpopup",
+                "data-role" : "popup",
+                "data-theme" : "b",
+                "data-dismissable" : false
+            });
+            
+            pageAlertPopup.append($("<div/>", {
+                "data-role" : "header",
+                "data-theme" : "b"
+            }));
+            
+            pageAlertPopup.append($("<div/>", {
+                "role" : "main",
+                "class" : "ui-content"
+            }));
+            
+            pageAlertPopup.children(".ui-content").append($("<div/>", {
+                "class" : "ui-title popupContentArea"
+            }));
+            
+            pageAlertPopup.children(".ui-content").append($("<a/>", {
+                href : "#",
+                "class" : "ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b",
+                "data-rel" : "back",
+                "data-transition" : "flow"
+            }));
+            pageAlertPopup.find("a.ui-btn[data-rel='back']").text("OK");
+            
+            activePage.append(pageAlertPopup.enhanceWithin());
+            
+            pageAlertPopup.popup({
+                dismissable: false,
+                theme : "b",
+                positionTo : "window",
+                overlayTheme : "b"
+            });
+        }
+        
+        pageAlertPopup.find("[data-role='header']").html("<h1>" + title + 
+            "</h1>");
+        pageAlertPopup.find(".popupContentArea").html(textContent);
+        console.log("show popup: " + title + " text " + textContent);
+        pageAlertPopup.one("popupafteropen", (function(evt, ui) {
+            clearInterval(this.popupOpenFallback);
+        }).bind(this));
+        
+        this.popupOpenFallback = setTimeout(function() {
+            $(":mobile-pagecontainer").pagecontainer("getActivePage").find(
+                ".umalertpopup").popup("open");
+        }, 750);
+        pageAlertPopup.popup("open");
     }
 };
 
@@ -98,12 +164,127 @@ UstadCatalogView.makeView = function(controller) {
     
 };
 
+UstadCatalogView.browserDefaultOpts = {
+    "defaulticon_acquisitionfeed": "img/default-acquire-icon.png",
+    "defaulticon_navigationfeed" : "img/default-navigation-icon.png"
+};
+
 UstadCatalogView.prototype.show = function() {
     this.controller.appController.view.setTitle("Catalog");
-    $.mobile.changePage("catalogview.html", { 
+    
+    var statusOpts = {};
+    var opdsBrowserOpts = {
+        "defaulticon_acquisitionfeed": UstadCatalogView.browserDefaultOpts.defaulticon_acquisitionfeed,
+        "defaulticon_navigationfeed" : UstadCatalogView.browserDefaultOpts.defaulticon_navigationfeed,
+        "acquisitionfeedselected" : 
+            this.controller.handleClickAcquisitionFeedEntry.bind(this.controller),
+        "acquisitionstatushandler" : (function(entryId){
+            return UstadCatalogController.getAcquisitionStatusByEntryId(entryId,
+                statusOpts);
+        }).bind(this)
+    };
+    
+    $( ":mobile-pagecontainer" ).one('pagecontainershow', (function(evt, ui){
+        var catalogContainer = ui.toPage.find(".um_catalog_container");
+        catalogContainer.empty();
+        for(var i = 0; i < this.controller.model.opdsFeeds.length; i++) {
+            var catalogEl = $("<div/>", {
+                "class" : "um_opdsbrowser_container",
+                "data-feed-id" : this.controller.model.opdsFeeds[i].id
+            });
+            
+            catalogContainer.append(catalogEl);
+            catalogEl.opdsbrowser(opdsBrowserOpts).opdsbrowser(
+                "setupnavigationfeedview", this.controller.model.opdsFeeds[i]);
+        }
+    }).bind(this));
+    
+    $( ":mobile-pagecontainer" ).pagecontainer("change", "catalogview.html", {
         changeHash: true,
         transition: "slide"
     });
+};
+
+/**
+ * Shows an acquisition feed - e.g. representing a course on UMCloud with a 
+ * number of entries in the course that link to containers that can be opened
+ * and viewed.
+ * 
+ * @param {UstadJSOPDSFeed} opdsObj the feed to show
+ */
+UstadCatalogView.prototype.showAcquisitionFeed = function(opdsObj) {
+    $( ":mobile-pagecontainer" ).one('pagecontainershow', (function(evt, ui){
+        var opdsBrowserOpts = {
+            "defaulticon_acquisitionfeed": 
+                UstadCatalogView.browserDefaultOpts.defaulticon_acquisitionfeed,
+            "defaulticon_navigationfeed" : 
+                UstadCatalogView.browserDefaultOpts.defaulticon_navigationfeed,
+            "containerentryselected" : 
+                this.controller.handleClickContainerEntry.bind(this.controller)
+        }
+        var containerEl = ui.toPage.find(".um_acquisitionfeed_container");
+        containerEl.opdsbrowser(opdsBrowserOpts);
+        containerEl.opdsbrowser("setupacquisitionfeedview", opdsObj);
+    }).bind(this));
+    
+    $( ":mobile-pagecontainer" ).pagecontainer("change", 
+        "catalogview_acquisitionfeed.html", {
+            changeHash: true,
+            transition: "slide"
+        });
+};
+
+UstadCatalogView.prototype.showConfirmAcquisitionDialog = function(title, text) {
+    $("#ustad_acquirecontent_popup .um_popup_header").text(title);
+    $("#ustad_acquirecontent_dialog_text").text(text);
+    $("#ustad_acquirecontent_popup").popup("open");
+    $("#ustad_acquirecontent_popup .ui-btn").off("click");
+    
+    $("#ustad_acquirecontent_popup_ok").on("click", 
+        this.controller.handleConfirmEntryAcquisition.bind(this.controller));
+    $("#ustad_acquirecontent_popup_cancel").on("click", 
+        this.hideConfirmAcquisitionDialog.bind(this));
+};
+
+UstadCatalogView.prototype.hideConfirmAcquisitionDialog = function() {
+    $("#ustad_acquirecontent_popup").popup("close");
+    $("#ustad_acquirecontent_popup .optionbutton").off("click");
+};
+
+UstadCatalogView.prototype.getCatalogWidgetByFeedId = function(feedId) {
+    return $(".um_opdsbrowser_container[data-feed-id='" + feedId + "']");
+};
+
+UstadCatalogView.prototype.setEntryStatus = function(feedId, entryId, status, options) {
+    var catalogWidgetEl = this.getCatalogWidgetByFeedId(feedId);
+    catalogWidgetEl.opdsbrowser("updateentrystatus", entryId, status, options);
+};
+
+UstadCatalogView.prototype.updateEntryProgress = function(feedId, entryId, options) {
+    var catalogWidgetEl = this.getCatalogWidgetByFeedId(feedId);
+    catalogWidgetEl.opdsbrowser("updateentryprogress", entryId, options);
+};
+
+var UstadContainerView = function(controller) {
+    this.controller = controller;
+    
+};
+
+/**
+ * Make the view - this method gets overriden by the respective view for the
+ * platform that loads
+ * 
+ * @param {UstadContainerController} controller - controller related to this view
+ * 
+ */
+UstadContainerView.makeView = function(controller) {
+    //this will be implemented by the underlying platform cordova or nodewebkit etc
+    return new UstadContainerView(controller);
+};
+
+UstadContainerView.prototype.show = function() {
+    alert("You want to look at :" + this.controller.model.entry.title  + 
+            "which is saved in " + this.controller.model.fileURI);
 };
 
 

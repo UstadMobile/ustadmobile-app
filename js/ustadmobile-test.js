@@ -194,16 +194,6 @@ function testAcquireEntries() {
         }).done(function(opdsStr) {
             var opdsFeedObj = UstadJSOPDSFeed.loadFromXML(opdsStr, 
                 acquireFeedURL);
-            var entryIds = [];
-            var acquireURLs = [];
-            for(var i = 0; i< opdsFeedObj.entries.length; i++) {
-                var urlToGet = UstadJS.resolveURL(testAssetsURL,
-                    opdsFeedObj.entries[i].getAcquisitionLinks(
-                    UstadJSOPDSEntry.LINK_ACQUIRE, 
-                    UstadJSOPDSEntry.TYPE_EPUBCONTAINER, true));
-                entryIds.push(opdsFeedObj.entries[i].id);
-                acquireURLs.push(urlToGet);
-            }
             
             var onProgCallCount = 0;
             var acquireOpts = {
@@ -213,7 +203,7 @@ function testAcquireEntries() {
                 }
             };
             
-            UstadCatalogController.acquireCatalogEntries(entryIds, acquireURLs,
+            UstadCatalogController.acquireCatalogEntries(opdsFeedObj.entries, [],
                 acquireOpts, function(result) {
                     assert.ok(result, "Hit success fn");
                     assert.ok(onProgCallCount > 0, "Progress event ran");
@@ -224,6 +214,23 @@ function testAcquireEntries() {
         });
         
     });
+    
+    QUnit.test("Can download entire acquisition feed", function(assert) {
+        assert.expect(1);
+        var downloadAllDoneFn = assert.async();
+        var navFeedURL = testAssetsURL + "nav.opds";
+        $.ajax(navFeedURL, {
+            dataType: "text"
+        }).done(function(opdsStr){
+            var opdsNavFeed = UstadJSOPDSFeed.loadFromXML(opdsStr, navFeedURL);
+            UstadCatalogController.downloadEntireAcquisitionFeed(
+                opdsNavFeed.entries[0], {}, function(dlResult) {
+                    assert.ok(dlResult, "Got a download result from feed");
+                    downloadAllDoneFn();
+                });
+        });  
+    });
+    
 }
 
 function testResumableDownloadList() {
