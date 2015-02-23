@@ -4,7 +4,7 @@
  Ustad Mobile Copyright (C) 2011-2015 UstadMobile, Inc
  
  Ustad Mobile is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
+ it under the terms of the GNU General Public License as published getAcquiredEntryInfoByIdby
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version with the following additional terms:
  
@@ -130,7 +130,7 @@ UstadMobileAppController.prototype = {
                 /*new UstadCatalogController(
                     UstadMobile.getInstance().appController).view.show();*/
                 UstadCatalogController.makeControllerByURL(
-                    "http://192.168.0.6:6821/shelf.opds",
+                    "http://192.168.48.100:6821/shelf.opds",
                     UstadMobile.getInstance().appController, {}, function(ctrl){
                         ctrl.view.show();
                     });
@@ -368,14 +368,44 @@ UstadCatalogController.downloadEntireAcquisitionFeed = function(src, options, su
         }
     ], function(resultInfo) {
         //when the whole feed has downloaded OK
+        //TODO: Fix me - this needs to be an opds object
+        /*
         var entryInfo = {
             status : $UstadJSOPDSBrowser.ACQUIRED,
             srcHrefs : [srcURL]
         };
-        UstadCatalogController._saveAcquiredEntryInfo(opdsSrc.id, entryInfo, 
+        */
+        var opdsEntryFeedId = opdsSrc.id + "-com.ustadmobile.diskentryfeed";
+        var opdsEntryFeedObj = new UstadJSOPDSFeed("Container Feed for" +
+            opdsSrc.id, opdsEntryFeedId);
+        var thisItem = new UstadJSOPDSEntry(null, opdsEntryFeedObj);
+        thisItem.setupEntry({
+            "id" : opdsSrc.id, 
+            "title" : opdsSrc.title ? opdsSrc.title : opdsSrc.id
+        });
+        
+        var localEntryHref = UstadCatalogController._getFileNameForOPDSFeedId(
+            opdsSrc.id, options)
+        thisItem.addLink(UstadJSOPDSEntry.LINK_ACQUIRE, localEntryHref,
+            UstadJSOPDSEntry.TYPE_ACQUISITIONFEED);
+                
+        UstadCatalogController._saveAcquiredEntryInfo(opdsSrc.id, opdsEntryFeedObj, 
             options);
         UstadMobileUtils.runCallback(successFn, [resultInfo], this);
-    }, failFn)
+    }, failFn);
+};
+
+/**
+ * 
+ * @returns {undefined}
+ */
+UstadCatalogController.deleteEntriesAcquiredFromFeedById = function(feedId, options, successFn, failFn) {
+    UstadMobileUtils.waterfall([
+        //get the catalog itself
+        function(successFnW, failFnW){
+            
+        }
+    ])
 };
 
 
@@ -589,13 +619,23 @@ UstadCatalogController.acquireCatalogEntries = function(entries, srcURLs, option
         UstadMobileUtils.runCallback(successFn, [[]], this);
     }
     
+    //Array of entry IDs to be downloaded
     var entryIDs = [];
+    
+    //The destination URIs to be written to
     var destURIs = [];
+    
+    //Array of the mime types acquired for each file
+    var mimeTypes = [];
+    
+    //Array of the OPDS objects that represent the acquired entries
+    var acquiredOpdsObjects = [];
+    
     options.opdsEntries = options.opdsEntries ? options.opdsEntries : [];
     
     if(entries[0] instanceof UstadJSOPDSEntry) {
         //setup from the entries themselves
-        var mimeTypes = options.acquiremimetypes ? options.acquiremimetypes : [UstadJSOPDSEntry.TYPE_EPUBCONTAINER];
+        var mimeTypesRequested = options.acquiremimetypes ? options.acquiremimetypes : [UstadJSOPDSEntry.TYPE_EPUBCONTAINER];
         options.opdsEntries = entries;
         
         
@@ -603,10 +643,11 @@ UstadCatalogController.acquireCatalogEntries = function(entries, srcURLs, option
             entryIDs.push(entries[i].id);
             var thisEntryHref = entries[i].getAcquisitionLinks(
                     UstadJSOPDSEntry.LINK_ACQUIRE, 
-                    mimeTypes[0], true);
+                    mimeTypesRequested[0], true);
             var thisEntrySrcURL = UstadJS.resolveURL(entries[i].parentFeed.href,
                 thisEntryHref);
             srcURLs.push(thisEntrySrcURL);
+            mimeTypes.push(mimeTypesRequested[0]);
         }
     }
     
@@ -639,40 +680,33 @@ UstadCatalogController.acquireCatalogEntries = function(entries, srcURLs, option
                 var thisFilename = UstadMobileUtils.getFilename(srcURLs[i]);
                 var containerFeedDestURI = UstadMobileUtils.joinPath([
                     UstadMobileUtils.getPath(destURIs[i]), 
-                    "." + thisFilename + ".container"
+                    "." + thisFilename + ".entry"
                 ]);
                 
                 var thisOPDSFeed = new UstadJSOPDSFeed("Container Feed for" +
-                    thisFilename, entryIDs[i] + "/com.ustadmobile.containerfeed");
+                    thisFilename, entryIDs[i] + "/com.ustadmobile.diskentryfeed");
                 var thisItem = new UstadJSOPDSEntry(null, thisOPDSFeed);
                 thisItem.setupEntry({
                     "id" : entryIDs[i], 
                     "title" : opdsEntryObj ? opdsEntryObj.title : thisFilename
                 });
+                thisItem.addLink(UstadJSOPDSEntry.LINK_ACQUIRE, thisFilename,
+                    mimeTypes[i]);
+                
                 containerFeedsToWrite.push([containerFeedDestURI, 
                     thisOPDSFeed.toString(), {}]);
+                
+                UstadCatalogController._saveAcquiredEntryInfo(entryIDs[i],
+                    thisOPDSFeed, options);
+                acquiredOpdsObjects.push(thisOPDSFeed);
             }
             
             UstadMobileUtils.asyncMap(
                 UstadMobile.getInstance().systemImpl.writeStringToFile,
                 containerFeedsToWrite, successFnW, failFnW);
         },function(writeResult, successFnW, failFnW) {
-            var containerResults = [];
-            for(var i = 0; i < entryIDs.length; i++) {
-                var containerInfo = {
-                    srcHrefs : [srcURLs[i]],
-                    acquiredFileURI : destURIs[i],
-                    status: $UstadJSOPDSBrowser.ACQUIRED
-                };
-                
-                debugger;
-                UstadCatalogController._saveAcquiredEntryInfo(entryIDs[i],
-                    containerInfo, options);
-                containerResults.push(containerInfo);
-            }
-            
-            UstadMobileUtils.runCallback(successFnW, [containerResults], 
-                successFnW);
+            UstadMobileUtils.runCallback(successFnW, [acquiredOpdsObjects], 
+                this);
         }
     ], successFn, failFn);
 };
@@ -696,35 +730,47 @@ UstadCatalogController.getAcquiredContainerURIByEntryId = function(entryId, opti
  * a container (e.g. epub file etc) or an acquisition feed.  Returns null if the
  * item is not acquired
  * 
- * Returns
- * { acquiredFileURI : '/path/to/file.epub', srcHrefs: [href1, href2], status : STATUSFLAG}
- * 
  * STATUSFLAG is according to $UstadJSOPDSBrowser.STATUS flags e.g. "acquired" etc.
  * 
  * @param {string} entryId The entryID to lookup
  * @param {Object} options standard options including username of the current user
- * @returns {Object}
+ * 
+ * @returns {UstadJSOPDSFeed} A feed object with one entry and one link in the 
+ * entry (providing the filename in the href, mime type in type, and relationship
  */
 UstadCatalogController.getAcquiredEntryInfoById = function(entryId, options) {
     var storageKey = UstadCatalogController._getStorageKeyForAcquiredEntryID(entryId, options);
     var result = localStorage.getItem(storageKey);
     if(result) {
-        return JSON.parse(result);
+        var opdsFeed = UstadJSOPDSFeed.loadFromXML(result, "localstorage/" + 
+            entryId);
+        return opdsFeed;
     }else {
         return null;
     }
 };
 
+UstadCatalogController.getAcquiredLinkById = function(entryId, options) {
+    
+};
+
 UstadCatalogController.getAcquisitionStatusByEntryId = function(entryId, options) {
-    var entryObj = UstadCatalogController.getAcquiredEntryInfoById(entryId,
-        options);
-    if(entryObj) {
-        return entryObj.status;
+    var storageKey = UstadCatalogController._getStorageKeyForAcquiredEntryID(entryId, options);
+    if(localStorage.getItem(storageKey)) {
+        return $UstadJSOPDSBrowser.ACQUIRED;
     }else {
         return $UstadJSOPDSBrowser.NOT_ACQUIRED;
     }
 };
 
+/**
+ * The prefix that is used on local storage for mapping acquired
+ * entries to their container
+ * 
+ * @type String
+ */
+UstadCatalogController.PREFIX_STORAGE_ENTRYID_TO_FILEURI = 
+    "com.ustadmobile.entryid-to-opds-info";
 
 /**
  * Gets the local storage key to find info about a container that has been
@@ -732,8 +778,8 @@ UstadCatalogController.getAcquisitionStatusByEntryId = function(entryId, options
  * 
  * Maps in the form of
  * 
- * entryid-to-acquired-fileuri:userid:entryID ->
- *  { acquiredFileURI : '/path/to/file.epub', srcHrefs: [href1, href2], status : STATUSFLAG}
+ * entryid-to-acquired-fileuri:userid:entryID -> OPDS acquisition feed with one entry
+ *  
  * 
  * ContainerID is the ID from the OPDS entry feed AND should be the same ID
  * used in the ID element of the manifest
@@ -746,16 +792,51 @@ UstadCatalogController.getAcquisitionStatusByEntryId = function(entryId, options
  */
 UstadCatalogController._getStorageKeyForAcquiredEntryID = function(entryID, options) {
     var username = UstadMobileUtils.defaultVal(options.user, "nobody");
-    return "com.ustadmobile.entryid-to-acquired-fileuri:" + username + ":" + 
-        entryID;
+    return UstadCatalogController.PREFIX_STORAGE_ENTRYID_TO_FILEURI +
+        ":" + username + ":" + entryID;
 };
 
-UstadCatalogController._saveAcquiredEntryInfo = function(entryID, entryInfo, options) {
+/**
+ * Saves information about the entry that has just been acquired to the disk
+ * to localStorage to track which entries have/have not been acquired
+ * 
+ * @param {string} entryID the EntryID that has been acquired
+ * @param {UstadJSOPDSFeed} entryInfo a OPDS Feed object (acquisition feed)
+ * that has exactly one link - acquired entry itself
+ * @param {Object} options misc options
+ * 
+ */
+UstadCatalogController._saveAcquiredEntryInfo = function(entryID, opdsObj, options) {
     var storageKey = UstadCatalogController._getStorageKeyForAcquiredEntryID(
         entryID, options);
-    localStorage.setItem(storageKey, JSON.stringify(entryInfo));
+    localStorage.setItem(storageKey, opdsObj.toString());
 };
 
+/**
+ * Get an Array of entry ids (as strings)
+ * 
+ * @param {type} options
+ * @returns {Object} Object with a property for 
+ */
+UstadCatalogController.getEntriesByAcquisitionStatus = function(acquisitionStatus, options) {
+    var retVal = [];
+    var username = UstadMobileUtils.defaultVal(options.user) ? options.user : 
+        "nobody";
+    var prefix = UstadCatalogController.PREFIX_STORAGE_ENTRYID_TO_FILEURI  + 
+        ":" + username;
+    for(var i = 0; i < localStorage.length; i++) {
+        var key = localStorage.key(i);
+        if(key.substring(0, prefix.length) === prefix) {
+            var entryStatusObj = JSON.parse(localStorage.getItem(
+                localStorage.key(i)));
+            if(entryStatusObj.status === acquisitionStatus) {
+                retVal.push(entryStatusObj);
+            }
+        }
+    }
+    
+    return retVal;
+};
 
 var UstadContainerController = function(appController) {
     this.appController = appController;
@@ -765,15 +846,21 @@ var UstadContainerController = function(appController) {
 };
 
 UstadContainerController.makeFromEntry = function(appController, opdsEntry, options) {
-    var entryInfo = UstadCatalogController.getAcquiredEntryInfoById(opdsEntry.id, 
+    var entryOPDSFeed = UstadCatalogController.getAcquiredEntryInfoById(opdsEntry.id, 
         options);
-    if(entryInfo === null) {
+    if(entryOPDSFeed === null) {
         throw "ERROR: Entry no longer present";
     }
     
     var newController = new UstadContainerController(appController);
     newController.model.setEntry(opdsEntry);
-    newController.model.setFileURI(entryInfo.acquiredFileURI);
+    
+    //getAcquiredEntryInfoById will always have exactly 1 entry with one acquire link
+    var entryLink = entryOPDSFeed.entries[0].getLinks(UstadJSOPDSEntry.LINK_ACQUIRE,
+        null, {linkRelByPrefix : true})[0];
+    var entryFileURI = entryLink.href;
+    
+    newController.model.setFileURI(entryFileURI);
     
     return newController;
 };
