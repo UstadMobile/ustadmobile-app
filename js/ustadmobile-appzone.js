@@ -101,6 +101,16 @@ UstadMobileAppZone.STORAGE_PREFIX_COURSEINFO = "ustad_courseinfo.";
  */
 UstadMobileAppZone.STORAGE_PREFIX_COURSEINFOTIME = "ustad_courseinfo_time.";
 
+/**
+ * Authentication with HTTP basic authentication (the only one currently supported)
+ * 
+ * @type number
+ */
+UstadMobileAppZone.AUTHMECH_HTTPBASIC = 0;
+
+UstadMobileAppZone.OPDS_URL = 
+    "http://umcloud1.ustadmobile.com/opds/assigned_courses";
+
 UstadMobileAppZone.prototype = {
     
     /**
@@ -221,33 +231,6 @@ UstadMobileAppZone.prototype = {
         return "http://umcloud1.ustadmobile.com/";
     },
     
-    /**
-     * Load the JSON information about a given course from the server
-     * 
-     * @param String username 
-     * @param String password
-     * @param String courseid the TINCAN ID of the course to list out
-     * @param String httpURL HTTP url send post request to
-     * @param function callback function to run when done
-     * 
-     */
-    loadCourseInfo: function(username, password, courseid, httpURL, callback) {
-        $.ajax({
-            method : "POST",
-            url : httpURL,
-            dataType : "json",
-            data: {
-                "username" : username,
-                "password" : password,
-                "courseid" : encodeURIComponent(courseid)
-            }
-        }).done(function(data){
-            UstadMobileUtils.runCallback(callback, [data, null], this);
-        }).fail(function(jqXHR, textStatus){
-            console.log("REQUEST FAIL: "  + jqXHR.responseText);
-            UstadMobileUtils.runCallback(callback, [null, textStatus], this);
-        });
-    },
     
     /**
      * Make the HTML that will show the courses assigned to this user
@@ -372,11 +355,45 @@ UstadMobileAppZone.prototype = {
     /**
      * Get the current LRS username
      * 
+     * @deprecated 
      * @returns String current cloud user
      * @method
      */
     getCurrentUsername: function() {
         return localStorage.getItem("username");
+    },
+    
+    /**
+     * Provide the current username
+     * 
+     * @returns {string}
+     */
+    getUsername: function() {
+        return localStorage.getItem("username");
+    },
+    
+    /**
+     * Provide the present authentication mechanism - currently only 
+     * http basic auth
+     * 
+     * @returns {Number}
+     */
+    getAuthMech: function() {
+        return UstadMobileAppZone.AUTHMECH_HTTPBASIC;
+    },
+    
+    getFirstOPDSURL: function() {
+        return UstadMobileAppZone.OPDS_URL;
+    },
+    
+    /**
+     * Return the current authentication credentials to be used for sending 
+     * xAPI statements etc.
+     * 
+     * @returns {DOMString}
+     */
+    getAuthCredentials: function() {
+        return localStorage.getItem("password");
     },
     
     /**

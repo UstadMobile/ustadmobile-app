@@ -1458,6 +1458,27 @@ UstadMobileUtils.getFilename = function(path, seperator) {
 };
 
 /**
+ * Use to remove trailing slash when needed - will remove as many trailing
+ * slashes as occur at the end of a path
+ * 
+ * e.g. /file/dir/ -> /file/dir and /file/somedir/// to /file/somedir
+ * 
+ * @param {string} path
+ * @param {string} [seperator=/] the seperator - must be of length 1
+ * 
+ * @returns the path with any trailing seperators removed
+ */
+UstadMobileUtils.removeTrailingSeperators = function(path, seperator) {
+    var sepChar = UstadMobileUtils.getSeperator(seperator);
+    var retVal = path;
+    while(retVal.charAt(retVal.length-1) === sepChar) {
+        retVal = retVal.substring(0, retVal.length-1);
+    }
+    
+    return retVal;
+};
+
+/**
  * Get everything except the last part of the path
  */
 UstadMobileUtils.getPath = function(completePath, seperator) {
@@ -1847,6 +1868,45 @@ UstadMobileAppImplementation.prototype = {
         }
         
         return blobResult;
+    },
+    
+    /**
+     * Make a new directory
+     * 
+     * @abstract
+     * @param {string} dirURI file URI for the directory to be made
+     * @param {Object} options
+     * @param {function} successFn callback when completed successfully
+     * @param {function} failFn callback when failed
+     */
+    makeDirectory: function(dirURI, options, successFn, failFn) {
+        
+    },
+    
+    /**
+     * Remove the directory and it's contents recursively
+     * 
+     * @param {string} dirURI Directory to remove
+     * @param {Object} options
+     * @param {function} successFn success callback with no arguments provided
+     * @param {function} failFn error callback given the error that occurred
+     */
+    removeRecursively: function(dirURI, options, successFn, failFn) {
+        
+    },
+    
+    /**
+     * Unzips a given zip file to a given directory
+     * 
+     * @param {string|FileEntry} zipSrc source zip file
+     * @param {string|DirectoryEntry} destDir directory to unzip into
+     * @param {Object} options
+     * @param {function} [options.onprogress] progress event handler
+     * @param {function} successFn success callback that takes destDirEntry arg
+     * @param {function} failFn failure callback
+     */
+    unzipFile: function(zipSrc, destDir, options, successFn, failFn) {
+        
     }
     
 };
@@ -2204,9 +2264,6 @@ UstadMobileResumableDownloadList.prototype._handleProgress = function(evt) {
         loaded: loadedSize,
         total: this.totalSize
     };
-    
-    console.log("Download list : progress : " + loadedSize / + 
-        this.totalSize);
     
     if(this.onprogress) {
         this.onprogress(progressEvt);

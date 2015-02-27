@@ -93,8 +93,15 @@ var UstadContainerModel = function(controller) {
     
     /**
      * The URI of this container on the local filesystem
+     * @type {string}
      */
     this.fileURI = null;
+    
+    /** 
+     * The mime type of this container
+     * @type {string}
+     */
+    this.mimeType = null;
     
     this.view = UstadContainerView.makeView();
 };
@@ -107,4 +114,7 @@ UstadContainerModel.prototype.setFileURI = function(fileURI) {
     this.fileURI = fileURI;
 };
 
+UstadContainerModel.prototype.setMimeType = function(mimeType) {
+    this.mimeType = mimeType;
+};
 

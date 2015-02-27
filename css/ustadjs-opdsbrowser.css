@@ -51,3 +51,7 @@
     float: left;
     margin: 3px;
 }
+
+.umjs_opdsbrowser_containerentry_element {
+    border-bottom: 2px solid lightgray;
+}

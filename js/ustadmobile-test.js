@@ -182,7 +182,29 @@ var containerChangeFn = function() {
     testAsyncUtilEdgeCases();
     
     testAcquireEntries();
+    
+    testUstadMobileUtils();
+    
+    testDirCreationAndRemoval();
+    
+    testUnzip();
 }());
+
+function testUstadMobileUtils() {
+    QUnit.test("Test util functions behave as expected", function(assert) {
+        assert.expect(3);
+        assert.equal(UstadMobileUtils.removeTrailingSeperators("/some/path"),
+            "/some/path", "Path comes back the same with no trailing");
+        assert.equal(UstadMobileUtils.removeTrailingSeperators("/some/path/"),
+            "/some/path", "Path comes back without trailing one trailing /");
+        assert.equal(UstadMobileUtils.removeTrailingSeperators("/some/path///"),
+            "/some/path", "Path comes back without multiple trailing /");
+    });
+}
+
+function testErrFn(err, err1) {
+    console.log("Fail Fn: " + err  + " : " + err1);
+}
 
 function testAcquireEntries() {
     QUnit.test("Acquire entries from a catalog", function(assert) {
@@ -529,6 +551,139 @@ function testAppImplDownload() {
                 UstadMobile.getInstance().systemImpl.removeFileIfExists(uriDest,
                     invalidTestDone);
             });
+    });
+    
+}
+
+function testDirCreationAndRemoval() {
+    QUnit.test("Test create new directory", function(assert) {
+        var makeDirDoneFn = assert.async();
+        assert.expect(1);
+       
+        var dirPath = UstadMobileUtils.joinPath([
+            UstadMobile.getInstance().contentDirURI,
+            "tmptest"]);
+        var mkDirOpts = {};
+       
+        UstadMobileUtils.waterfall([
+            function(successFnW, failFnW) {
+                UstadMobile.getInstance().systemImpl.makeDirectory(dirPath, 
+                    mkDirOpts, successFnW);
+            },function(newDirEntry, successFnW, failFnW) {
+                UstadMobile.getInstance().systemImpl.fileExists(dirPath, 
+                    successFnW, failFnW);
+            },function(newDirExists, successFnW, failFnW) {
+                assert.equal(newDirExists, true, "Newly created dir exists");
+                UstadMobileUtils.runCallback(successFnW, [], this);
+            }
+        ], makeDirDoneFn);
+       
+    });
+    
+    QUnit.test("Test recursive removal", function(assert) {
+        var recursiveRmDone = assert.async();
+        
+        var dirPath = UstadMobileUtils.joinPath([
+            UstadMobile.getInstance().contentDirURI,
+            "tmptest"]);
+        
+        var contentTxtURI = UstadMobileUtils.joinPath([
+            UstadMobile.getInstance().contentDirURI, "tmptest", "readme.txt"
+        ]);
+        
+        UstadMobileUtils.waterfall([
+            function(successFnW, failFnW) {
+                UstadMobile.getInstance().systemImpl.writeStringToFile(contentTxtURI,
+                    "Hello World", {}, successFnW, failFnW);
+            }, function(writeResult, successFnW, failFnW) {
+                UstadMobile.getInstance().systemImpl.removeRecursively(dirPath,
+                    {}, successFnW, failFnW);
+            }, function(successFnW, failFnW) {
+                UstadMobile.getInstance().systemImpl.fileExists(dirPath, 
+                    successFnW, failFnW);
+            }, function(fileExists, successFnW, failFnW) {
+                assert.equal(fileExists, false, "Dir removed recursively");
+                UstadMobileUtils.runCallback(successFnW, [], this);
+            }
+        ], recursiveRmDone);
+    });
+}
+
+function testUnzip() {
+    QUnit.test("Download and unzip something", function(assert) {
+        var unzipDoneFn = assert.async();
+        assert.expect(1);
+        var zipFileURL = testAssetsURL + "validzip.zip";
+        var destDirURI = UstadMobileUtils.joinPath([
+            UstadMobile.getInstance().contentDirURI,
+            "unziptest"
+        ]);
+        var zipFileURI = UstadMobileUtils.joinPath([destDirURI, "validzip.zip"]);
+        
+        
+        UstadMobileUtils.waterfall([
+            function(successFnW, failFnW) {
+                UstadMobile.getInstance().systemImpl.makeDirectory(destDirURI,
+                    {}, successFnW, failFnW);
+            },function(createResult, successFnW, failFnW) {
+                UstadMobile.getInstance().systemImpl.downloadUrlToFileURI(
+                    zipFileURL, zipFileURI, {}, successFnW, failFnW);
+            },function(downloadedEntry, successFnW, failFnW) {
+                var unzipOpts = {
+                    onprogress: function(progEvt) {
+                        console.log("unzip " + progEvt.loaded + "/" + progEvt.total);
+                    }
+                };
+                UstadMobile.getInstance().systemImpl.unzipFile(zipFileURI,
+                    destDirURI, unzipOpts, successFnW, failFnW);
+            },function(unzippedDir, successFnW, failFnW) {
+                var unzippedFileURI = UstadMobileUtils.joinPath([
+                    destDirURI, "acquire.opds"
+                ]);
+                UstadMobile.getInstance().systemImpl.fileExists(unzippedFileURI, 
+                    successFnW, failFnW);
+            },function(fileExists, successFnW, failFnW) {
+                assert.ok(fileExists === true, "Unzipped file exists");
+                UstadMobile.getInstance().systemImpl.removeRecursively(
+                    destDirURI, {}, successFnW, failFnW);
+            }
+        ], unzipDoneFn, testErrFn);
+    });
+    
+    QUnit.test("Download attempt to unzip invalid file: must fail", function(assert) {
+        var unzipDoneFn = assert.async();
+        assert.expect(1);
+        var zipFileURL = testAssetsURL + "invalidzip.zip";
+        var destDirURI = UstadMobileUtils.joinPath([
+            UstadMobile.getInstance().contentDirURI,
+            "unziptest"
+        ]);
+        var zipFileURI = UstadMobileUtils.joinPath([destDirURI, "invalidzip.zip"]);
+        
+        
+        UstadMobileUtils.waterfall([
+            function(successFnW, failFnW) {
+                UstadMobile.getInstance().systemImpl.makeDirectory(destDirURI,
+                    {}, successFnW, failFnW);
+            },function(createResult, successFnW, failFnW) {
+                UstadMobile.getInstance().systemImpl.downloadUrlToFileURI(
+                    zipFileURL, zipFileURI, {}, successFnW, failFnW);
+            },function(downloadedEntry, successFnW, failFnW) {
+                var unzipOpts = {
+                    onprogress: function(progEvt) {
+                        console.log("unzip " + progEvt.loaded + "/" + progEvt.total);
+                    }
+                };
+                
+                //swap the success and error function - this function SHOULD fail
+                UstadMobile.getInstance().systemImpl.unzipFile(zipFileURI,
+                    destDirURI, unzipOpts, failFnW, successFnW);
+            },function(errResult, successFnW, failFnW) {
+                assert.ok(true, "Fail callback hit with invalid zip file");
+                UstadMobile.getInstance().systemImpl.removeRecursively(
+                    destDirURI, {}, successFnW, failFnW);
+            }
+        ], unzipDoneFn, testErrFn);
     });
     
 }

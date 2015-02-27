@@ -166,13 +166,16 @@ UstadCatalogView.makeView = function(controller) {
 
 UstadCatalogView.browserDefaultOpts = {
     "defaulticon_acquisitionfeed": "img/default-acquire-icon.png",
-    "defaulticon_navigationfeed" : "img/default-navigation-icon.png"
+    "defaulticon_navigationfeed" : "img/default-navigation-icon.png",
+    "defaulticon_containerelement" : "img/default-acquire-icon.png"
 };
 
 UstadCatalogView.prototype.show = function() {
     this.controller.appController.view.setTitle("Catalog");
     
     var statusOpts = {};
+    statusOpts = UstadCatalogController._addCurrentUserToOpts(statusOpts);
+    
     var opdsBrowserOpts = {
         "defaulticon_acquisitionfeed": UstadCatalogView.browserDefaultOpts.defaulticon_acquisitionfeed,
         "defaulticon_navigationfeed" : UstadCatalogView.browserDefaultOpts.defaulticon_navigationfeed,
@@ -219,6 +222,8 @@ UstadCatalogView.prototype.showAcquisitionFeed = function(opdsObj) {
                 UstadCatalogView.browserDefaultOpts.defaulticon_acquisitionfeed,
             "defaulticon_navigationfeed" : 
                 UstadCatalogView.browserDefaultOpts.defaulticon_navigationfeed,
+            "defaulticon_containerelement" : 
+                UstadCatalogView.browserDefaultOpts.defaulticon_containerelement,
             "containerentryselected" : 
                 this.controller.handleClickContainerEntry.bind(this.controller)
         }

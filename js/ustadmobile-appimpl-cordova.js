@@ -461,7 +461,12 @@ UstadMobileAppImplCordova.prototype.cacheEpubsInDir = function(dirPath, callback
                             }else {
                                 callback();
                             }
-                        });
+                        });UstadMobileUtils.waterfall([
+            
+        ])
+        zip.unzip(epubFileEntry.toURL(), cacheDirEntry.toURL(), function(val) {
+                    UstadMobileUtils.runCallback(callback, [cacheDirEntry], this);
+        });
                 };
                 
                 if(epubEntries.length > 0) {
@@ -919,6 +924,63 @@ UstadMobileAppImplCordova.prototype.ensureIsFileEntry= function(fileObj, options
         UstadMobileUtils.runCallback(successFn, [fileObj], this);
     }
 };
+
+UstadMobileAppImplCordova.prototype.makeDirectory = function(dirURI, options, successFn, failFn) {
+    var parentDirURI = UstadMobileUtils.getURLParent(dirURI);
+    var newDirName = UstadMobileUtils.getFilename(dirURI);
+    UstadMobileUtils.waterfall([
+        function(successFnW, failFnW) {
+            UstadMobileAppImplCordova.getInstance().ensureIsFileEntry(
+                parentDirURI, options, successFnW, failFnW);
+        },function(parentDirEntry, successFnW, failFnW) {
+            parentDirEntry.getDirectory(newDirName, { "create" : true}, 
+                successFnW, failFnW);
+        }
+    ], successFn, failFn)
+};
+
+UstadMobileAppImplCordova.prototype.removeRecursively = function(dirURI, options, successFn, failFn) {
+    UstadMobileUtils.waterfall([
+        function(successFnW, failFnW) {
+            UstadMobileAppImplCordova.getInstance().ensureIsFileEntry(dirURI, {},
+                successFnW, failFnW);
+        },function(dirEntry, successFnW, failFnW) {
+            dirEntry.removeRecursively(successFnW, failFnW);
+        }, function(arg0, arg1, arg2) {
+            //for some reason we normally get an "OK" instead of no argument here
+            var fn2Run = (typeof arg0 === "function") ? arg0 : arg1;
+            UstadMobileUtils.runCallback(fn2Run, [], this);
+        }
+    ], successFn, failFn);
+};
+
+UstadMobileAppImplCordova.prototype.unzipFile = function(zipSrc, destDir, options, successFn, failFn) {
+    var srcEntry = null;
+    var destEntry = null;
+    var progressFn = options.onprogress ? options.onprogress : function() {};
+    
+    UstadMobileUtils.waterfall([
+        function(successFnW, failFnW) {
+            UstadMobileAppImplCordova.getInstance().ensureIsFileEntry(zipSrc, {},
+                successFnW, failFnW);
+        },function(srcEntryArg, successFnW, failFnW) {
+            srcEntry = srcEntryArg;
+            UstadMobileAppImplCordova.getInstance().ensureIsFileEntry(destDir, {},
+                successFnW, failFnW);
+        },function(destEntryArg, successFnW, failFnW) {
+            destEntry = destEntryArg;
+            zip.unzip(srcEntry.toURL(), destEntry.toURL(), successFnW, 
+                progressFn);
+        },function(resultVal, successFnW, failFnW) {
+            if(resultVal === 0) {
+                UstadMobileUtils.runCallback(successFnW, [destEntry], this);
+            }else {
+                //something went wrong
+                UstadMobileUtils.runCallback(failFnW, [resultVal], this);
+            }
+        }
+    ], successFn, failFn);
+}
 
 //Set the implementation accordingly on UstadMobile object
 UstadMobile.getInstance().systemImpl = 
