@@ -114,7 +114,15 @@ UstadContainerModel.prototype.setFileURI = function(fileURI) {
     this.fileURI = fileURI;
 };
 
+UstadContainerModel.prototype.getFileURI = function() {
+    return this.fileURI;
+};
+
 UstadContainerModel.prototype.setMimeType = function(mimeType) {
     this.mimeType = mimeType;
+};
+
+UstadContainerModel.prototype.getMimeType = function() {
+    return this.mimeType;
 };
 

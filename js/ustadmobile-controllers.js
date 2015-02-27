@@ -259,7 +259,13 @@ UstadCatalogController.prototype.handleClickContainerEntry = function(evt, data)
     UstadCatalogController._addCurrentUserToOpts(opts);
     var containerController = UstadContainerController.makeFromEntry(this.appController,
         entry, opts);
-    containerController.view.show();
+    var initOpts = {};
+    containerController.init(initOpts, function(val) {
+        containerController.view.show();
+    }, function(err) {
+        UstadMobile.getInstance().appController.view.showAlertPopup("Error",
+                "Sorry: something went wrong trying to open that. " + err);
+    });
 };
 
 
@@ -910,6 +916,13 @@ var UstadContainerController = function(appController) {
     
     this.model = new UstadContainerModel(this);
     this.view = UstadContainerView.makeView(this);
+    
+    /**
+     * Temporary files that may be used (eg. unzipped epub contents)
+     * 
+     * @type {string}
+     */
+    this.tempDir = null;
 };
 
 UstadContainerController.makeFromEntry = function(appController, opdsEntry, options) {
@@ -937,13 +950,41 @@ UstadContainerController.makeFromEntry = function(appController, opdsEntry, opti
  * Initialize this container so that it's ready for viewing - this might be
  * needed for different filetypes (e.g. unzip an zip based container format)
  * 
+ * @param {Object} options
+ * @param {function} options.onprogress progress event handler 
  * @param {type} successFn
  * @param {type} failFn
  * @returns {undefined}
  */
-UstadContainerController.prototype.init = function(successFn, failFn) {
+UstadContainerController.prototype.init = function(options, successFn, failFn) {
     if(this.model.getMimeType() === UstadJSOPDSEntry.TYPE_EPUBCONTAINER) {
         //we need to unzip to a directory so this is ready to serve
+        var thisFilename = UstadMobileUtils.getFilename(this.model.getFileURI());
+        
+        //TODO: this really should get base HREF from the opds feed etc.
+        var epubURI = UstadMobileUtils.joinPath([
+            UstadMobile.getInstance().contentDirURI, thisFilename]);
+        
+        var cacheDirName = thisFilename + "_cache";
+        
+        var cacheDirURI = UstadMobileUtils.joinPath([
+            UstadMobile.getInstance().contentDirURI, cacheDirName]);
+        var unzipOpts = {};
+        if(options.onprogress) {
+            unzipOpts.onprogress = options.onprogress;
+        }
+        
+        UstadMobileUtils.waterfall([
+            function(successFnW, failFnW) {
+                UstadMobile.getInstance().systemImpl.makeDirectory(cacheDirURI,
+                    {}, successFnW, failFnW);
+            }, function(dirMade, successFnW, failFnW) {
+                UstadMobile.getInstance().systemImpl.unzipFile(epubURI, 
+                    cacheDirURI, unzipOpts, successFnW, failFnW);
+            } 
+        ], successFn, failFn);
+    }else {
+        UstadMobileUtils.runCallback(successFn, [], this);
     }
 };
 
