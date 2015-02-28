@@ -143,16 +143,16 @@ UstadMobileAppZone.prototype = {
     
     init: function() {
         UstadMobile.getInstance().runWhenImplementationReady(function() {
-            UstadMobile.getInstance().appController = 
-                        new UstadMobileAppController();
-            UstadMobile.getInstance().appController.init();
-            
-            var systemImpl = UstadMobile.getInstance().systemImpl;
-            systemImpl.startHTTPServer();
-            UstadMobile.getInstance().displayUsername();
-            
-            //UstadMobile.getInstance().systemImpl.getSystemLang(function(lang){
-            //});
+            UstadMobile.getInstance().runAfterPathsCreated(function() {
+                var contentDirURI = UstadMobile.getInstance().contentDirURI;
+                UstadMobile.getInstance().appController = 
+                            new UstadMobileAppController();
+                UstadMobile.getInstance().appController.init();
+
+                var systemImpl = UstadMobile.getInstance().systemImpl;
+                systemImpl.startHTTPServer();
+                UstadMobile.getInstance().displayUsername();
+            });
         });
         
         this.tincanQueueTransmitInterval = setInterval(function() {

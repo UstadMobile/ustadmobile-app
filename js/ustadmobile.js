@@ -1532,7 +1532,7 @@ UstadMobileUtils.joinPath = function(pathArr, seperator) {
     seperator = UstadMobileUtils.getSeperator(seperator);
     
     if(pathArr.length === 1) {
-        return pathArr[1];
+        return pathArr[0];
     }
     
     var retVal = pathArr[0];
@@ -1550,11 +1550,11 @@ UstadMobileUtils.joinPath = function(pathArr, seperator) {
     }
     
     return retVal;
-}
+};
 
 UstadMobileUtils.debugLog = function(msg) {
     console.log(msg);
-}
+};
 
 /**
  * Format an ISO8601 duration for the given number of milliseconds difference
@@ -2322,78 +2322,6 @@ function setupClozeWidth() {
     $(".ClozeIdevice input[type=text]").css("width", "");
 }
 
-/*
-$(function() {
-    $(document).on("pagebeforecreate", function(event, ui) { //pageinit gets triggered when app start.
-        console.log("In pagebeforecreate");
-        if(typeof(onLanguageDeviceReady) == "function" ){
-            onLanguageDeviceReady();
-        }else{ // meaning it is in Content..
-            callOnLanguageDeviceReady();
-        }
-    });
-});
-*/
-
-/*
-    On Pagechange, the logic for touch, swipe and scroll events are executed.
-*/
-
-/*
-$(document).on("pagechange", function(event){
-    setupClozeWidth();
-    $('.ui-page-active').swipe( {   //On the active page..
-
-    //Generic swipe handler for all directions
-        //swipe handler to check swipe event.
-        swipe:function(event, direction, distance, duration, fingerCount){
-                console.log("You swiped " + direction + " for " + distance + "px");
-          },
-            
-        //Swipe handler to handle page changes.
-        swipeStatus:function(event, phase, direction, distance, duration) {
-                //event.stopPropagation();
-                //event.preventDefault();
-            if(duration < 1500 && distance > 100 && phase == "end"){
-                if(direction=="left"){       
-                    exeNextPageOpen();
-                    console.log("Registered direction left.");
-                }else if(direction =="right"){
-                    exePreviousPageOpen();
-                }
-            }else if(scrollEnabled == 1 && phase == "move"){
-                if(direction == "up"){
-                    window.scrollBy(0,20);
-                }else if(direction == "down"){
-                    window.scrollBy(0, -20);
-                }               
-            }
-        },
-
-        //Default is 75px, set to 200 in Ustad Mobile to reduce error reproduction.
-         threshold:200,
-      }); 
-
-	//console.log("THE CONTENT_MODELS IS: " + CONTENT_MODELS);
-         if(typeof CONTENT_MODELS !== 'undefined' && CONTENT_MODELS == "test"){
- 	       console.log("Test mode and current page done.");
-       		//exeNextPageOpen();
-        	var nextPageHREF = $(".ui-page-active #exeNextPage").attr("href");
-        	nextPageHREF = $.trim(nextPageHREF);
-        	if (nextPageHREF != null && nextPageHREF !="#" ){
-                	console.log("on pagechange: Next Page exists: " + nextPageHREF);
-                	exeNextPageOpen();
-        	}else{
-			console.log("No more pages to go to.");
-			if(changePageFlag == false ){
-			runcallback(testContentCallback, "checkContentPageLoad success");
-			}
-			changePageFlag = false;
-		}
-    	}
-
-});
-*/
 
 /*
  Localization function - will return original English if not in JSON

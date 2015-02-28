@@ -171,6 +171,7 @@ public class UstadMobileActivity extends FragmentActivity implements CordovaInte
         //1 is the default number of pages to keep offscreen
         // see http://developer.android.com/reference/android/support/v4/view/ViewPager.html#setOffscreenPageLimit%28int%29
         viewPager.setOffscreenPageLimit(1);
+        viewPager.setCurrentItem(1);
         
         mainLinearLayout.removeView(cordova_webview);
         

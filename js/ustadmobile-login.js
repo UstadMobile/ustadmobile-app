@@ -129,7 +129,7 @@ UstadMobileLogin.prototype = {
             function(statusCode, pass) {
                 $.mobile.loading('hide');
                 if(statusCode === 200) {
-                    UstadMobile.getInstance().goPage(UstadMobile.PAGE_BOOKLIST);
+                    UstadCatalogController.setupUserCatalog({show: true});
                 }else {
                     //change this alert
                     $("#ustad_loginerrortext").text(
@@ -232,17 +232,7 @@ UstadMobileLogin.prototype = {
         }, this));
     },
    
-    /**
-     * Checks if user logged in from earlier and re directs to book list.
-     * @method checkLoggedIn
-     */
-    checkLoggedIn: function() {
-        console.log("Username stored before: " + localStorage.getItem('username'));
-        if (localStorage.getItem('username')) {
-           UstadMobileLogin.getInstance().openPage("ustadmobile_booklist.html");
-        }
-   },
-   
+
    /**
      * Skips if user doesn't want to log in but still access Books.
      * @method umSkip
@@ -263,14 +253,3 @@ UstadMobileLogin.prototype = {
        $.mobile.changePage(openFile);
    }
 };
-
-UstadMobile.getInstance().runWhenInitDone(function() {
-    var pageId = $( ":mobile-pagecontainer" ).pagecontainer(
-            "getActivePage").attr("id");
-    
-    if(pageId === "ustad_loginpage") {
-        UstadMobile.getInstance().runWhenImplementationReady(function() {
-            UstadMobileLogin.getInstance().checkLoggedIn();
-        });
-    }
-});

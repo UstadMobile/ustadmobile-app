@@ -59,21 +59,23 @@ var UstadMobileAppController = function() {
     this.model = new UstadMobileAppModel(this);
 };
 
-UstadMobileAppController.MENUITEMS = ["Library",  "My Courses", "Download", 
+UstadMobileAppController.MENUITEMS = ["My Courses", "Device Contents", "Download", 
     "Logout", "About"];
-
-/**
- * Menu Item constant for the library / my courses page
- * @type Number
- */
-UstadMobileAppController.MENUITEM_LIBRARY = 0;
 
 /**
  * Menu Item that we should 
  * 
  * @type Number
  */
-UstadMobileAppController.MENUITEM_CATALOG = 1;
+UstadMobileAppController.MENUITEM_CATALOG = 0;
+
+/**
+ * Menu Item constant for the library / my courses page
+ * @type Number
+ */
+UstadMobileAppController.MENUITEM_LIBRARY = 1;
+
+
 
 /**
  * Menu Item for the download page
@@ -103,6 +105,13 @@ UstadMobileAppController.prototype = {
         this.view.init();
         this.view.setMenuItems(UstadMobileAppController.MENUITEMS);
         this.contentPager = null;
+        
+        if(UstadMobile.getInstance().getZoneObj().getUsername()) {
+            console.log("attempting to show user catalog FFS");
+            UstadCatalogController.setupUserCatalog({show : true});
+        }else {
+            //show the login page
+        }
     },
     
     /**
@@ -121,6 +130,22 @@ UstadMobileAppController.prototype = {
      * 
      */
     handleMenuClick: function(itemId) {
+        //cleanup open container if there is one that needs sorted out
+        if(UstadContainerController.openContainer) {
+            this.view.showLoading({
+                text : "Closing entry"
+            });
+            
+            UstadContainerController.cleanupOpenContainer({}, (function() {
+                this.view.hideLoading();
+                this.handleMenuClick(itemId);
+            }).bind(this), function(err) {
+                UstadMobile.getInstance().appController.view.showAlertPopup(
+                    "Error", "Error closing previously loaded content item");
+            });
+            return;
+        }
+        
         switch(itemId) {
             case UstadMobileAppController.MENUITEM_LIBRARY:
                 UstadMobile.getInstance().goPage(UstadMobile.PAGE_BOOKLIST);
@@ -139,17 +164,7 @@ UstadMobileAppController.prototype = {
                     UstadMobile.getInstance().appController.view.showAlertPopup(
                         "Sorry!", "You are not logged in... login before selecting my courses");
                 }else {
-                    var catalogOpts = {};
-                    UstadCatalogController._addCurrentUserToOpts(catalogOpts);
-                    
-                    UstadCatalogController.makeControllerByURL(
-                        UstadMobile.getInstance().getZoneObj().getFirstOPDSURL(),
-                        UstadMobile.getInstance().appController, catalogOpts, function(ctrl){
-                            ctrl.view.show();
-                        }, function(err) {
-                            UstadMobile.getInstance().appController.view.showAlertPopup(
-                                "Sorry: Error loading catalog.")
-                        });
+                    UstadCatalogController.setupUserCatalog({show: true});
                 }
         }
     }
@@ -190,6 +205,29 @@ UstadCatalogController._addCurrentUserToOpts = function(opts) {
     }
     
     return opts;
+};
+
+UstadCatalogController.setupUserCatalog = function(options, successFn, failFn) {
+    var catalogOpts = {};
+    UstadCatalogController._addCurrentUserToOpts(catalogOpts);
+
+    options.show = (options.show === false) ? false : true;
+    console.log('setupUserCatalog - makecontrollerbyURL call');
+    
+    UstadCatalogController.makeControllerByURL(
+        UstadMobile.getInstance().getZoneObj().getFirstOPDSURL(),
+        UstadMobile.getInstance().appController, catalogOpts, function(ctrl){
+            console.log('setupUserCatalog - controller made');
+            if(options.show) {
+                console.log('setupUserCatalog - showing');
+                ctrl.view.show();
+            }
+            UstadMobileUtils.runCallback(successFn, [ctrl], this);
+        }, function(err) {
+            UstadMobile.getInstance().appController.view.showAlertPopup(
+                "Sorry: Error loading catalog.");
+            UstadMobileUtils.runCallback(failFn, [err], this);
+        });
 };
 
 /**
@@ -260,9 +298,12 @@ UstadCatalogController.prototype.handleClickContainerEntry = function(evt, data)
     var containerController = UstadContainerController.makeFromEntry(this.appController,
         entry, opts);
     var initOpts = {};
-    containerController.init(initOpts, function(val) {
+    this.appController.view.showLoading({text : "Opening"});
+    containerController.init(initOpts, (function() {
+        UstadContainerController.setOpenContainer(containerController);
+        this.appController.view.hideLoading();
         containerController.view.show();
-    }, function(err) {
+    }).bind(this), function(err) {
         UstadMobile.getInstance().appController.view.showAlertPopup("Error",
                 "Sorry: something went wrong trying to open that. " + err);
     });
@@ -925,6 +966,44 @@ var UstadContainerController = function(appController) {
     this.tempDir = null;
 };
 
+/**
+ * An array of container controllers which are currently open (e.g. unzipped)
+ * and would need cleaned up when done with
+ * 
+ * @type Array<UstadContainerController>
+ */
+UstadContainerController.openContainer = null;
+
+/**
+ * Whether or not a cleanup process is already underway
+ * 
+ * @type Boolean
+ */
+UstadContainerController.cleanupInProcess = false;
+
+UstadContainerController.setOpenContainer = function(containerController) {
+    UstadContainerController.openContainer = containerController;
+};
+
+/**
+ * Cleanup (e.g. deleted unzipped contents etc) any active open containers
+ * @param {type} containerController
+ * @returns {undefined}
+ */
+UstadContainerController.cleanupOpenContainer = function(options, successFn, failFn) {
+    if(UstadContainerController.openContainer && UstadContainerController.cleanupInProcess === false) {
+        UstadContainerController.cleanupInProcess = true;
+        UstadContainerController.openContainer.cleanup(function() {
+            UstadContainerController.openContainer = null;
+            UstadContainerController.cleanupInProcess = false;
+            UstadMobileUtils.runCallback(successFn, [], this);
+        }, failFn);
+    }else {
+        UstadMobileUtils.runCallback(successFn, [], this);
+    }
+};
+
+
 UstadContainerController.makeFromEntry = function(appController, opdsEntry, options) {
     var entryOPDSFeed = UstadCatalogController.getAcquiredEntryInfoById(opdsEntry.id, 
         options);
@@ -969,6 +1048,8 @@ UstadContainerController.prototype.init = function(options, successFn, failFn) {
         
         var cacheDirURI = UstadMobileUtils.joinPath([
             UstadMobile.getInstance().contentDirURI, cacheDirName]);
+        this.tempDir = cacheDirURI;
+        
         var unzipOpts = {};
         if(options.onprogress) {
             unzipOpts.onprogress = options.onprogress;
@@ -989,7 +1070,14 @@ UstadContainerController.prototype.init = function(options, successFn, failFn) {
 };
 
 UstadContainerController.prototype.cleanup = function(successFn, failFn) {
-    
+    if(this.tempDir) {
+        UstadMobile.getInstance().systemImpl.removeRecursively(this.tempDir,
+            {}, function() {
+                UstadMobileUtils.runCallback(successFn, [], this);
+            }, failFn);
+    }else {
+        UstadMobileUtils.runCallback(successFn, [], this);
+    }
 };
 
 /**

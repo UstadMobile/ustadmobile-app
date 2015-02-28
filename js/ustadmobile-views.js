@@ -153,6 +153,22 @@ UstadMobileAppView.prototype = {
                 ".umalertpopup").popup("open");
         }, 750);
         pageAlertPopup.popup("open");
+    },
+    
+    /**
+     * Options are as per http://api.jquerymobile.com/loader/ 
+     * 
+     * @param {Object} options
+     */
+    showLoading: function(options) {
+        if(!options.theme) {
+            options.theme = "b";
+        }
+        $.mobile.loading("show", options)
+    },
+    
+    hideLoading: function() {
+        $.mobile.loading("hide");
     }
 };
 
