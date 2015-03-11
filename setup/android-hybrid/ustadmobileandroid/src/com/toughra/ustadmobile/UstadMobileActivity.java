@@ -1,5 +1,6 @@
 package com.toughra.ustadmobile;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
@@ -167,10 +168,12 @@ public class UstadMobileActivity extends FragmentActivity implements CordovaInte
 		mPagerAdapter = new ContentViewPagerAdapter(
 				getSupportFragmentManager(), urlList);
         viewPager.setAdapter(mPagerAdapter);
+        viewPager.setOnPageChangeListener(
+    		new ContentViewPagerPageChangeListenerI(mPagerAdapter));
         
         //1 is the default number of pages to keep offscreen
         // see http://developer.android.com/reference/android/support/v4/view/ViewPager.html#setOffscreenPageLimit%28int%29
-        viewPager.setOffscreenPageLimit(1);
+        viewPager.setOffscreenPageLimit(0);
         viewPager.setCurrentItem(1);
         
         mainLinearLayout.removeView(cordova_webview);
@@ -194,6 +197,23 @@ public class UstadMobileActivity extends FragmentActivity implements CordovaInte
 		
 	}
 	
+	private class ContentViewPagerPageChangeListenerI extends android.support.v4.view.ViewPager.SimpleOnPageChangeListener {
+		
+		private ContentViewPagerAdapter mAdapter;
+		
+		public ContentViewPagerPageChangeListenerI(ContentViewPagerAdapter mAdapter) {
+			this.mAdapter = mAdapter;
+		}
+		
+		@Override
+		public void onPageSelected(int pos) {
+			/*ContentViewPagerPageFragment frag = (ContentViewPagerPageFragment)
+				mAdapter.getItem(pos);
+			frag.loadURLInWebView();*/
+			super.onPageSelected(pos);
+		}
+	}
+	
 	
 	/**
      * A simple pager adapter that uses an array of urls (as a string 
@@ -204,6 +224,9 @@ public class UstadMobileActivity extends FragmentActivity implements CordovaInte
      */
     private class ContentViewPagerAdapter extends FragmentStatePagerAdapter {
     	
+    	
+    	HashMap<Integer,WeakReference<ContentViewPagerPageFragment>> pagesMap;
+    	
     	/**
     	 * Array of pages to be shown
     	 */
@@ -212,6 +235,7 @@ public class UstadMobileActivity extends FragmentActivity implements CordovaInte
         public ContentViewPagerAdapter(FragmentManager fm, String[] pageList) {
             super(fm);
             this.pageList = pageList;
+            this.pagesMap = new HashMap<Integer,WeakReference<ContentViewPagerPageFragment>>();
         }
 
         @Override
@@ -223,8 +247,26 @@ public class UstadMobileActivity extends FragmentActivity implements CordovaInte
          * @param position Position in the list of fragment to create
          */
         public Fragment getItem(int position) {
-        	Fragment frag = ContentViewPagerPageFragment.create(pageList[position]);
-            return frag;
+        	ContentViewPagerPageFragment existingFrag = null;
+        	WeakReference<ContentViewPagerPageFragment> ref = this.pagesMap.get(
+    			Integer.valueOf(position));
+        	
+        	if(ref != null) {
+        		existingFrag = ref.get();
+        	}
+        	
+        	//something wrong HERE
+        	if(existingFrag != null) {
+        		return existingFrag;
+        	}else {
+        		ContentViewPagerPageFragment frag = 
+    				ContentViewPagerPageFragment.create(
+						pageList[position]);
+        		this.pagesMap.put(Integer.valueOf(position), 
+    				new WeakReference<ContentViewPagerPageFragment>(frag));
+                return frag;
+        	}
+
         }
 
         @Override

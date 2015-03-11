@@ -5,20 +5,29 @@ IMPORTANT: Please see the license regarding what theme changes
 are and are not allowed.  Diminishing the UstadMobile brand
 or renaming is prohibited without a commercial license.
 
+Uses JQueryMobile 1.4.5
+
 JQueryMobile theming use:
 App contents use swatch 'b' (e.g. buttons/menus, back/next)
-Learning content from eXe (and it's themes) can must use swatch 'a'
-(default) and should go in jqm-content-theme.css
+eXeLearning generated content uses the default swatch a and a seperate
+JQueryMobile setup inside the content EPUB.
 
+JQueryMobile App UI Themeing:
 
-App: used in building:
-jqm/jqm-app-theme.css [Should provide JQM swatch b]
-jqm/jqm-base.css (should include jquery.mobile.icons.min.css and jquery.structure css)
+JQueryMobile Theme comes from:
+css/jquerymobile/themes/ustadmobile.[min].css 
+
+Can be output from themeroller, another JQueryMobile theme, etc.
+Misc other files:
 res/umres/aboutlogo.png
 css/ustad-app.css
 
-Content default (theme to provide swatch 'a' if theme does not have it's own jqm-content-theme.css file):
-jqm/jqm-content-theme.css
+Content (within epub) Themeing:
+JQueryMobile theme comes from:
+jquerymobiletheme.min.css .  Image icons are automatically copied into 
+/images 
+
+
 
 
 
