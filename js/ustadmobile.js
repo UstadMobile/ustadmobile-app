@@ -1419,7 +1419,7 @@ UstadMobileUtils.getSeperator = function(seperator) {
     }else {
         return seperator;
     }
-}
+};
 
 /**
  * Gets the extension of a file - e.g. ".epub" for somefile.epub
@@ -1549,6 +1549,30 @@ UstadMobileUtils.joinPath = function(pathArr, seperator) {
         retVal += nextSection;
     }
     
+    return retVal;
+};
+
+/**
+* Turns search query variables into a dictionary - adapted from
+* http://css-tricks.com/snippets/javascript/get-url-variables/
+* 
+* @param {string} queryStr Input query string
+* @method getQueryVariable
+*/
+UstadMobileUtils.getQueryVariables = function(queryStr) {
+    var locationQuery = window.location.search.substring.length >= 1 ?
+        window.location.search.substring(1) : "";
+    var query = (typeof queryStr !== "undefined") ? queryStr : 
+        locationQuery;
+    
+    var retVal = {};
+    if(window.location.search.length > 2) {
+        var vars = query.split("&");
+        for (var i=0;i<vars.length;i++) {
+            var pair = vars[i].split("=");
+            retVal[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1]);
+        }
+    }
     return retVal;
 };
 
