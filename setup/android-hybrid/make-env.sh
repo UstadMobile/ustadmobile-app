@@ -21,7 +21,10 @@ read TARGETID
 
 BASEDIR=$(pwd)
 
-android create project --target $TARGETID --name UstadMobileActivity --path ./ustadmobileandroid --activity UstadMobileActivity --package com.toughra.ustadmobile
+# project created using: 
+# android create project --target $TARGETID \
+# --name UstadMobileActivity --path ./ustadmobileandroid 
+# --activity UstadMobileActivity --package com.toughra.ustadmobile
 
 $BASEDIR/make-cordovalib-project.sh
 

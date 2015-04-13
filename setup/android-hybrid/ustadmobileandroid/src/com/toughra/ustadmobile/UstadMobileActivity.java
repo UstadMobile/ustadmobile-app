@@ -77,7 +77,7 @@ public class UstadMobileActivity extends FragmentActivity implements CordovaInte
 	private String TAG = "CORDOVA_ACTIVITY";
 	private final ExecutorService threadPool = Executors.newCachedThreadPool();
 	
-	/** The Main Menu Drawer */
+	/** The Main Menu Drawer. */
 	private ListView mDrawerList;
 	
 	/** String array of the text menu items for the drawer */
