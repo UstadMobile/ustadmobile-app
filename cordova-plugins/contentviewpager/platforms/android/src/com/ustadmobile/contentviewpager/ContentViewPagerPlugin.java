@@ -12,6 +12,7 @@ import com.toughra.ustadmobile.UstadMobileActivity;
 
 import android.app.Activity;
 import android.app.DialogFragment;
+import android.support.v4.app.FragmentActivity;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
@@ -25,9 +26,7 @@ public class ContentViewPagerPlugin extends CordovaPlugin {
 	public static final String ACTION_OPENPAGERVIEW = 
 			"openPagerView";
 
-	
-	private ContentViewPagerDialog dialog;
-	
+		
     @Override
 	public boolean execute(String action, JSONArray args, final CallbackContext callbackContext) throws JSONException{
 		if(action.equals(ACTION_OPENPAGERVIEW)) {
@@ -54,17 +53,12 @@ public class ContentViewPagerPlugin extends CordovaPlugin {
     }
     
     public String showPager(final String[] urls, final CallbackContext callbackContext) {
+    	final UstadMobileActivity umActivity = 
+    			(UstadMobileActivity)cordova.getActivity();
     	this.cordova.getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-            	dialog = new ContentViewPagerDialog(
-            			cordova.getActivity(), 
-            			android.R.style.Theme_Holo_Light_DarkActionBar,
-            			urls);
-            	
-            	
-            	dialog.show(cordova.getActivity().getFragmentManager(),"pager_frag_name");
-            	
+            	umActivity.showContentPager(urls);
             	callbackContext.success();
             }
 		});
@@ -72,4 +66,3 @@ public class ContentViewPagerPlugin extends CordovaPlugin {
     }
     
 }
-

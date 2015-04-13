@@ -1,11 +1,14 @@
 package com.ustadmobile.contentviewpager;
 
-import android.app.Fragment;
+import android.support.v4.app.Fragment;
+import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
@@ -15,7 +18,7 @@ import android.webkit.WebViewClient;
  * 
  * The URL is set via Fragment arguments with the ARG_PAGE key
  * 
- * @see com.ustadmobile.contentviewpager.ContentViewPagerDialog
+ * @see com.ustadmobile.contentviewpager.ContentViewPagerDialogFragment
  * 
  * @author Mike Dawson <mike@ustadmobile.com>
  *
@@ -66,6 +69,10 @@ public class ContentViewPagerPageFragment extends Fragment {
         return fragment;
     }
     
+    public void loadURLInWebView() {
+    	webView.loadUrl(mPageURL);
+    }
+    
     @Override
     /**
      * Create the webview and return it
@@ -74,11 +81,15 @@ public class ContentViewPagerPageFragment extends Fragment {
             Bundle savedInstanceState) {
     	//TODO: is this right?  implement onDestroy?
     	this.webView = new WebView(getActivity());
-    	webView.loadUrl(mPageURL);
+    	this.loadURLInWebView();
     	
     	webView.setWebViewClient(new WebViewClient());
     	webView.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
     	webView.setHorizontalScrollBarEnabled(false);
+    	if(Build.VERSION.SDK_INT >= 17) {
+        	webView.getSettings().setMediaPlaybackRequiresUserGesture(
+    			false);
+		}
     	webView.getSettings().setJavaScriptEnabled(true);
         return webView; 
     }
@@ -86,7 +97,15 @@ public class ContentViewPagerPageFragment extends Fragment {
     @Override
     public void onDestroy() {
     	// TODO Auto-generated method stub
-    	super.onDestroy();
+    	Log.d("CONTENTVIEWPAGER", "onDestroy for fragment of " + mPageURL);
     	this.webView = null;
+    	super.onDestroy();
+    }
+    
+        
+    @Override
+    public void onDetach() {
+    	Log.d("CONTENTVIEWPAGER", "onDetach for fragment of " + mPageURL);
+    	super.onDetach();
     }
 }
