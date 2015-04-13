@@ -20,7 +20,10 @@ fi
 mkdir -p $ASSETSDIR/res/umres
 cp $SRCDIR/res/umres/*.png $ASSETSDIR/res/umres/
 
-rm $ASSETSDIR/*.html
+if [ -e $ASSETSDIR/index.html ]; then
+    rm $ASSETSDIR/*.html
+fi
+
 cp $SRCDIR/*.html $ASSETSDIR/
 
 #Remove JQueryMobile header and footers we wont use in Droid

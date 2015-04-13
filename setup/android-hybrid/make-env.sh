@@ -37,5 +37,10 @@ android create test-project -m ../ustadmobileandroid -n ustadmobileandroid_test 
 #now copy the base html files
 cp -r $BASEDIR/umcordovalib/platforms/android/assets/www androidproject/assets/
 
+#install Ustad Mobile specific plugins
 ./plugins-appview.sh install
 ./plugins-contentviewpager.sh install
+
+#install general cordova plugins
+./install-cordova-plugins.sh
+./update-www-assets.sh
