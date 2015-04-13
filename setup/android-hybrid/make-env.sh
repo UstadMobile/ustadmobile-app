@@ -37,7 +37,7 @@ android create test-project -m ../ustadmobileandroid -n ustadmobileandroid_test 
 #now copy the base html files
 cp -r $BASEDIR/umcordovalib/platforms/android/assets/www androidproject/assets/
 
-# Avoid weird-a** Cannot call method 'trim' of null bug with plugman when no 
+# Avoid weird 'Cannot call method 'trim' of null' bug with plugman when no 
 # version file is present in Cordova
 
 if [ ! -e ustadmobileandroid/cordova ]; then
@@ -48,6 +48,10 @@ if [ ! -e ustadmobileandroid/cordova/version ]; then
     cp umcordovalib/platforms/android/cordova/version \
         ustadmobileandroid/cordova/version
 fi
+
+# copy the real cordova.js from the umcordovalib project
+cp umcordovalib/platforms/android/assets/www/cordova.js \
+    ustadmobileandroid/assets/www/
 
 #install Ustad Mobile specific plugins
 ./plugins-appview.sh install
