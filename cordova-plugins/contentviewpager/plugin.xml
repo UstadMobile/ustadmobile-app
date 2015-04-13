@@ -18,6 +18,7 @@
         </config-file>
         
         <source-file src="platforms/android/src/com/ustadmobile/contentviewpager/ContentViewPagerPlugin.java" target-dir="src/com/ustadmobile/contentviewpager/" />
+        <source-file src="platforms/android/src/com/ustadmobile/contentviewpager/ContentViewPagerPageFragment.java" target-dir="src/com/ustadmobile/contentviewpager/"/>
     </platform>
 </plugin>
 
