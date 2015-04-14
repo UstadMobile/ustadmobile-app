@@ -105,7 +105,7 @@ if [ "$(adb get-state)" != "device" ]; then
         ENABLEKVMARG=" -enable-kvm "
     fi
     
-    $ANDROID_HOME/tools/emulator-x86 -avd $AVDNAME $ANDROID_EMU_ARGS -qemu  $ENABLEKVMARG & 
+    $ANDROID_HOME/tools/emulator -avd $AVDNAME $ANDROID_EMU_ARGS -qemu  $ENABLEKVMARG & 
     EMULATEPID=$!
 
     STATUS="unknown"
