@@ -1,6 +1,15 @@
 #!/bin/bash
 
-PLUGINLIST="org.apache.cordova.device org.apache.cordova.network-information org.apache.cordova.file https://github.com/UstadMobile/cordova-plugin-file-transfer org.apache.cordova.globalization org.apache.cordova.console https://github.com/UstadMobile/cordova-plugin-inappbrowser.git https://github.com/mikedawson/cordova-httpd.git https://github.com/mikedawson/CordovaMediaSanitize.git"
+PLUGINLIST="org.apache.cordova.device 
+org.apache.cordova.network-information 
+org.apache.cordova.file 
+https://github.com/UstadMobile/cordova-plugin-file-transfer 
+org.apache.cordova.globalization org.apache.cordova.console
+https://github.com/UstadMobile/cordova-plugin-inappbrowser.git 
+https://github.com/mikedawson/cordova-httpd.git 
+https://github.com/mikedawson/CordovaMediaSanitize.git
+https://github.com/MobileChromeApps/zip.git
+"
 
 #Parameters to use with plugman
 PROJECTDIR="./ustadmobileandroid"

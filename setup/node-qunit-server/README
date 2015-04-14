@@ -1,6 +1,10 @@
-NODE QUNIT SERVER
+NodeJS Testing SERVER:
 
-Install Slow Stream:
+The server can receive results over http (e.g. when an app runs on a device)
+and can serve assets over http.  When serving assets it can slow downoads and
+break them to test resume functionalities in the app..
 
-npm install git+https://github.com/rvagg/node-slow-stream.git
+To install required node modules:
+
+./configure.sh
 

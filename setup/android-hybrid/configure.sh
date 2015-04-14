@@ -60,3 +60,9 @@ cp umcordovalib/platforms/android/assets/www/cordova.js \
 #install general cordova plugins
 ./install-cordova-plugins.sh
 ./update-www-assets.sh
+
+#make sure the node qunit server is ready to go
+cd $BASEDIR/../node-qunit-server
+./configure.sh
+cd $BASEDIR
+
