@@ -35,7 +35,11 @@ cd $BASEDIR
 android create test-project -m ../ustadmobileandroid -n ustadmobileandroid_test -p ustadmobileandroid_test
 
 #now copy the base html files
-cp -r $BASEDIR/umcordovalib/platforms/android/assets/www androidproject/assets/
+if [ ! -e $BASEDIR/ustadmobileandroid/assets ]; then
+    mkdir $BASEDIR/ustadmobileandroid/assets
+fi
+
+cp -rv $BASEDIR/umcordovalib/platforms/android/assets/www $BASEDIR/ustadmobileandroid/assets/
 
 # Avoid weird 'Cannot call method 'trim' of null' bug with plugman when no 
 # version file is present in Cordova
