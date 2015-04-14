@@ -134,7 +134,9 @@ var containerChangeFn = function() {
     
     //Set timeout to 75 seconds (cache courses; includes working with zips)
     QUnit.testTimeout = 75000;
-    testUstadMobileCourseLoad();
+    
+    //Temporarily Disabled: we are phasing out the old booklist
+    //testUstadMobileCourseLoad();
     
         
     var audioEl = document.createElement("audio");
