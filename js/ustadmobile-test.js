@@ -77,6 +77,16 @@ var UstadMobileTest = {
         $.ajax(httpControlURL, {
             dataType: "text"
         }).done(opDoneCallback);
+    },
+    
+    logFailFn: function(err) {
+        function st2(f) {
+            return !f ? [] : 
+                st2(f.caller).concat([f.toString().split('(')[0].substring(9) + '(' + f.arguments.join(',') + ')']);
+        };
+        
+        console.log("Test Fail: " + err);
+        console.log(st2(arguments.callee.caller));
     }
     
 };
@@ -312,7 +322,7 @@ function testResumableDownload() {
             function(dlEntry) {
                 assert.ok(dlEntry, "Seems to have downloaded an entry");
                 downloadDoneFn();
-            });
+            }, UstadMobileTest.logFailFn);
     });
     
     QUnit.test("Resumable download can download file successfully in multiple attempts", function(assert) {
@@ -349,7 +359,7 @@ function testResumableDownload() {
                 $.ajax(slowDownOffURL, {
                     dataType : "text"
                 }).done(resumedFileDoneFn);
-            }); 
+            }, UstadMobileTest.logFailFn); 
         });
     });
     
@@ -376,7 +386,7 @@ function testResumableDownload() {
                 }).done(function() {
                     rd.removePartialFiles(resumedFailedDoneFn);
                 });
-            });
+            },UstadMobileTest.logFailFn);
         });
     });
     
@@ -445,9 +455,7 @@ function testResumableDownload() {
                             progressFileLocalURI, dlInfoURI],
                         successFnW, failFnW);
             }
-        ], recoverDoneFn, function(err) {
-            console.log("shisse: ")
-        });
+        ], recoverDoneFn, UstadMobileTest.logFailFn);
     });
     
 };
