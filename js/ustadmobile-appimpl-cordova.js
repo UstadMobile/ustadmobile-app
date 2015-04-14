@@ -461,12 +461,7 @@ UstadMobileAppImplCordova.prototype.cacheEpubsInDir = function(dirPath, callback
                             }else {
                                 callback();
                             }
-                        });UstadMobileUtils.waterfall([
-            
-        ])
-        zip.unzip(epubFileEntry.toURL(), cacheDirEntry.toURL(), function(val) {
-                    UstadMobileUtils.runCallback(callback, [cacheDirEntry], this);
-        });
+                        });
                 };
                 
                 if(epubEntries.length > 0) {
