@@ -2023,9 +2023,13 @@ UstadMobileResumableDownload.prototype.checkPreviousAttempt = function(successFn
                     UstadMobile.getInstance().systemImpl.readStringFromFile(
                         dlInfoURI, {}, successFnW2, failFnW2);
                 },function(jsonInfoStr, successFnW2, failFnW2) {
-                    dlInfoJSON = JSON.parse(jsonInfoStr);
-                    UstadMobile.getInstance().systemImpl.fileExists(inprogURI, 
-                        successFnW2, failFnW2);
+                    try {
+                        dlInfoJSON = JSON.parse(jsonInfoStr);
+                        UstadMobile.getInstance().systemImpl.fileExists(inprogURI, 
+                            successFnW2, failFnW2);
+                    }catch(e0) {
+                        failFnW2(e0);
+                    }
                 },
                 function(inprogexists, successFnW2, failFnW2) {
                     if(inprogexists) {
