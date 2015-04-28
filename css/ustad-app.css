@@ -30,3 +30,21 @@
 #ustad_user_button{
     width: auto;
 }
+
+/*
+ * Download all button on OPDS acquisition view
+ */
+.um-download-all-btn {
+    display: block !important;
+    margin: 5px;
+}
+
+/*
+ * Download progress bar
+ */
+.um-progress-bar {
+    display: block;
+    width: 100%;
+    padding: 5px;
+}
+

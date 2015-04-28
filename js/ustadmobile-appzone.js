@@ -109,7 +109,7 @@ UstadMobileAppZone.STORAGE_PREFIX_COURSEINFOTIME = "ustad_courseinfo_time.";
 UstadMobileAppZone.AUTHMECH_HTTPBASIC = 0;
 
 UstadMobileAppZone.OPDS_URL = 
-    "http://umcloud1.ustadmobile.com/opds/assigned_courses";
+    "http://umcloud1.ustadmobile.com/opds/";
 
 UstadMobileAppZone.prototype = {
     

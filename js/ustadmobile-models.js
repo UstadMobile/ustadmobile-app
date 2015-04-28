@@ -73,13 +73,13 @@ var UstadCatalogModel = function(controller) {
     /**
      * The catalog feeds that should be shown on screen
      * 
-     * @type {Array<UstadJSOPDSFeed}
+     * @type UstadJSOPDSFeed
      */
-    this.opdsFeeds = [];
+    this.opdsFeed = null;
 };
 
-UstadCatalogModel.prototype.addFeed = function(opdsFeed) {
-    this.opdsFeeds.push(opdsFeed);
+UstadCatalogModel.prototype.setFeed = function(opdsFeed) {
+    this.opdsFeed = opdsFeed;
 };
 
 var UstadContainerModel = function(controller) {

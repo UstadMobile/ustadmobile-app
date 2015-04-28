@@ -231,20 +231,53 @@ UstadCatalogController.setupUserCatalog = function(options, successFn, failFn) {
 };
 
 /**
- * Handles when the user clicks (or taps) on an entry representing an
- * acquisition feed.
+ * Handle when the user clicks on the download all button - shown at the bottom
+ * of a navigation feed
  * 
  * @param {type} evt
  * @param {type} data
  * @returns {undefined}
  */
-UstadCatalogController.prototype.handleClickAcquisitionFeedEntry = function(evt, data) {
-    var entryId = data.entry.id;
+UstadCatalogController.prototype.handleClickDownloadAll = function(evt, data) {
+    //confirm that the user wants to do this
+    var dialogTitle = "Download?";
+    var dialogText = this.model.opdsFeed.title;
+    this.view.showConfirmAcquisitionDialog(dialogTitle, dialogText);
+};
+
+UstadCatalogController.prototype.handleConfirmDownloadAll = function(evt, data) {
+    alert("OK get it all");
+};
+
+/**
+ * Handle when the user clicks on an entry which is itself a feed
+ * 
+ * @param {type} evt
+ * @param {type} data
+ * @returns {undefined}
+ */
+UstadCatalogController.prototype.handleClickFeedEntry = function(evt, data, successFn, failFn) {
     var entryOpts = UstadCatalogController._addCurrentUserToOpts({});
+    var entryNavFeedLink = data.entry.getNavigationLink();
+    
+    var feedEntryURL = UstadJS.resolveURL(this.model.opdsFeed.href,
+        entryNavFeedLink.href);
     
     
-    var entryStatus = UstadCatalogController.getAcquisitionStatusByEntryId(
-        entryId, entryOpts);
+    UstadCatalogController.makeControllerByURL(feedEntryURL,
+        UstadMobile.getInstance().appController, entryOpts, function(ctrl){
+            ctrl.view.show();
+            UstadMobileUtils.runCallback(successFn, [ctrl], this);
+        }, function(err) {
+            UstadMobile.getInstance().appController.view.showAlertPopup(
+                "Sorry: Error loading catalog.");
+            UstadMobileUtils.runCallback(failFn, [err], this);
+        });
+
+    /*
+     * TO BE MOVED: we don't automatically ask to download a whole acquisition 
+     * feed anymore
+     * 
     if(entryStatus === $UstadJSOPDSBrowser.NOT_ACQUIRED) {
         //confirm that the user wants to do this
         this.userSelectedEntry = data.entry;
@@ -259,7 +292,7 @@ UstadCatalogController.prototype.handleClickAcquisitionFeedEntry = function(evt,
                 UstadMobile.getInstance().appController.view.showAlertPopup("Error",
                 "Sorry: seems like that was downloaded but now its not accessible" + err);
             });
-    }
+    }*/
 };
 
 UstadCatalogController.prototype.handleConfirmEntryAcquisition = function(evt, data) {
@@ -327,7 +360,7 @@ UstadCatalogController.makeControllerByURL = function(url, appController, option
                 failFnW);
         },function(opdsFeedObj, result, successFnW, failFnW) {
             var newController = new UstadCatalogController(appController);
-            newController.model.addFeed(opdsFeedObj);
+            newController.model.setFeed(opdsFeedObj);
             UstadMobileUtils.runCallback(successFnW, [newController], this);
         }], successFn, failFn);
 };

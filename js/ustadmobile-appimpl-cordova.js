@@ -985,11 +985,6 @@ UstadMobile.getInstance().systemImpl =
 function ustadAppImplCordovaDeviceReady() {
     //check and see if cordova really loaded
     if(window.cordova && window.cordova.plugins) {
-        //disable dodgy back button behaviour for the moment
-        document.addEventListener("backbutton", function(e){
-            e.preventDefault();
-        }, false);
-        
         var mediaSanity = ( cordova && cordova.plugins && cordova.plugins.MediaSanity ) 
             ? cordova.plugins.MediaSanity : null;
         UstadMobileAppImplCordova.getInstance().mediaSanityPlugin = mediaSanity;

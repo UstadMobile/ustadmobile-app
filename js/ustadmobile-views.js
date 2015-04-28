@@ -173,11 +173,42 @@ UstadMobileAppView.prototype = {
 };
 
 var UstadCatalogView = function() {
-    
+    /**
+     * JQueryMobile page ID
+     * @type {String}
+     */
+    this._pageID = null;
 };
+
+/**
+ * Serial number to be used when generting div ids
+ * 
+ * @type Number
+ */
+UstadCatalogView._nextFeedSerialNum = 0;
+
+UstadCatalogView._feedIdToSerialNumMap = {};
+
+UstadCatalogView.transitionName = "fade";
 
 UstadCatalogView.makeView = function(controller) {
     
+};
+
+/**
+ * 
+ * @param {string} feedId
+ * @returns {string}
+ */
+UstadCatalogView.getPageID = function(feedId) {
+    if(UstadCatalogView._feedIdToSerialNumMap.hasOwnProperty(feedId)) {
+        return UstadCatalogView._feedIdToSerialNumMap[feedId];
+    }
+    
+    var newPageID = "opds-page-" + UstadCatalogView._nextFeedSerialNum;
+    UstadCatalogView._feedIdToSerialNumMap[feedId] = newPageID;
+    UstadCatalogView._nextFeedSerialNum++;
+    return newPageID;
 };
 
 UstadCatalogView.browserDefaultOpts = {
@@ -186,42 +217,97 @@ UstadCatalogView.browserDefaultOpts = {
     "defaulticon_containerelement" : "img/default-acquire-icon.png"
 };
 
+UstadCatalogView.prototype.loadCatalogViewPage = function(options) {
+    $.ajax("catalogview.html", {
+        dataType: "html"
+    }).done((function(data) {
+        var statusOpts = {};
+        statusOpts = UstadCatalogController._addCurrentUserToOpts(statusOpts);
+
+        var opdsBrowserOpts = {
+            "defaulticon_acquisitionfeed": UstadCatalogView.browserDefaultOpts.defaulticon_acquisitionfeed,
+            "defaulticon_navigationfeed" : UstadCatalogView.browserDefaultOpts.defaulticon_navigationfeed,
+            "feedselected" : 
+                this.controller.handleClickFeedEntry.bind(this.controller),
+            "acquisitionstatushandler" : (function(entryId){
+                return UstadCatalogController.getAcquisitionStatusByEntryId(entryId,
+                    statusOpts);
+            }).bind(this)
+        };
+        
+        var newPageDiv = $("<div/>", {
+           "data-role" : "page",
+           "id": this._pageID
+        });
+        newPageDiv.html(data);
+        newPageDiv.find(".ustad-confirm-popup").attr("id",
+            this._pageID + "-confirm-popup");
+
+        var catalogContainer = newPageDiv.find(".um_catalog_container");
+        catalogContainer.empty();
+        var catalogEl = $("<div/>", {
+            "class" : "um_opdsbrowser_container",
+            "data-feed-id" : this.controller.model.opdsFeed.id
+        });
+
+        catalogContainer.append(catalogEl);
+        catalogEl.opdsbrowser(opdsBrowserOpts).opdsbrowser(
+            "setupfromfeed", this.controller.model.opdsFeed);
+        if(this.controller.model.opdsFeed.isAcquisitionFeed()) {
+            var footerEl = $("<div/>", {
+                "data-role" : "footer",
+                "data-position" : "fixed",
+                "data-theme" : "b"
+            });
+            
+            var progressBar = $("<progress/>", {
+               "max": 100,
+               "value": 20,
+               "class" : "um-progress-bar"
+            }).css("display", "block");
+            footerEl.append(progressBar);
+            
+            var downloadButton = $("<div/>", {
+                "class" : "ui-btn um-download-all-btn"
+            });
+            downloadButton.text("Download All");
+            downloadButton.on("click", 
+                this.controller.handleClickDownloadAll.bind(this.controller));
+            //downloadButton.on("click", 
+                
+            footerEl.append(downloadButton);
+            newPageDiv.append(footerEl);
+        }
+
+        newPageDiv.appendTo($( ":mobile-pagecontainer" )).enhanceWithin();
+        $( ":mobile-pagecontainer" ).pagecontainer("change", 
+            "#"+this._pageID, { 
+                changeHash: true,
+                transition: UstadCatalogView.transitionName
+            });
+    }).bind(this));
+};
+
 UstadCatalogView.prototype.show = function() {
     this.controller.appController.view.setTitle("Catalog");
     
-    var statusOpts = {};
-    statusOpts = UstadCatalogController._addCurrentUserToOpts(statusOpts);
+    //load the catalogview page, set an id and change the page to it
+    var opdsFeedId = this.controller.model.opdsFeed.id;
+    this._pageID = UstadCatalogView.getPageID(opdsFeedId);
     
-    var opdsBrowserOpts = {
-        "defaulticon_acquisitionfeed": UstadCatalogView.browserDefaultOpts.defaulticon_acquisitionfeed,
-        "defaulticon_navigationfeed" : UstadCatalogView.browserDefaultOpts.defaulticon_navigationfeed,
-        "acquisitionfeedselected" : 
-            this.controller.handleClickAcquisitionFeedEntry.bind(this.controller),
-        "acquisitionstatushandler" : (function(entryId){
-            return UstadCatalogController.getAcquisitionStatusByEntryId(entryId,
-                statusOpts);
-        }).bind(this)
-    };
+    //see if we have already loaded this page id
+    var pageDiv = $("#" + this._pageID);
     
-    $( ":mobile-pagecontainer" ).one('pagecontainershow', (function(evt, ui){
-        var catalogContainer = ui.toPage.find(".um_catalog_container");
-        catalogContainer.empty();
-        for(var i = 0; i < this.controller.model.opdsFeeds.length; i++) {
-            var catalogEl = $("<div/>", {
-                "class" : "um_opdsbrowser_container",
-                "data-feed-id" : this.controller.model.opdsFeeds[i].id
+    if(pageDiv.length < 1) {
+        this.loadCatalogViewPage();
+    }else {
+        $( ":mobile-pagecontainer" ).pagecontainer("change", 
+            "#"+this._pageID, { 
+                changeHash: true, 
+                transition: UstadCatalogView.transitionName
             });
-            
-            catalogContainer.append(catalogEl);
-            catalogEl.opdsbrowser(opdsBrowserOpts).opdsbrowser(
-                "setupnavigationfeedview", this.controller.model.opdsFeeds[i]);
-        }
-    }).bind(this));
+    }
     
-    $( ":mobile-pagecontainer" ).pagecontainer("change", "catalogview.html", {
-        changeHash: true,
-        transition: "slide"
-    });
 };
 
 /**
@@ -245,7 +331,7 @@ UstadCatalogView.prototype.showAcquisitionFeed = function(opdsObj) {
         }
         var containerEl = ui.toPage.find(".um_acquisitionfeed_container");
         containerEl.opdsbrowser(opdsBrowserOpts);
-        containerEl.opdsbrowser("setupacquisitionfeedview", opdsObj);
+        containerEl.opdsbrowser("setupfromfeed", opdsObj);
     }).bind(this));
     
     $( ":mobile-pagecontainer" ).pagecontainer("change", 
@@ -256,20 +342,23 @@ UstadCatalogView.prototype.showAcquisitionFeed = function(opdsObj) {
 };
 
 UstadCatalogView.prototype.showConfirmAcquisitionDialog = function(title, text) {
-    $("#ustad_acquirecontent_popup .um_popup_header").text(title);
-    $("#ustad_acquirecontent_dialog_text").text(text);
-    $("#ustad_acquirecontent_popup").popup("open");
-    $("#ustad_acquirecontent_popup .ui-btn").off("click");
+    var confirmDivID = this._pageID + "-confirm-popup";
+    var confirmDivIDSel = "#" + confirmDivID;
     
-    $("#ustad_acquirecontent_popup_ok").on("click", 
-        this.controller.handleConfirmEntryAcquisition.bind(this.controller));
-    $("#ustad_acquirecontent_popup_cancel").on("click", 
+    $(confirmDivIDSel + " .um_popup_header").text(title);
+    $(confirmDivIDSel + " .ustad_acquirecontent_dialog_text").text(text);
+    $(confirmDivIDSel).popup("open");
+    $(confirmDivIDSel +" .ui-btn").off("click");
+    
+    $(confirmDivIDSel + " .ustad_acquirecontent_popup_ok").on("click", 
+        this.controller.handleConfirmDownloadAll.bind(this.controller));
+    $(confirmDivIDSel + " .ustad_acquirecontent_popup_cancel").on("click", 
         this.hideConfirmAcquisitionDialog.bind(this));
 };
 
 UstadCatalogView.prototype.hideConfirmAcquisitionDialog = function() {
-    $("#ustad_acquirecontent_popup").popup("close");
-    $("#ustad_acquirecontent_popup .optionbutton").off("click");
+    $("#" + this._pageID + "-confirm-popup").popup("close");
+    $("#" + this._pageID +" .optionbutton").off("click");
 };
 
 UstadCatalogView.prototype.getCatalogWidgetByFeedId = function(feedId) {

@@ -17,7 +17,10 @@ cd ustadmobileandroid
 ant clean $WHAT $2 
 cd ..
 
-#to install: adb shell am start -a android.intent.action.MAIN -n com.toughra.ustadmobile/.UstadMobileActivity
+echo "check arg $2" 
+if [ "$2" == "install" ]; then
+    adb shell am start -a android.intent.action.MAIN -n com.toughra.ustadmobile/.UstadMobileActivity
+fi
 
 
 

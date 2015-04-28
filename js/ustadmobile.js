@@ -512,7 +512,7 @@ UstadMobile.prototype = {
             umObj.initScriptsToLoad.push("js/ustadmobile-views.js");
             umObj.initScriptsToLoad.push("js/ustadmobile-models.js");
             
-            umObj.initScriptsToLoad.push("lib/ustadjs.js");
+            umObj.initScriptsToLoad.push("lib/ustadjs/ustadjs.js");
             umObj.initScriptsToLoad.push("lib/tincan.js");
             umObj.initScriptsToLoad.push("lib/tincan_queue.js");
             umObj.initScriptsToLoad.push("js/ustadmobile-getpackages.js");
