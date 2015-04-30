@@ -764,10 +764,6 @@ UstadMobileAppImplCordova.prototype.removeFile = function(file, successFn, failF
  * @param {string} url Absolute url to be downloaded
  * @param {string} fileURI Local File URI where this file is to be downloaded
  * @param {Object} options misc options
- * @param {number} [options.frombyte=0] Range to start downloading from 
- * requires range support on the server
- * @param {number} [options.tobyte] Range to download until - requires range
- * support from the server AND options.frombyte set
  * @param {progress_callback}  [options.onprogress] call the onprogress handler 
  * when downloading
  * @param {boolean} [options.keepIncompleteFile] - if a download fails, leave it
@@ -775,85 +771,26 @@ UstadMobileAppImplCordova.prototype.removeFile = function(file, successFn, failF
  * @returns {undefined}
  */
 UstadMobileAppImplCordova.prototype.downloadUrlToFileURI = function(url, fileURI, options, successFn, failFn) {
-    var ft = new FileTransfer();
-    
-    //set headers in here
-    var ftOptions = {
-        keepIncompleteFile : options.keepIncompleteFile ? true : false,
-        headers: {}
-    };
-    
-    if(options.frombyte) {
-        var rangeHeader = "bytes=" + options.frombyte + "-";
-        rangeHeader += options.tobyte ? options.tobyte : "";
-        ftOptions.headers.Range = rangeHeader;
-    }
-    
+    //adapt to a standard progress event
+    var progressFn = function() {};
     if(options.onprogress) {
-        ft.onprogress = options.onprogress;
-    }
-    
-    ft.download(encodeURI(url), fileURI, successFn, failFn, false, ftOptions);
-};
-
-UstadMobileAppImplCordova.prototype.concatenateFiles = function(files, destFile, options, successFn, failFn) {
-    var numFiles = files.length;
-    
-    if(files.length < 1) {
-        UstadMobileUtils.runCallback(failFn, 
-            ["concatenateFiles Failed: no src files!"], this);
-        return;
-    }
-    
-    var fileEntries = [];
-    var fileStats = [];
-    var thatDestFileEntry = null;
-    UstadMobileUtils.waterfall([
-        function(successFnW, failFnW) {
-            var getEntryFileInputs = [];
-            for(var i = 0; i < files.length; i++) {
-                getEntryFileInputs.push([files[i], {}]);
-            }
-            UstadMobileUtils.asyncMap(
-                UstadMobileAppImplCordova.getInstance().ensureIsFileEntry,    
-                    getEntryFileInputs, successFnW, failFnW);
-        },
-        function(entryResult, successFnW, failFnW) {
-            fileEntries = UstadMobileUtils.flattenArray(entryResult);
-            var metaDataFns = [];
-            for(var i = 0; i < files.length; i++) {
-                metaDataFns.push(fileEntries[i].getMetadata.bind(
-                    fileEntries[i]));
-            }
-            UstadMobileUtils.asyncMap(metaDataFns, [], successFnW, failFnW);
-        },
-        function(statResult, successFnW, failFnW) {
-            fileStats = UstadMobileUtils.flattenArray(statResult);
-            UstadMobileAppImplCordova.getInstance().ensureIsFileEntry(destFile, 
-                {"createfile" : true}, successFnW, failFnW);
-        },
-        function(destFileEntry, successFnW, failFnW) {
-            thatDestFileEntry = destFileEntry;
-            destFileEntry.createWriter(successFnW, failFnW);
-        },function(destFileWriter, successFnW, failFnW) {
-            destFileWriter.onerrror = failFnW;
-            if(options.append) {
-                destFileWriter.seek(destFileWriter.length);
-            }
-            
-            var readAndAppend = function(fileEntry, successW, failW) {
-                destFileWriter.onwriteend = successW;
-                fileEntry.file(function(srcFile) {
-                    destFileWriter.write(srcFile);
-                });
-            };
-            
-            UstadMobileUtils.asyncMap(readAndAppend, fileEntries,
-                successFnW, failFnW);
-        },function(resultMap, successFnW, failFnW) {
-            UstadMobileUtils.runCallback(successFnW, [thatDestFileEntry],this);
+        progressFn = function(bgEvt) {
+            options.onprogress({
+                lengthComputable : true,
+                loaded: bgEvt.bytesReceived,
+                total: bgEvt.totalBytesToReceive
+            });
         }
-    ], successFn, failFn);
+    }
+    
+    UstadMobileAppImplCordova.getInstance().ensureIsFileEntry(fileURI, {createfile: true}, 
+        function(fileEntry) {
+            var downloader = new BackgroundTransfer.BackgroundDownloader();
+            var download = downloader.createDownload(url, fileEntry);
+            download.startAsync().then(function(status) {
+                UstadMobileUtils.runCallback(successFn, [fileEntry], this);
+            }, failFn, progressFn);
+        }, failFn);
 };
 
 UstadMobileAppImplCordova.prototype.renameFile = function(srcFile, newName, options, successFn, failFn) {

@@ -171,6 +171,11 @@ function startAssetServer() {
         var rangeRequest = readRangeHeader(request.headers['range'], 
             fileSize);
         
+        var fileBuf = fs.readFileSync(fileURI);
+        var md5 = require("MD5");
+        var fileMD5Sum = md5(fileBuf);
+        fileBuf = null;
+        
         if(rangeRequest === null || (rangeRequest.Start === 0 && rangeRequest.End === fileSize-1)) {
             fs.readFile(fileURI, function(err,data) {
                 if(err) {
@@ -180,6 +185,8 @@ function startAssetServer() {
                     response.setHeader("Content-Type", mimeType);
                     response.setHeader("Content-Length", fileSize);
                     response.setHeader("Accept-Ranges", "bytes");
+                    response.setHeader("ETag", fileMD5Sum);
+                    
                     response.writeHead(200, httpHeaders);
                     if(request.method !== "HEAD") {
                         var fsReadable = fs.createReadStream(fileURI, 
@@ -203,6 +210,7 @@ function startAssetServer() {
                 response.setHeader('Content-Range', 'bytes ' + start + '-' + end + '/' + fileSize);
                 response.setHeader("Content-Length", contentLength);
                 response.setHeader("Content-Type", mimeType);
+                response.setHeader("ETag", fileMD5Sum);
                 response.setHeader("Accept-Ranges", "bytes");
 
                 response.writeHead(206);

@@ -4,4 +4,4 @@
 #
 
 npm install git+https://github.com/UstadMobile/node-slow-stream.git \
-    buffered-stream http-server stream-buffers
+    buffered-stream http-server stream-buffers MD5

@@ -232,7 +232,7 @@ UstadCatalogController.setupUserCatalog = function(options, successFn, failFn) {
 
 /**
  * Handle when the user clicks on the download all button - shown at the bottom
- * of a navigation feed
+ * of a navigation feed.  Ask to confirm if they want to download it all....
  * 
  * @param {type} evt
  * @param {type} data
@@ -245,8 +245,37 @@ UstadCatalogController.prototype.handleClickDownloadAll = function(evt, data) {
     this.view.showConfirmAcquisitionDialog(dialogTitle, dialogText);
 };
 
+/**
+ * Handle when the user confirms that they want to download the entire acquisition
+ * feed
+ * 
+ * @param {type} evt
+ * @param {type} data
+ * @returns {undefined}
+ */
 UstadCatalogController.prototype.handleConfirmDownloadAll = function(evt, data) {
-    alert("OK get it all");
+    this.view.hideConfirmAcquisitionDialog();
+    
+    var dlOptions = {
+        onprogress : this.view.updateDownloadAllProgress.bind(this.view)
+    };
+    
+    
+    UstadCatalogController._addCurrentUserToOpts(dlOptions);
+    
+    /*
+    this.view.setEntryStatus(feedId, entryId, 
+        $UstadJSOPDSBrowser.ACQUISITION_IN_PROGRESS, 
+        {"loaded" : 0, "total" : 100});
+    */
+   
+    UstadCatalogController.downloadEntireAcquisitionFeed(this.model.opdsFeed,
+        dlOptions, function(result) {
+            alert("OK Downloaded entire acquisition catalog");
+        }, function(err) {
+            UstadMobile.getInstance().appController.view.showAlertPopup("Error",
+                "Sorry: something went wrong trying to download that. " + err);
+        });
 };
 
 /**
@@ -296,31 +325,7 @@ UstadCatalogController.prototype.handleClickFeedEntry = function(evt, data, succ
 };
 
 UstadCatalogController.prototype.handleConfirmEntryAcquisition = function(evt, data) {
-    this.view.hideConfirmAcquisitionDialog();
-    //the source feed that this acquisition feed came from
-    var feedId = this.userSelectedEntry.parentFeed.id;
-    var entryId = this.userSelectedEntry.id;
     
-    var dlOptions = {
-        onprogress : (function(evt) {
-            this.view.updateEntryProgress(feedId, entryId, evt);
-        }).bind(this)
-    };
-    
-    UstadCatalogController._addCurrentUserToOpts(dlOptions);
-    
-    this.view.setEntryStatus(feedId, entryId, 
-        $UstadJSOPDSBrowser.ACQUISITION_IN_PROGRESS, 
-        {"loaded" : 0, "total" : 100});
-    
-    UstadCatalogController.downloadEntireAcquisitionFeed(this.userSelectedEntry,
-        dlOptions, (function(result) {
-            this.view.setEntryStatus(feedId, entryId, 
-            $UstadJSOPDSBrowser.ACQUIRED);
-        }).bind(this), function(err) {
-            UstadMobile.getInstance().appController.view.showAlertPopup("Error",
-                "Sorry: something went wrong trying to download that. " + err);
-        });
 };
 
 UstadCatalogController.prototype.handleClickContainerEntry = function(evt, data) {
@@ -485,7 +490,8 @@ UstadCatalogController.getCatalogURLSByID = function(id, options) {
 /**
  * Acquire all the items that are in a given feed
  * 
- * @param {UstadJSOPDSEntry|string} src the feed to get: either a URL or an OPDSEntry object
+ * @param {UstadJSOPDSEntry|UstadJSOPDSFeed|string} src the feed to get - can be:
+ *  String URL, an UstadJSOPDSEntry that points to that feed, or an UstadJSOPDSFeed itself
  * @param {type} options misc options used by downstream functions (e.g. username etc)
  * @param {type} successFn success callback: array of results
  * @param {type} failFn fail callback
@@ -495,17 +501,20 @@ UstadCatalogController.downloadEntireAcquisitionFeed = function(src, options, su
     var srcURL = "";
     UstadMobileUtils.waterfall([
         function(successFnW, failFnW) {
-            if(src instanceof UstadJSOPDSEntry) {
-                var entryLink = src.getAcquisitionLinks(null, 
-                    UstadJSOPDSEntry.TYPE_ACQUISITIONFEED);
-                srcURL = UstadJS.resolveURL(src.parentFeed.href,
-                    entryLink);
+            if(src instanceof UstadJSOPDSFeed) {
+                successFnW(src, {});
             }else {
-                srcURL = src;
+                if(src instanceof UstadJSOPDSEntry) {
+                    var entryLink = src.getAcquisitionLinks(null, 
+                        UstadJSOPDSEntry.TYPE_ACQUISITIONFEED);
+                    srcURL = UstadJS.resolveURL(src.parentFeed.href,
+                        entryLink);
+                }else if(typeof src === "string"){
+                    srcURL = src;
+                }
+                UstadCatalogController.getCatalogByURL(srcURL, options, 
+                    successFnW, failFnW);
             }
-            
-            UstadCatalogController.getCatalogByURL(srcURL, options, 
-                successFnW, failFnW);
         },function(opdsFeedObj, resultInfo, successFnW, failFnW) {
             opdsSrc = opdsFeedObj;
             UstadCatalogController.acquireCatalogEntries(opdsFeedObj.entries,

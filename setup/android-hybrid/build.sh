@@ -3,6 +3,11 @@
 # Usage:
 # ./build.sh (debug|release) 
 # Default:debug
+#
+# To specify a given device
+# export ANDROID_SERIAL=serial
+# where serial number is given by $ adb devices
+#
 
 
 WHAT="debug"
@@ -19,6 +24,7 @@ cd ..
 
 echo "check arg $2" 
 if [ "$2" == "install" ]; then
+    
     adb shell am start -a android.intent.action.MAIN -n com.toughra.ustadmobile/.UstadMobileActivity
 fi
 

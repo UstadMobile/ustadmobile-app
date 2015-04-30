@@ -1,12 +1,13 @@
 #!/bin/bash
 
-PLUGINLIST="org.apache.cordova.device 
-org.apache.cordova.network-information 
-org.apache.cordova.file 
-https://github.com/UstadMobile/cordova-plugin-file-transfer 
+PLUGINLIST="org.apache.cordova.device
+org.apache.cordova.network-information
+org.apache.cordova.file
+https://github.com/UstadMobile/cordova-plugin-file-transfer
+https://github.com/sgrebnov/cordova-plugin-background-download.git
 org.apache.cordova.globalization org.apache.cordova.console
-https://github.com/UstadMobile/cordova-plugin-inappbrowser.git 
-https://github.com/mikedawson/cordova-httpd.git 
+https://github.com/UstadMobile/cordova-plugin-inappbrowser.git
+https://github.com/mikedawson/cordova-httpd.git
 https://github.com/mikedawson/CordovaMediaSanitize.git
 https://github.com/MobileChromeApps/zip.git
 "

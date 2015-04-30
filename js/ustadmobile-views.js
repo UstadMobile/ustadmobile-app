@@ -263,6 +263,7 @@ UstadCatalogView.prototype.loadCatalogViewPage = function(options) {
             var progressBar = $("<progress/>", {
                "max": 100,
                "value": 20,
+               "id" : "um-progress-dlall-" + this._pageID,
                "class" : "um-progress-bar"
             }).css("display", "block");
             footerEl.append(progressBar);
@@ -273,7 +274,6 @@ UstadCatalogView.prototype.loadCatalogViewPage = function(options) {
             downloadButton.text("Download All");
             downloadButton.on("click", 
                 this.controller.handleClickDownloadAll.bind(this.controller));
-            //downloadButton.on("click", 
                 
             footerEl.append(downloadButton);
             newPageDiv.append(footerEl);
@@ -368,6 +368,22 @@ UstadCatalogView.prototype.getCatalogWidgetByFeedId = function(feedId) {
 UstadCatalogView.prototype.setEntryStatus = function(feedId, entryId, status, options) {
     var catalogWidgetEl = this.getCatalogWidgetByFeedId(feedId);
     catalogWidgetEl.opdsbrowser("updateentrystatus", entryId, status, options);
+};
+
+/**
+ * Update the progress bar showing the download of an enitre acquisition feed
+ * 
+ * Progress bar is only visible if the feed type is an acquisition feed
+ * 
+ * @param {Number} percentComplete between 0 and 100
+ */
+UstadCatalogView.prototype.updateDownloadAllProgress = function(progressEvt) {
+    var percentComplete = 0;
+    if(progressEvt.lengthComputable === true) {
+        percentComplete = 
+            Math.round((progressEvt.loaded / progressEvt.total)*100);
+        $("#um-progress-dlall-" + this._pageID).attr("value", percentComplete);
+    }
 };
 
 UstadCatalogView.prototype.updateEntryProgress = function(feedId, entryId, options) {

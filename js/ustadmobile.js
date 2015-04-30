@@ -2084,7 +2084,8 @@ UstadMobileResumableDownload.prototype.download = function(url, destFileURI, opt
     }
     
     UstadMobileUtils.waterfall([
-        this.checkPreviousAttempt.bind(this),
+        //Disable this - using background download service
+        //this.checkPreviousAttempt.bind(this),
         this.getInfo.bind(this),
         (function(dlObj, successFnW, failFnW) {
             this.continueDownload(successFnW, failFnW);
@@ -2112,7 +2113,6 @@ UstadMobileResumableDownload.prototype._handleProgressUpdate = function(evt) {
 };
 
 UstadMobileResumableDownload.prototype.continueDownload = function(successFn, failFn) {
-    var inProgressFileURI = this.destURI + ".inprogress";
     var partFileURI = this.destURI + ".part";
     var destFileURI = this.destURI;
     var destFileName = UstadMobileUtils.getFilename(this.destURI);
@@ -2130,67 +2130,18 @@ UstadMobileResumableDownload.prototype.continueDownload = function(successFn, fa
         function(successFnW, failFnW) {
             thatDownload.tryCount++;
             UstadMobile.getInstance().systemImpl.downloadUrlToFileURI(srcURL,
-                inProgressFileURI, downloadOptions, successFnW, failFnW);
-        }, 
-        function(downloadedResultFileVal, successFnW, failFnW) {
-            downloadedResultFile = downloadedResultFileVal;
-            UstadMobile.getInstance().systemImpl.fileExists(
-                partFileURI, successFnW, failFnW);
-        }, 
-        function(downloadedPartExists, successFnW, failFnW) {
-            if(downloadedPartExists) {
-                //concatenate and finish - here we need to return a file entry,
-                var thatDestFile = null;
-                UstadMobileUtils.waterfall([
-                    function(successFnW2, failFnW2) {
-                        UstadMobile.getInstance().systemImpl.concatenateFiles(
-                            [partFileURI, inProgressFileURI], destFileURI, {},
-                            successFnW2, failFnW2);
-                    },function(destFileEntry, successFnW2, failFnW2) {
-                        thatDestFile = destFileEntry;
-                        thatDownload.removePartialFiles(successFnW2, failFnW2);
-                    },function(successFnW2, failFnW2) {
-                        UstadMobileUtils.runCallback(successFnW2, [thatDestFile],
-                            this);
-                    }
-                ], successFnW, failFnW);
-                
-            }else {
-                //move and finish
-                UstadMobile.getInstance().systemImpl.renameFile(
-                    downloadedResultFile, destFileName, {},
-                    successFnW, failFnW);
-            }
+                destFileURI, downloadOptions, successFnW, failFnW);
         },function(destFile, successFnW, failFnW) {
             thatDownload.removeDLInfoFile(function() {
                 UstadMobileUtils.runCallback(successFnW, [destFile], this);
             }, failFnW);
         }
     ], successFn, (function(err) {
-        //TODO: logic to see if we should retry...
+        debugger;
         if(this.tryCount < this.maxRetries) {
-            //concatenate the results of the last attempt into the .part file
-            UstadMobileUtils.waterfall([
-                function(successFnW, failFnW) {
-                    UstadMobile.getInstance().systemImpl.concatenateFiles(
-                        [inProgressFileURI], partFileURI, {append : true},
-                        successFnW, failFnW);
-                },
-                function(writeFinishEvt, successFnW, failFnW) {
-                    UstadMobile.getInstance().systemImpl.fileSize(
-                        partFileURI, successFnW, failFnW);
-                },
-                (function(downloadedSize, successFnW, failFnW) {
-                    this.bytesDownloadedOK = downloadedSize;
-                    UstadMobile.getInstance().systemImpl.removeFile(
-                        this.destURI + ".inprogress", successFnW, failFnW);
-                }).bind(this),
-                this.continueDownload.bind(this)
-                ], successFn, failFn);
-                
+            this.continueDownload(successFn, failFn);
         }else {
-            //we have exceeded the maximum number of retries 
-           UstadMobileUtils.runCallback(failFn, [err], this);
+            UstadMobileUtils.runCallback(failFn, [err], this);
         }
     }).bind(this));
 };

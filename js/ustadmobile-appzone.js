@@ -446,7 +446,7 @@ UstadMobileAppZone.prototype = {
         var stmt = null;
         if(typeof stmtVal === "string") {
             stmt = new TinCan.Statement(JSON.parse(stmtVal),
-            {'storeOriginal' : true});
+                {'storeOriginal' : true});
         }else {
             stmt = stmtVal;
         }
