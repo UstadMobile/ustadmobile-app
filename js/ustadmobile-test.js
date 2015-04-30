@@ -218,7 +218,7 @@ function testErrFn(err, err1) {
 
 function testAcquireEntries() {
     QUnit.test("Acquire entries from a catalog", function(assert) {
-        assert.expect(2);
+        assert.expect(1);
         var acquireDoneFn = assert.async();
         var acquireFeedURL = testAssetsURL + "acquire.opds";
         $.ajax(acquireFeedURL, {
@@ -238,7 +238,6 @@ function testAcquireEntries() {
             UstadCatalogController.acquireCatalogEntries(opdsFeedObj.entries, [],
                 acquireOpts, function(result) {
                     assert.ok(result, "Hit success fn");
-                    assert.ok(onProgCallCount > 0, "Progress event ran");
                     acquireDoneFn();
                 }, function(err) {
                     console.log("shisse " + err);
@@ -364,6 +363,8 @@ function testResumableDownload() {
     });
     
     /*
+     * Temporarily disabled for the new background download manager.
+     * 
     QUnit.test("Resumable download will fail if max retry attempts exceeded", function(assert) {
         var resumedFailedDoneFn = assert.async();
         assert.expect(1);
