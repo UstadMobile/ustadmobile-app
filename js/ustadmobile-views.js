@@ -227,6 +227,8 @@ UstadCatalogView.prototype.loadCatalogViewPage = function(options) {
         var opdsBrowserOpts = {
             "defaulticon_acquisitionfeed": UstadCatalogView.browserDefaultOpts.defaulticon_acquisitionfeed,
             "defaulticon_navigationfeed" : UstadCatalogView.browserDefaultOpts.defaulticon_navigationfeed,
+            "containerselected" : 
+                this.controller.handleClickContainerEntry.bind(this.controller),
             "feedselected" : 
                 this.controller.handleClickFeedEntry.bind(this.controller),
             "acquisitionstatushandler" : (function(entryId){
@@ -341,9 +343,22 @@ UstadCatalogView.prototype.showAcquisitionFeed = function(opdsObj) {
         });
 };
 
-UstadCatalogView.prototype.showConfirmAcquisitionDialog = function(title, text, confirmCallback, cancelCallback) {
+/**
+ * Show an OK/Cancel dialog for the user to confirm if they want to download
+ * a given entry
+ * 
+ * @param {String} title Dialog title
+ * @param {String} text Dialog text 
+ * @param {Object} options
+ * @param {Object} [options.confirmData] data to pass with the confirm event
+ * @param {function} confirmCallback
+ * @param {function} cancelCallback
+ * @returns {undefined}
+ */
+UstadCatalogView.prototype.showConfirmAcquisitionDialog = function(title, text, options, confirmCallback, cancelCallback) {
     var confirmDivID = this._pageID + "-confirm-popup";
     var confirmDivIDSel = "#" + confirmDivID;
+    var confirmData = options.confirmData || {};
     
     $(confirmDivIDSel + " .um_popup_header").text(title);
     $(confirmDivIDSel + " .ustad_acquirecontent_dialog_text").text(text);
@@ -351,17 +366,17 @@ UstadCatalogView.prototype.showConfirmAcquisitionDialog = function(title, text, 
     $(confirmDivIDSel +" .ui-btn").off("click");
     
     
-    $(confirmDivIDSel + " .ustad_acquirecontent_popup_ok").on("click", 
+    $(confirmDivIDSel + " .ustad_acquirecontent_popup_ok").on("click", confirmData,
         (function(evt) {
             this.hideConfirmAcquisitionDialog();
-            UstadMobileUtils.runCallback(confirmCallback, [], this);
+            UstadMobileUtils.runCallback(confirmCallback, [evt], this);
         }).bind(this));
     
     
     $(confirmDivIDSel + " .ustad_acquirecontent_popup_cancel").on("click", 
         (function(evt) {
             this.hideConfirmAcquisitionDialog();
-            UstadMobileUtils.runCallback(cancelCallback, [], this);
+            UstadMobileUtils.runCallback(cancelCallback, [evt], this);
         }).bind(this));
 };
 
@@ -393,6 +408,22 @@ UstadCatalogView.prototype.updateDownloadAllProgress = function(progressEvt) {
             Math.round((progressEvt.loaded / progressEvt.total)*100);
         $("#um-progress-dlall-" + this._pageID).attr("value", percentComplete);
     }
+};
+
+/**
+ * Set whether or not the progress bar will be visible for a given entry
+ * 
+ * @param {string} entryId The entry id in question
+ * @param {boolean} visible 
+ */
+UstadCatalogView.prototype.setDownloadEntryProgressVisible = function(entryId, visible) {
+    $("#" + this._pageID + " .um_opdsbrowser_container").opdsbrowser("progressentryvisible",
+        entryId, visible);
+};
+
+UstadCatalogView.prototype.updateDownloadEntryProgress = function(entryId, progressEvt) {
+    $("#" + this._pageID + " .um_opdsbrowser_container").opdsbrowser("updateentryprogress",
+        entryId, progressEvt);
 };
 
 UstadCatalogView.prototype.updateEntryProgress = function(feedId, entryId, options) {

@@ -238,7 +238,7 @@ UstadCatalogController.setupUserCatalog = function(options, successFn, failFn) {
  * @param {type} data
  * @returns {undefined}
  */
-UstadCatalogController.prototype.handleClickDownloadAll = function(evt, data) {
+UstadCatalogController.prototype.handleClickDownloadAll = function(evt) {
     //confirm that the user wants to do this
     var dialogTitle = "Download?";
     var dialogText = this.model.opdsFeed.title;
@@ -254,7 +254,7 @@ UstadCatalogController.prototype.handleClickDownloadAll = function(evt, data) {
  * @param {type} data
  * @returns {undefined}
  */
-UstadCatalogController.prototype.handleConfirmDownloadAll = function(evt, data) {
+UstadCatalogController.prototype.handleConfirmDownloadAll = function(evt) {
     this.view.hideConfirmAcquisitionDialog();
     
     var dlOptions = {
@@ -276,6 +276,58 @@ UstadCatalogController.prototype.handleConfirmDownloadAll = function(evt, data) 
         }, function(err) {
             UstadMobile.getInstance().appController.view.showAlertPopup("Error",
                 "Sorry: something went wrong trying to download that. " + err);
+        });
+};
+
+/**
+ * This is being reworked to handle individual entry downloads
+ *
+UstadCatalogController.prototype.handleClickContainerEntry = function(evt, data) {
+    //here it is time to open the container entry
+    var entry = data.entry;
+    var opts = {};
+    UstadCatalogController._addCurrentUserToOpts(opts);
+    var containerController = UstadContainerController.makeFromEntry(this.appController,
+        entry, opts);
+    var initOpts = {};
+    this.appController.view.showLoading({text : "Opening"});
+    containerController.init(initOpts, (function() {
+        UstadContainerController.setOpenContainer(containerController);
+        this.appController.view.hideLoading();
+        containerController.view.show();
+    }).bind(this), function(err) {
+        UstadMobile.getInstance().appController.view.showAlertPopup("Error",
+                "Sorry: something went wrong trying to open that. " + err);
+    });
+};
+*/
+
+UstadCatalogController.prototype.handleClickContainerEntry = function(evt, data, successFn, failFn) {
+    var entryClicked = data.entry;
+    var dialogTitle = "Download Entry?";
+    var dialogText = data.entry.title;
+    this.view.showConfirmAcquisitionDialog(dialogTitle, dialogText, {confirmData : {entry : entryClicked}},
+        this.handleConfirmDownloadContainer.bind(this));
+};
+
+UstadCatalogController.prototype.handleConfirmDownloadContainer = function(evt) {
+    var entryClicked = evt.data.entry;
+    
+    var dlOptions = {
+        onprogress : (function(progEvt) {
+            this.view.updateDownloadEntryProgress(entryClicked.id, progEvt);
+        }).bind(this)
+    };
+    UstadCatalogController._addCurrentUserToOpts(dlOptions);
+    
+    this.view.setDownloadEntryProgressVisible(evt.data.entry.id, true);
+    
+    UstadCatalogController.acquireCatalogEntries([entryClicked],
+        [], dlOptions, (function(successEvt) {
+            this.view.setDownloadEntryProgressVisible(evt.data.entry.id, false);
+            alert("Downloaded entry OK");
+        }).bind(this), function(err) {
+            alert("failed to download entry");
         });
 };
 
@@ -329,24 +381,6 @@ UstadCatalogController.prototype.handleConfirmEntryAcquisition = function(evt, d
     
 };
 
-UstadCatalogController.prototype.handleClickContainerEntry = function(evt, data) {
-    //here it is time to open the container entry
-    var entry = data.entry;
-    var opts = {};
-    UstadCatalogController._addCurrentUserToOpts(opts);
-    var containerController = UstadContainerController.makeFromEntry(this.appController,
-        entry, opts);
-    var initOpts = {};
-    this.appController.view.showLoading({text : "Opening"});
-    containerController.init(initOpts, (function() {
-        UstadContainerController.setOpenContainer(containerController);
-        this.appController.view.hideLoading();
-        containerController.view.show();
-    }).bind(this), function(err) {
-        UstadMobile.getInstance().appController.view.showAlertPopup("Error",
-                "Sorry: something went wrong trying to open that. " + err);
-    });
-};
 
 
 /**

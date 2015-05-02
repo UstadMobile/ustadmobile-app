@@ -30,6 +30,21 @@
     color: #c0c0c0;
 }*/
 
+/** Status element used to contain progress info etc. */
+.umjs_opdsbrowser_progressarea {
+    visibility: hidden;
+    position: absolute;
+    left: 6.25em;//this should match with the listview margin (where thumbnail is)
+    bottom: 0;
+    right: 0;
+    height: 10px;
+}
+
+.umjs_opdsbrowser_progressarea progress {
+    width: 100%;
+    height: 20px;
+}
+
 .umjs_opdsbrowser_navfeed .ui-listview li .ui-btn .ui-li-aside {
     color: #eee;
 }
