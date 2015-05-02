@@ -341,7 +341,7 @@ UstadCatalogView.prototype.showAcquisitionFeed = function(opdsObj) {
         });
 };
 
-UstadCatalogView.prototype.showConfirmAcquisitionDialog = function(title, text) {
+UstadCatalogView.prototype.showConfirmAcquisitionDialog = function(title, text, confirmCallback, cancelCallback) {
     var confirmDivID = this._pageID + "-confirm-popup";
     var confirmDivIDSel = "#" + confirmDivID;
     
@@ -350,10 +350,19 @@ UstadCatalogView.prototype.showConfirmAcquisitionDialog = function(title, text) 
     $(confirmDivIDSel).popup("open");
     $(confirmDivIDSel +" .ui-btn").off("click");
     
+    
     $(confirmDivIDSel + " .ustad_acquirecontent_popup_ok").on("click", 
-        this.controller.handleConfirmDownloadAll.bind(this.controller));
+        (function(evt) {
+            this.hideConfirmAcquisitionDialog();
+            UstadMobileUtils.runCallback(confirmCallback, [], this);
+        }).bind(this));
+    
+    
     $(confirmDivIDSel + " .ustad_acquirecontent_popup_cancel").on("click", 
-        this.hideConfirmAcquisitionDialog.bind(this));
+        (function(evt) {
+            this.hideConfirmAcquisitionDialog();
+            UstadMobileUtils.runCallback(cancelCallback, [], this);
+        }).bind(this));
 };
 
 UstadCatalogView.prototype.hideConfirmAcquisitionDialog = function() {

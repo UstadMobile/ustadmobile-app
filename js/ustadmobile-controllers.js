@@ -242,7 +242,8 @@ UstadCatalogController.prototype.handleClickDownloadAll = function(evt, data) {
     //confirm that the user wants to do this
     var dialogTitle = "Download?";
     var dialogText = this.model.opdsFeed.title;
-    this.view.showConfirmAcquisitionDialog(dialogTitle, dialogText);
+    this.view.showConfirmAcquisitionDialog(dialogTitle, dialogText,
+        this.handleConfirmDownloadAll.bind(this));
 };
 
 /**
