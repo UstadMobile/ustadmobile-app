@@ -179,6 +179,8 @@ var containerChangeFn = function() {
     
     testUstadMobileAppImplEnsureIsFileEntry();
     
+    testUstadMobileAppImplContentDirSys();
+    
     testUstadMobileControllerGetCatalogByURL();
     
     testUstadCatalogControllerCacheCatalog();
@@ -523,6 +525,29 @@ function testAppImplDownload() {
             });
     });
     
+}
+
+function testUstadMobileAppImplContentDirSys() {
+    QUnit.test("Test creating a content directory", function(assert) {
+        var dirSysDoneFn = assert.async();
+        assert.expect(1);
+        UstadMobileUtils.waterfall([
+            function(successFnW, failFnW) {
+                UstadMobile.getInstance().systemImpl.getSharedContentDir(
+                        successFnW, failFnW);
+            },
+            function(sharedDirURI, successFnW, failFnW) {
+                UstadMobile.getInstance().systemImpl.fileExists(sharedDirURI, 
+                    successFnW, failFnW);
+            },
+            function(sharedDirExists, successFnW, failFnW) {
+                assert.ok(sharedDirExists, "Shared content dir exists as file");
+                //UstadMobile.getInstance().systemImpl.checkUserContentDirectory(successFnW, failFnW);
+                dirSysDoneFn();
+            }
+        ]);
+        
+    });
 }
 
 function testDirCreationAndRemoval() {

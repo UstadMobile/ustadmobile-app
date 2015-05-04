@@ -86,6 +86,8 @@ UstadMobile.getInstance = function() {
  * Constant: the base directory name where content is put - in the global or
  * app specific persistent storage area
  * 
+ * Value "ustadmobileContent"
+ * 
  * @type String
  */
 UstadMobile.CONTENT_DIRECTORY = "ustadmobileContent";
@@ -386,7 +388,6 @@ UstadMobile.prototype = {
     init: function() {
         $.mobile.allowCrossDomainPages = true;
         $.support.cors = true;
-        console.log("Mobileinit changes set for jQuery mobile for PhoneGap");
         
         //Load the scripts appropriate to the implementation and context
         this.loadInitScripts(function() {        
@@ -1273,9 +1274,12 @@ UstadMobileUtils.runOrWait = function(runNow, fn, args, thisObj, waitingList) {
  * @param {type} fnList
  * @param {type} successFn
  * @param {type} failFn
+ * @param {Object} [options]
+ * @param {Object} [options.context] context in which to run functions
+ * 
  * @returns {undefined}
  */
-UstadMobileUtils.waterfall = function(fnList, successFn, failFn) {
+UstadMobileUtils.waterfall = function(fnList, successFn, failFn, options) {
     if(fnList.length < 1) {
         UstadMobileUtils.runCallback(successFn, [], this);
         return;
@@ -1289,11 +1293,13 @@ UstadMobileUtils.waterfall = function(fnList, successFn, failFn) {
             if(index < (fnList.length - 1)) {
                 runItFn(index+1);
             }else {
-                UstadMobileUtils.runCallback(successFn, lastResultArgs, this);
+                UstadMobileUtils.runCallback(successFn, lastResultArgs, 
+                    options && options.context ? options.context : this);
             }
         });
         lastResultArgs.push(failFn);
-        fnList[index].apply(this, lastResultArgs);
+        fnList[index].apply(options && options.context ? options.context : this,
+            lastResultArgs);
     };
     
     runItFn(0);
@@ -1603,6 +1609,27 @@ UstadMobileUtils.formatISO8601Duration = function(duration) {
 };
 
 /**
+ * Utility function to assert that something is OK, if not call the error function
+ * to force the program to stop/display error to the user etc.
+ * 
+ * @param {type} expr
+ * @param {type} reason
+ * @param {type} successFn
+ * @param {type} failFn
+ */
+UstadMobileUtils.assertCallback = function(expr, reason, successFn, failFn) {
+    if(!expr) {
+        var err = {
+            "reason": reason,
+            "value" : expr
+        };
+        UstadMobileUtils.runCallback(failFn, [reason, expr], this);
+    }else {
+        UstadMobileUtils.runCallback(successFn, [], this);
+    }
+};
+
+/**
  * 
  * @param Node mediaEl - DOM node representing an audio or video tag
  * @param function onPlayCallback function to call once the item has played
@@ -1682,6 +1709,15 @@ var UstadMobileAppImplementation = function() {
             
     
 };
+
+/**
+ * Directory named assigned to the cache value ".cache"
+ * 
+ * @type {String}
+ */
+UstadMobileAppImplementation.DIRNAME_CACHE = ".cache";
+
+UstadMobileAppImplementation.DIRNAME_DOWNLOADS = ".downloadinprog";
 
 UstadMobileAppImplementation.prototype = {
     

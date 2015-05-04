@@ -18,6 +18,10 @@ if [ ! -e $ANDROID_HOME/tools ]; then
     exit 1
 fi
 
+if [ ! -e coverage_report ]; then
+    mkdir coverage_report
+fi
+
 SRCDIR=$(pwd)/../../
 
 WORKINGDIR=$(pwd)

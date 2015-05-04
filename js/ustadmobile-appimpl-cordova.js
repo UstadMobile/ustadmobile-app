@@ -48,11 +48,24 @@ var UstadMobileAppImplCordova;
  * Object that handles logic and functions that work within the content context
  * (as opposed to the app context)
  * 
+ * In Cordova the content directories are as follows:
+ * 
+ * Android:
+ * sdcard/ustadmobileContent : Shared content directory
+ *  .cache - storage for caching entries downloaded over http
+ *  .inprogress - storage for partially downloaded files etc.
+ *  
+ *  user-<USERNAME> : per user content directory for files specific to this user
+ *   .cache - as above
+ *   .inprogress - as above
+ * 
+ * 
  * @class UstadMobileAppImplCordova
  * @constructor
  */
 UstadMobileAppImplCordova = function() {
-    
+    this._baseContentDirEntry = null;
+    this._baseContentDirEntryURI = null;
 };
 
 /**
@@ -76,11 +89,136 @@ UstadMobileAppImplCordova.getInstance = function() {
     return UstadMobileAppImplCordova.mainInstance;
 };
 
-
-
-
 UstadMobileAppImplCordova.prototype = Object.create(
     UstadMobileAppImplementation.prototype);
+
+/**
+ * Setup the Cordova UstadMobile app implementation - ensure that directories
+ * are created etc.
+ * 
+ * TODO: Make this listen for deviceready itself and have a timeout, after which
+ * fail should be called.
+ * 
+ * @param {successFn} success callback
+ * @param {failFn} failure callback
+ * 
+ */
+UstadMobileAppImplCordova.prototype.init = function(successFn, failFn) {
+    UstadMobileUtils.waterfall([
+        function(successFnW, failFnW) {
+            UstadMobileUtils.assertCallback(window.cordova && window.cordova.plugins,
+                "Assert cordova is ready", successFnW, failFnW);
+        },
+        function(successFnW, failFnW) {
+            UstadMobileAppImplCordova.prototype.getSharedContentDir(successFnW, failFnW);
+        },
+        function(contentDirURI, successFnW, failFnW) {
+            this.checkContentDir(contentDirURI, {}, successFnW, failFnW)
+        },
+        function(contentDirEntry, successFnW, failFnW) {
+            this._baseContentDirEntry = contentDirEntry;
+            this._baseContentDirEntryURI = contentDirEntry.toURL();
+            var mediaSanity = ( cordova && cordova.plugins && cordova.plugins.MediaSanity ) 
+                ? cordova.plugins.MediaSanity : null;
+            UstadMobileAppImplCordova.getInstance().mediaSanityPlugin = mediaSanity;
+
+            //prevent requirement for a gesture to play media
+            mediaSanity.setMediaGestureRequired(false, function() {
+                console.log("MEDIA: Set media gesture required to false OK");
+            }, function(err) {
+                console.log("Media: set media gesture required FAIL : " + err);
+            });
+            UstadMobile.getInstance().fireImplementationReady();
+            UstadMobileUtils.runCallback(successFnW, [], this);
+        }
+    ], successFn, failFn, {context: this});
+};
+
+/**
+ * Provides the path to the shared content directory 
+ * 
+ * @param {function} successFn should take one argument: uri to the directory
+ * @param {function} failFn should take one argument: error that occurred
+ */
+UstadMobileAppImplCordova.prototype.getSharedContentDir = function(successFn, failFn) {
+    if(this._baseContentDirEntryURI) {
+        UstadMobileUtils.runCallback(successFn, [this._baseContentDirEntryURI], 
+            this);
+    }else {
+        window.resolveLocalFileSystemURL("cdvfile://localhost/sdcard/",
+            function(sdCardDirEntry) {
+                var contentDirURI = UstadMobileUtils.joinPath([sdCardDirEntry.toURL(),
+                    UstadMobile.CONTENT_DIRECTORY]);
+                UstadMobileUtils.runCallback(successFn, [contentDirURI], this);
+            }, failFn);
+    }
+};
+
+
+/**
+ * Makes a given set of sub directories (.cache and .inprogress) so a directory
+ * can be used for content storage (e.g. as the shared directory for the device
+ * or as a per user directory)
+ * 
+ * @param {FileEntry|String} baseDir
+ * @param {Object} options (c
+ * @param {type} successFn success callback called with the given base directory
+ * @param {type} failFn failure callback called with the error that occured
+ */
+UstadMobileAppImplCordova.prototype.checkContentDir = function(baseDir, options, successFn, failFn) {
+    var baseDirURL = typeof baseDir === "string" ? baseDir : baseDir.toURL();
+    var baseDirEntryRetVal = null;
+    UstadMobileUtils.waterfall([
+        function(successFnW, failFnW) {
+            this.makeDirectory(baseDirURL, {}, successFnW, failFnW);
+        },
+        function(baseDirEntry, successFnW, failFnW) {
+            baseDirEntryRetVal = baseDirEntry;
+            var cachePath = UstadMobileUtils.joinPath([baseDirEntryRetVal.toURL(),
+                UstadMobileAppImplementation.DIRNAME_CACHE]);
+            this.makeDirectory(cachePath, {}, successFnW, failFnW);
+        },
+        function(cacheDirEntry, successFnW, failFnW){
+            var inProgPath = UstadMobileUtils.joinPath([baseDirEntryRetVal.toURL(),
+                UstadMobileAppImplementation.DIRNAME_DOWNLOADS]);
+            this.makeDirectory(inProgPath, {}, successFnW, failFnW);
+        }
+    ], function() {
+        //success function: run the callback using the baseDirEntry 
+        UstadMobileUtils.runCallback(successFn, [baseDirEntryRetVal], this);
+    }, failFn, {context: this});
+};
+
+/**
+ * Check that a user specific content directory is ready
+ * 
+ * @param {String} username username to check directory for
+ * @param {Object} options misc options (unused)
+ * @param {function} successFn success callback to be provided with the directory 
+ * @param {function} failFn failure callback provided with the error as argument
+ */
+UstadMobileAppImplCordova.prototype.checkUserContentDirectory = function(username, options, successFn, failFn) {
+    var userDirURI = this.getUserDirectory(username, options);
+    this.checkContentDir(userDirURI, options, successFn, failFn);
+};
+
+/**
+ * Gets a path to the URL for the user's content directory
+ * 
+ * @param {String} username the authenticated user to get a directory for
+ * @param {Object} options misc options (unused)
+ * @returns {undefined}
+ */
+UstadMobileAppImplCordova.prototype.getUserDirectory = function(username, options) {
+    return UstadMobileUtils.joinPath([this._baseContentDirEntryURI, 
+        "user-"+username]);
+};
+
+//make the init function run when Cordova is ready
+document.addEventListener("deviceready", function() {
+    UstadMobileAppImplCordova.getInstance().init();
+}, false);
+
 
 /**
  * Reference to the CordovaHTTP server
@@ -857,6 +995,14 @@ UstadMobileAppImplCordova.prototype.ensureIsFileEntry= function(fileObj, options
     }
 };
 
+/**
+ * Make a given directory on the file system
+ * 
+ * @param {String} dirURI the String URI of the directory to be created
+ * @param {Object} options misc options (not used)
+ * @param {function} successFn success callback called with the new entry made
+ * @param {function} failFn failure callback called with the error
+ */
 UstadMobileAppImplCordova.prototype.makeDirectory = function(dirURI, options, successFn, failFn) {
     var parentDirURI = UstadMobileUtils.getURLParent(dirURI);
     var newDirName = UstadMobileUtils.getFilename(dirURI);
@@ -917,28 +1063,3 @@ UstadMobileAppImplCordova.prototype.unzipFile = function(zipSrc, destDir, option
 //Set the implementation accordingly on UstadMobile object
 UstadMobile.getInstance().systemImpl = 
         UstadMobileAppImplCordova.getInstance();
-
-
-function ustadAppImplCordovaDeviceReady() {
-    //check and see if cordova really loaded
-    if(window.cordova && window.cordova.plugins) {
-        var mediaSanity = ( cordova && cordova.plugins && cordova.plugins.MediaSanity ) 
-            ? cordova.plugins.MediaSanity : null;
-        UstadMobileAppImplCordova.getInstance().mediaSanityPlugin = mediaSanity;
-
-        //prevent requirement for a gesture to play media
-        mediaSanity.setMediaGestureRequired(false, function() {
-            console.log("MEDIA: Set media gesture required to false OK");
-        }, function(err) {
-            console.log("Media: set media gesture required FAIL : " + err);
-        });
-        UstadMobile.getInstance().fireImplementationReady();
-    }else {
-        console.log("Deviceready fired, but not actually really ready.... - try and wait again...");
-        setTimeout(ustadAppImplCordovaDeviceReady, 1000);
-    }   
-}
-
-document.addEventListener("deviceready", ustadAppImplCordovaDeviceReady, false);
-
-

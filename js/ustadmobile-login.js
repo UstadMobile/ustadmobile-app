@@ -223,8 +223,13 @@ UstadMobileLogin.prototype = {
                 + jqxhr.status);
             localStorage.setItem('username', username);
             localStorage.setItem('password', password);
-            UstadMobileUtils.runCallback(callback, [jqxhr.status, password], 
-                this);
+            UstadMobile.getInstance().systemImpl.checkUserContentDirectory(username, {},
+                function() {
+                    UstadMobileUtils.runCallback(callback, [jqxhr.status, password], 
+                        this);
+                }, function(err) {
+                    console.log("Error in evil old deprecated method of umlogin: " + err);
+                });
         }, this)).fail($.proxy(function(jqxhr, b, c) {
             debugLog("Wrong username/password combination or server error. Status Code:" + jqxhr.status);
             UstadMobileUtils.runCallback(callback, [jqxhr.status, password], 
