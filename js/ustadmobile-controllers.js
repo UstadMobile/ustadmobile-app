@@ -650,7 +650,7 @@ UstadCatalogController._getStorageKeyForFeedID = function(feedid, options) {
  * Get the appropriate directory for storing cached catalogs.
  * 
  * @param {Object} [options]
- * @parma {String} [options.userdir] if set put the cached entry in the given 
+ * @parma {String} [options.user] if set put the cached entry in the given 
  * 
  * user specific directory, if null / unset put it in the public cache dir
  */
@@ -695,7 +695,7 @@ UstadCatalogController.cacheCatalog = function(opdsObj, options, successFn, fail
     var opdsFilename = UstadCatalogController._getFileNameForOPDSFeedId(
             opdsObj.id, options);
     var fileURIDest = UstadMobileUtils.joinPath([
-        UstadCatalogController._getCacheCatalogCacheDir(),
+        UstadCatalogController._getCacheCatalogCacheDir(options),
         opdsFilename]);
     UstadMobile.getInstance().systemImpl.writeStringToFile(fileURIDest,
         opdsObj.toString(), options, function(e) {
