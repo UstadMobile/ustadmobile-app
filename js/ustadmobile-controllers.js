@@ -107,7 +107,6 @@ UstadMobileAppController.prototype = {
         this.contentPager = null;
         
         if(UstadMobile.getInstance().getZoneObj().getUsername()) {
-            console.log("attempting to show user catalog FFS");
             UstadCatalogController.setupUserCatalog({show : true});
         }else {
             //show the login page
@@ -242,7 +241,7 @@ UstadCatalogController.prototype.handleClickDownloadAll = function(evt) {
     //confirm that the user wants to do this
     var dialogTitle = "Download?";
     var dialogText = this.model.opdsFeed.title;
-    this.view.showConfirmAcquisitionDialog(dialogTitle, dialogText,
+    this.view.showConfirmAcquisitionDialog(dialogTitle, dialogText, {},
         this.handleConfirmDownloadAll.bind(this));
 };
 
@@ -567,13 +566,17 @@ UstadCatalogController.downloadEntireAcquisitionFeed = function(src, options, su
         });
         
         var localEntryHref = UstadCatalogController._getFileNameForOPDSFeedId(
-            opdsSrc.id, options)
+            opdsSrc.id, options);
         thisItem.addLink(UstadJSOPDSEntry.LINK_ACQUIRE, localEntryHref,
             UstadJSOPDSEntry.TYPE_ACQUISITIONFEED);
                 
         UstadCatalogController._saveAcquiredEntryInfo(opdsSrc.id, opdsEntryFeedObj, 
             options);
-        UstadMobileUtils.runCallback(successFn, [resultInfo], this);
+        
+        //generate an OPDS of local links for the main content dir
+        UstadCatalogController.generateLocalCatalog(opdsSrc, options, function(catalog) {
+            UstadMobileUtils.runCallback(successFn, [resultInfo], this);
+        }, failFn);
     }, failFn);
 };
 
@@ -643,8 +646,26 @@ UstadCatalogController._getStorageKeyForFeedID = function(feedid, options) {
     return "com.ustadmobile.opds-cache:" + user + ":" + feedid;
 };
 
-UstadCatalogController._getCacheCatalogCacheDir = function() {
-    return UstadMobile.getInstance().contentDirURI;
+/**
+ * Get the appropriate directory for storing cached catalogs.
+ * 
+ * @param {Object} [options]
+ * @parma {String} [options.userdir] if set put the cached entry in the given 
+ * 
+ * user specific directory, if null / unset put it in the public cache dir
+ */
+UstadCatalogController._getCacheCatalogCacheDir = function(options) {
+    var basePath = null;
+    if(options && options.user) {
+        basePath = UstadMobile.getInstance().systemImpl.getUserDirectory(
+            options.user, options);
+    }else {
+        basePath = UstadMobile.getInstance().contentDirURI;
+    }
+    
+    return UstadMobileUtils.joinPath([basePath, 
+        UstadMobileAppImplementation.DIRNAME_CACHE]);
+
 };
 
 /**
@@ -689,6 +710,61 @@ UstadCatalogController.cacheCatalog = function(opdsObj, options, successFn, fail
                     opdsObj.href, options), opdsObj.id);
             UstadMobileUtils.runCallback(successFn, [opdsObj], this);
         }, failFn);
+};
+
+/**
+ * For any acquisition feed that we have - make a catalog of what we have locally
+ * that points at the actual contain entries on the disk
+ * 
+ * @param {String|UstadJSOPDSFeed} the entry to make a catalog for
+ * @param {Object} options
+ * @param {String} [options.user] if set use the user's storage space, otherwise shared
+ */
+UstadCatalogController.generateLocalCatalog = function(catalog, options, successFn, failFn) {
+    var opdsObj = null;
+    var localCatalog = null;
+    UstadMobileUtils.waterfall([
+        function(successFnW, failFnW) {
+            if(catalog instanceof UstadJSOPDSFeed) {
+                successFnW(catalog);
+            }else {
+                UstadCatalogController.getCachedCatalogByID(catalog, options, 
+                    successFnW, failFnW);
+            }
+        },
+        function(opdsVal, successFnW, failFnW) {
+            opdsObj = opdsVal;
+            localCatalog = new UstadJSOPDSFeed(opdsObj.title, 
+                opdsObj.id + "-com.ustadmobile.localcatalog");
+            
+            for(var i = 0; i < opdsObj.entries.length; i++) {
+                var thisItem = new UstadJSOPDSEntry(null, localCatalog);
+                thisItem.setupEntry({
+                    "id" : opdsObj.entries[i].id, 
+                    "title" : opdsObj.entries[i].title
+                });
+                
+                var containerEntryFeed = UstadCatalogController.getAcquiredEntryInfoById(
+                    opdsObj.entries[i].id, options);
+                
+                if(containerEntryFeed) {
+                    var localEntryHref = 
+                        containerEntryFeed.entries[0].getFirstAcquisitionLink();
+                    thisItem.addLink(UstadJSOPDSEntry.LINK_ACQUIRE, localEntryHref,
+                        UstadJSOPDSEntry.TYPE_ACQUISITIONFEED);
+                }
+            }
+            
+            var localCatalogFilename = UstadCatalogController._getFileNameForOPDSFeedId(
+                opdsObj.id, options);
+            var storageDir = options.user ? 
+                UstadMobile.getInstance().systemImpl.getUserDirectory(options.user) :
+                UstadMobile.getInstance().systemImpl.getSharedContentDirSync();
+            UstadMobile.getInstance().systemImpl.writeStringToFile(
+                UstadMobileUtils.joinPath([storageDir, localCatalogFilename]),
+                localCatalog.toString(), {}, successFnW, failFnW);
+        }
+    ], successFn, failFn);
 };
 
 /**
@@ -833,9 +909,12 @@ UstadCatalogController.acquireCatalogEntries = function(entries, srcURLs, option
         }
     }
     
-    
+    /** This controls where we save the content ; in the user's directory or 
+     * in the shared directory.
+     */
+    var downloadingUser = options.user ? options.user : null;
     var downloadDir = options.destdir ? 
-        options.destdir : UstadMobile.getInstance().contentDirURI;
+        options.destdir : UstadMobile.getInstance().systemImpl.getUserDirectory(downloadingUser);
     var dlList = null;
     
     

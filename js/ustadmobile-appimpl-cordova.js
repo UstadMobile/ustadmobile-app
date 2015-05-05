@@ -154,6 +154,17 @@ UstadMobileAppImplCordova.prototype.getSharedContentDir = function(successFn, fa
     }
 };
 
+/**
+ * Provides the path to the shared content directory - sync mode - can only be
+ * used after init which should have called getSharedContentDir
+ */
+UstadMobileAppImplCordova.prototype.getSharedContentDirSync = function() {
+    if(!this._baseContentDirEntryURI) {
+        throw "Shared content dir not known yet";
+    }
+    
+    return this._baseContentDirEntryURI;
+};
 
 /**
  * Makes a given set of sub directories (.cache and .inprogress) so a directory
@@ -203,15 +214,20 @@ UstadMobileAppImplCordova.prototype.checkUserContentDirectory = function(usernam
 };
 
 /**
- * Gets a path to the URL for the user's content directory
+ * Gets a path to the URL for the user's content directory.  Request for username
+ * null will return the shared content directory.
  * 
- * @param {String} username the authenticated user to get a directory for
+ * @param {String} username the authenticated user to get a directory for or null for no user
  * @param {Object} options misc options (unused)
- * @returns {undefined}
+ * @returns {String} the URI to the resulting directory 
  */
 UstadMobileAppImplCordova.prototype.getUserDirectory = function(username, options) {
-    return UstadMobileUtils.joinPath([this._baseContentDirEntryURI, 
-        "user-"+username]);
+    if(username === null) {
+        return UstadMobileAppImplCordova.getInstance().getSharedContentDirSync();
+    }else {
+        return UstadMobileUtils.joinPath([this._baseContentDirEntryURI, 
+            "user-"+username]);
+    }
 };
 
 //make the init function run when Cordova is ready
