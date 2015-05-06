@@ -185,9 +185,13 @@ var containerChangeFn = function() {
     
     testUstadCatalogControllerCacheCatalog();
     
+    testUstadCatalogControllerScanDir();
+    
     testFileSavingAndRemoving();
     
     testUstadCatalogControllerCacheFallback();
+    
+    
     
     testAppImplDownload();
         
@@ -198,6 +202,8 @@ var containerChangeFn = function() {
     testUstadMobileUtils();
     
     testDirCreationAndRemoval();
+    
+    testDirListing();
     
     testUnzip();
 }());
@@ -550,6 +556,29 @@ function testUstadMobileAppImplContentDirSys() {
     });
 }
 
+function testDirListing() {
+    QUnit.test("Test directory listing", function(assert) {
+        assert.expect(2);
+        var dirListDoneFn = assert.async();
+        var contentDir = UstadMobile.getInstance().systemImpl.getSharedContentDirSync();
+        UstadMobile.getInstance().systemImpl.listDirectory(contentDir, {}, function(dirList) {
+            assert.ok(dirList.length, "Found entries in directory");
+            
+            //make sure that we found a file that we know we downloaded there
+            var foundItem = false;
+            var nameToFind = "phonepic-large-failed.png";
+            for(var i = 0; i < dirList.length; i++) {
+                if(dirList[i].name === nameToFind) {
+                    foundItem = true;
+                }
+            }
+            assert.equal(foundItem, true, "Found " + nameToFind
+                + " in dir listing");
+            dirListDoneFn();
+        });
+    });
+}
+
 function testDirCreationAndRemoval() {
     QUnit.test("Test create new directory", function(assert) {
         var makeDirDoneFn = assert.async();
@@ -761,7 +790,17 @@ function testUstadCatalogControllerCacheFallback() {
     
 }
 
-
+function testUstadCatalogControllerScanDir() {
+    QUnit.test("Can scan a content directory", function(assert) {
+        assert.expect(1);
+        var scanDoneFn = assert.async();
+        UstadCatalogController.scanDir(UstadMobile.getInstance().systemImpl.getSharedContentDirSync(),
+            {}, function(dirScanResult) {
+                debugger;
+                scanDoneFn();
+            });
+    });
+}
 
 
 function testUstadCatalogControllerCacheCatalog() {

@@ -147,7 +147,8 @@ UstadMobileAppController.prototype = {
         
         switch(itemId) {
             case UstadMobileAppController.MENUITEM_LIBRARY:
-                UstadMobile.getInstance().goPage(UstadMobile.PAGE_BOOKLIST);
+                //UstadMobile.getInstance().goPage(UstadMobile.PAGE_BOOKLIST);
+                UstadCatalogController.setupDeviceCatalog({show: true});
                 break;
             case UstadMobileAppController.MENUITEM_DOWNLOAD:
                 UstadMobile.getInstance().goPage(UstadMobile.PAGE_DOWNLOAD);
@@ -228,6 +229,26 @@ UstadCatalogController.setupUserCatalog = function(options, successFn, failFn) {
             UstadMobileUtils.runCallback(failFn, [err], this);
         });
 };
+
+UstadCatalogController.setupDeviceCatalog = function(options, successFn, failFn) {
+    options = options  ? options : {};
+    UstadCatalogController._addCurrentUserToOpts(options);
+
+    options.show = (options.show === false) ? false : true;
+    console.log('setupUserCatalog - makecontrollerbyURL call');
+    UstadCatalogController.scanDir(UstadMobile.getInstance().systemImpl.getSharedContentDirSync(),
+        options, function(deviceOPDS) {
+            var newController = new UstadCatalogController(
+                UstadMobile.getInstance().appController);
+            newController.model.setFeed(deviceOPDS);
+            if(options.show) {
+                console.log('setupUserCatalog - showing');
+                newController.view.show();
+            }
+            UstadMobileUtils.runCallback(successFn, [newController], this);
+        }, failFn);
+};
+
 
 /**
  * Handle when the user clicks on the download all button - shown at the bottom
@@ -656,7 +677,7 @@ UstadCatalogController._getStorageKeyForFeedID = function(feedid, options) {
  */
 UstadCatalogController._getCacheCatalogCacheDir = function(options) {
     var basePath = null;
-    if(options && options.user) {
+    if(options && options.user && options.user !== "nobody") {
         basePath = UstadMobile.getInstance().systemImpl.getUserDirectory(
             options.user, options);
     }else {
@@ -818,7 +839,7 @@ UstadCatalogController.getCachedCatalogByURL = function(catalogURL, options, suc
  *  1. Go through all .opds files - load them and make a dictionary in the form of 
  *     catalogid -> opds object.  These are acquisition feeds (courses)
  *  
- * 2. Make another new empty OPDS object - looseContainers
+ * 2. Make another new empty OPDS navigation feed - looseContainers
  * 
  * 3. Go through all .epub files - are they present in any of the catalogs (check using ID)?
  *   No: Add them to the looseContainers object
@@ -829,11 +850,51 @@ UstadCatalogController.getCachedCatalogByURL = function(catalogURL, options, suc
  * 
  * @param {FileEntry|String} dir the directory to scan
  * @param {type} options misc options
- * @param {opdsCallback} successFn success callback
+ * @param {opdsCallback} successFn success callback will be provided with an 
+ * UstadJSOPDSFeed representing files in that directory
  * @param {function} failure callback - takes one error argument back
  */
 UstadCatalogController.scanDir = function(dir, options, successFn, failFn) {
-    
+    var opdsFiles;
+    UstadMobileUtils.waterfall([
+        function(successFnW, failFnW) {
+            UstadMobile.getInstance().systemImpl.listDirectory(dir, options, 
+                successFnW, failFnW);
+        },
+        function(dirListing, successFnW, failFnW) {
+            opdsFiles = [];
+            for(var i = 0; i  < dirListing.length; i++) {
+                if(UstadMobileUtils.getExtension(dirListing[i].name) === ".opds") {
+                    opdsFiles.push([dirListing[i], {}]);
+                }
+            }
+            
+            UstadMobileUtils.asyncMap(
+                UstadMobile.getInstance().systemImpl.readStringFromFile.bind(
+                UstadMobileUtils.getExtension),
+                opdsFiles, successFnW, failFnW);
+        },
+        function(opdsStrResults, successFnW, failFnW) {
+            var resultOPDS = new UstadJSOPDSFeed("Downloaded", 
+                "http://ustadmobile.com/device/");
+            resultOPDS.href = (typeof dir === "string") ? dir : dir.toURL();
+            for(var j = 0; j < opdsStrResults.length; j++) {
+                var opdsResultObj = UstadJSOPDSFeed.loadFromXML(
+                    opdsStrResults[j][0], opdsFiles[j].name);
+                if(opdsResultObj.isAcquisitionFeed()) {
+                    //add a link for this feed
+                    var opdsLink = new UstadJSOPDSEntry(null, resultOPDS);
+                    opdsLink.setupEntry({
+                        id: opdsResultObj.id,
+                        title: opdsResultObj.title
+                    });
+                    opdsLink.addLink("subsection", 
+                        opdsFiles[j][0].name, UstadJSOPDSEntry.TYPE_ACQUISITIONFEED);
+                }
+            }
+            successFnW(resultOPDS);
+        }
+    ], successFn, failFn);
 };
 
 /**

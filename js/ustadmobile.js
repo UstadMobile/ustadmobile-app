@@ -1342,8 +1342,22 @@ UstadMobileUtils.asyncMapAdvanced = function(fn, argArr, options, successFn, fai
 };
 
 /**
- * For each item in arg array call the given function.  
+ * For each item in arg array call the given async function and save the 
+ * values provided via that functions callback into an array.
+ * 
  * It will be assumed that the last arguments will be the successFn and failFn
+ * 
+ * e.g. UstadMobileUtils.asyncMap(someAsyncFn, [1, 2, 3], function(result) {
+ *  //result[0] = value provided by asyncFn to success callback of first arg... etc
+ * }, 
+ * function(err) {
+ * });
+ * 
+ * @param {function|Array} fn The Function to run - this can be either a single function or an array of functions
+ * @param {argArr} argArr Array of arguments to pass to the function - each item 
+ * in the array can be either an array itself or a single item
+ * @param {successFn} success callback
+ * @param {failFn} failure callback
  * 
  */
 UstadMobileUtils.asyncMap = function(fn, argArr, successFn, failFn) {

@@ -222,7 +222,7 @@ UstadMobileAppImplCordova.prototype.checkUserContentDirectory = function(usernam
  * @returns {String} the URI to the resulting directory 
  */
 UstadMobileAppImplCordova.prototype.getUserDirectory = function(username, options) {
-    if(username === null) {
+    if(username === null || username === "nobody") {
         return UstadMobileAppImplCordova.getInstance().getSharedContentDirSync();
     }else {
         return UstadMobileUtils.joinPath([this._baseContentDirEntryURI, 
@@ -906,6 +906,30 @@ UstadMobileAppImplCordova.prototype.removeFile = function(file, successFn, failF
             UstadMobileUtils.runCallback(successFn,[], this)
         }, failFn)
     }, failFn);
+};
+
+/**
+ * Read the contents of a directory.  Return an array of entries.  Each entry
+ * should be an object that has most of the properties prescribed by the HTML5
+ * file api: isFile, isDirectory, .name and .fullpath
+ * 
+ * 
+ * @param {String|DirectoryEntry} dir directory to list
+ * @param {Object} options misc options - currently unused
+ * @param {function} successFn success callback will receive array of entries
+ * @param {function} failFn failure callback will receive error 
+ * 
+ */
+UstadMobileAppImplCordova.prototype.listDirectory = function(dir, options, successFn, failFn) {
+    UstadMobileUtils.waterfall([
+        function(successFnW, failFnW) {
+            UstadMobileAppImplCordova.getInstance().ensureIsFileEntry(dir, 
+                options, successFnW, failFnW);
+        },
+        function(dirEntry, successFnW, failFnW) {
+            dirEntry.createReader().readEntries(successFnW, failFnW);
+        }
+    ], successFn, failFn);
 };
 
 
