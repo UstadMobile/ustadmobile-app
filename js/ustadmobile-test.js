@@ -225,6 +225,7 @@ function testErrFn(err, err1) {
 }
 
 function testAcquireEntries() {
+    var testEntries = [];
     QUnit.test("Acquire entries from a catalog", function(assert) {
         assert.expect(1);
         var acquireDoneFn = assert.async();
@@ -234,6 +235,7 @@ function testAcquireEntries() {
         }).done(function(opdsStr) {
             var opdsFeedObj = UstadJSOPDSFeed.loadFromXML(opdsStr, 
                 acquireFeedURL);
+            testEntries = opdsFeedObj.entries;
             
             var onProgCallCount = 0;
             var acquireOpts = {
@@ -253,6 +255,35 @@ function testAcquireEntries() {
         });
         
     });
+    
+    QUnit.test("Can delete acquired entries", function(assert) {
+        assert.expect(4);
+        var testDeleteDoneFn = assert.async();
+        var removeEntryId = testEntries[0].id;
+        var entryOPDS = UstadCatalogController.getAcquiredEntryInfoById(removeEntryId,
+            {});
+        var fileURI = entryOPDS.entries[0].getFirstAcquisitionLink();
+        
+        assert.equal(UstadCatalogController.getAcquisitionStatusByEntryId(
+            removeEntryId), $UstadJSOPDSBrowser.ACQUIRED,
+            "Entry 0 status is acquired before deleting");
+        
+        UstadMobile.getInstance().systemImpl.fileExists(fileURI,function(fileExists) {
+            assert.equal(fileExists, true, "File exists before deleting");
+            
+            UstadCatalogController.removeEntry(testEntries[0], {}, function() {
+                assert.equal(UstadCatalogController.getAcquisitionStatusByEntryId(
+                    removeEntryId), $UstadJSOPDSBrowser.NOT_ACQUIRED,
+                    "Entry 0 status is not acquired after deleting");
+                
+                UstadMobile.getInstance().systemImpl.fileExists(fileURI, function(fileNowExists) {
+                    assert.equal(fileNowExists, false, "File does not exist after deleting");
+                    testDeleteDoneFn();
+                });
+            });
+        });
+    });
+    
     
     QUnit.test("Can download entire acquisition feed", function(assert) {
         assert.expect(1);
@@ -796,7 +827,7 @@ function testUstadCatalogControllerScanDir() {
         var scanDoneFn = assert.async();
         UstadCatalogController.scanDir(UstadMobile.getInstance().systemImpl.getSharedContentDirSync(),
             {}, function(dirScanResult) {
-                debugger;
+                assert.ok(dirScanResult, "Can scan directory");
                 scanDoneFn();
             });
     });

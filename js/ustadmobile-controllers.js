@@ -336,6 +336,12 @@ UstadCatalogController.prototype.handleClickContainerEntry = function(evt, data,
         UstadCatalogController._addCurrentUserToOpts(options);
         var containerController = UstadContainerController.makeFromEntry(this.appController,
             entryClicked, options);
+        if(containerController === null) {
+            UstadMobile.getInstance().appController.view.showAlertPopup("Error",
+                "File no longer present");
+            return;
+        }
+        
         var initOpts = {};
         this.appController.view.showLoading({text : "Opening"});
         containerController.init(initOpts, (function() {
@@ -1061,7 +1067,7 @@ UstadCatalogController.acquireCatalogEntries = function(entries, srcURLs, option
                     "id" : entryIDs[i], 
                     "title" : opdsEntryObj ? opdsEntryObj.title : thisFilename
                 });
-                thisItem.addLink(UstadJSOPDSEntry.LINK_ACQUIRE, thisFilename,
+                thisItem.addLink(UstadJSOPDSEntry.LINK_ACQUIRE, destURIs[i],
                     mimeTypes[i]);
                 
                 containerFeedsToWrite.push([containerFeedDestURI, 
@@ -1082,9 +1088,31 @@ UstadCatalogController.acquireCatalogEntries = function(entries, srcURLs, option
     ], successFn, failFn);
 };
 
-
-UstadCatalogController.removeEntryByID = function(entryID, options, successFn, failFn) {
+/**
+ * Delete the given entry
+ * 
+ * @param {UstadJSOPDSEntry|String} entry The entry object or the entry id as a string
+ * @param {Object} options
+ * @param {function} successFn
+ * @param {function} failFn
+ */
+UstadCatalogController.removeEntry = function(entry, options, successFn, failFn) {
+    var entryId = (entry instanceof UstadJSOPDSEntry) ? entry.id : entry;
     
+    var acquiredEntryOPDS = UstadCatalogController.getAcquiredEntryInfoById(entryId, 
+        options);
+    var fileURI = acquiredEntryOPDS.entries[0].getFirstAcquisitionLink();
+    UstadMobile.getInstance().systemImpl.removeFile(fileURI, function() {
+        var storageKeyUser = UstadCatalogController._getStorageKeyForAcquiredEntryID(entryId, options);
+        var storageKeyShared = UstadCatalogController._getStorageKeyForAcquiredEntryID(entryId, null);
+        if(localStorage.getItem(storageKeyUser)) {
+            localStorage.removeItem(storageKeyUser);
+        }
+        if(localStorage.getItem(storageKeyShared)) {
+            localStorage.removeItem(storageKeyShared);
+        }
+        UstadMobileUtils.runCallback(successFn, [], this);
+    }, failFn);
 };
 
 /**
@@ -1217,6 +1245,10 @@ UstadCatalogController._saveAcquiredEntryInfo = function(entryID, opdsObj, optio
     localStorage.setItem(storageKey, opdsObj.toString());
 };
 
+UstadCatalogController.removeAcquiredEntryInfo = function(entryID, options) {
+    
+};
+
 /**
  * Get an Array of entry ids (as strings)
  * 
@@ -1341,8 +1373,7 @@ UstadContainerController.prototype.init = function(options, successFn, failFn) {
         var thisFilename = UstadMobileUtils.getFilename(this.model.getFileURI());
         
         //TODO: this really should get base HREF from the opds feed etc.
-        var epubURI = UstadMobileUtils.joinPath([
-            UstadMobile.getInstance().contentDirURI, thisFilename]);
+        var epubURI = this.model.getFileURI();
         
         var cacheDirName = thisFilename + "_cache";
         

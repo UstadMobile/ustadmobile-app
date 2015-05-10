@@ -2040,7 +2040,7 @@ UstadMobileResumableDownload.nextID = 0;
  * @param {function} listener to receive the event
  * @param {boolean} useCapture (igored)
  */
-UstadMobileResumableDownload.addEventListener = function(type, listener, useCapture) {
+UstadMobileResumableDownload.prototype.addEventListener = function(type, listener, useCapture) {
     this.evtListeners[type].push(listener);
 };
 
@@ -2335,7 +2335,6 @@ UstadMobileResumableDownloadList.prototype.downloadList = function(urlList, dest
                 resumableDownload.srcURL = url;
                 resumableDownload.destURI = destURI;
                 resumableDownload.srcEntry = opdsEntry;
-                
                 if(opdsEntry) {
                     resumableDownload.addEventListener("start", 
                         UstadCatalogController.registerEntryDownload.bind(UstadCatalogController));
