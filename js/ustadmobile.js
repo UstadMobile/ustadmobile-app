@@ -2014,6 +2014,67 @@ var UstadMobileResumableDownload = function() {
      * If we found a previous attempt, where that started from
      */
     this.startedFrom = 0;
+    
+    UstadMobileResumableDownload._registerDownload(this);
+    
+    /**
+     * If this download is being used to acquire an entry - reference to the entry
+     * @type {UstadJSOPDSEntry} 
+     */
+    this.srcEntry = null;
+    
+    this.evtListeners = {"start" : [], "error" : [], "complete" : []};
+};
+
+/**
+ * 
+ * @type {Array<UstadMobileResuambleDownload>} 
+ */
+UstadMobileResumableDownload.activeDownloads = {};
+
+UstadMobileResumableDownload.nextID = 0;
+
+/**
+ * 
+ * @param {String} type "start"|"error"|"complete"
+ * @param {function} listener to receive the event
+ * @param {boolean} useCapture (igored)
+ */
+UstadMobileResumableDownload.addEventListener = function(type, listener, useCapture) {
+    this.evtListeners[type].push(listener);
+};
+
+
+/**
+ * Registers the download in our object map; makes a unique id for it
+ * and puts it in the activeDownloads map
+ * 
+ * @returns {String}
+ */
+UstadMobileResumableDownload._registerDownload = function(download) {
+    var idVal = UstadMobileResumableDownload.nextID;
+    UstadMobileResumableDownload.nextID++;
+    UstadMobileResumableDownload.activeDownloads[idVal] = download;
+};
+
+UstadMobileResumableDownload._unregisterDownload = function(download) {
+    var idVal = download.id;
+    delete UstadMobileResumableDownload.activeDownloads[idVal];
+}
+
+/**
+ * Gets a download by id
+ * 
+ * @param {String} id the download id being looked for
+ * 
+ * @returns {UstadMobileResumableDownload} 
+ */
+UstadMobileResumableDownload.getDownloadByID = function(id) {
+    if(UstadMobileResumableDownload.activeDownloads[id]) {
+        return UstadMobileResumableDownload.activeDownloads[id];
+    }else {
+        return null;
+    }
 };
 
 UstadMobileResumableDownload.prototype.info2JSON = function() {
@@ -2182,7 +2243,7 @@ UstadMobileResumableDownload.prototype.continueDownload = function(successFn, fa
             UstadMobile.getInstance().systemImpl.downloadUrlToFileURI(srcURL,
                 destFileURI, downloadOptions, successFnW, failFnW);
         },function(destFile, successFnW, failFnW) {
-            thatDownload.removeDLInfoFile(function() {
+            thatDownload.cleanup(function() {
                 UstadMobileUtils.runCallback(successFnW, [destFile], this);
             }, failFnW);
         }
@@ -2196,8 +2257,10 @@ UstadMobileResumableDownload.prototype.continueDownload = function(successFn, fa
     }).bind(this));
 };
 
-UstadMobileResumableDownload.prototype.removeDLInfoFile = function(successFn, failFn) {
+UstadMobileResumableDownload.prototype.cleanup = function(successFn, failFn) {
     var dlInfoFileURI = this.destURI + ".dlinfo";
+    UstadMobileResumableDownload._unregisterDownload(this);
+    
     UstadMobile.getInstance().systemImpl.removeFileIfExists(dlInfoFileURI, function() {
         UstadMobileUtils.runCallback(successFn, [], this);
     }, failFn);
@@ -2227,11 +2290,38 @@ var UstadMobileResumableDownloadList = function() {
     this.onprogress = null;
 };
 
+/**
+ * Downloads an entire array of URLs - supply with an array of URLs to download
+ * and a matching array of file URIs where those files should be saved to
+ * 
+ * e.g. downloadList(
+ *      ['http://server.com/file1.zip', 'http://server.com/file2.zip'],
+ *      ['/path/to/file-1.zip', '/path/to/file-2.zip'],
+ *      {},//options
+ *      function(success) {
+ *          //was successful
+ *      },
+ *      function(err) {
+ *          //error occured
+ *      });
+ *      
+ * 
+ * @param {Array<String>} urlList source urls to download
+ * @param {Array<String>} destFileURIList URIs where each file should be saved
+ * @param {Object} options misc options
+ * @param {Array<UstadJSOPDSEntry>} [options.opdsEntries] The corresponding OPDS 
+ * entries for each download - this can be used to track download status by entry
+ * @param {function} successFn success callback provided with array from the result downloading each item
+ * @param {function} failFn failure callback called when an error occurs
+ */
 UstadMobileResumableDownloadList.prototype.downloadList = function(urlList, destFileURIList, options, successFn, failFn) {
     
     var prepArguments = [];
+    var opdsEntries = options.opdsEntries ? options.opdsEntries : [];
+    
     for(var i = 0; i < urlList.length; i++) {
-        prepArguments[i] = [i, urlList[i], destFileURIList[i]];
+        prepArguments[i] = [i, urlList[i], destFileURIList[i], 
+            (opdsEntries[i] ? opdsEntries[i] : null)];
     }
     
     if(options.onprogress) {
@@ -2240,10 +2330,21 @@ UstadMobileResumableDownloadList.prototype.downloadList = function(urlList, dest
     
     UstadMobileUtils.waterfall([
         (function(successFnW, failFnW) {
-            UstadMobileUtils.asyncMap((function(index, url, destURI, successFnM, failFnM) {
+            UstadMobileUtils.asyncMap((function(index, url, destURI, opdsEntry, successFnM, failFnM) {
                 var resumableDownload = new UstadMobileResumableDownload();
                 resumableDownload.srcURL = url;
                 resumableDownload.destURI = destURI;
+                resumableDownload.srcEntry = opdsEntry;
+                
+                if(opdsEntry) {
+                    resumableDownload.addEventListener("start", 
+                        UstadCatalogController.registerEntryDownload.bind(UstadCatalogController));
+                    resumableDownload.addEventListener("complete",
+                        UstadCatalogController.unregisterEntryDownload.bind(UstadCatalogController));
+                    resumableDownload.addEventListener("error",
+                        UstadCatalogController.unregisterEntryDownload.bind(UstadCatalogController));
+                }
+                
                 this.resumableDownloads.push(resumableDownload);
                 resumableDownload.getInfo(successFnM, failFnM);
             }).bind(this), prepArguments, successFnW, failFnW);

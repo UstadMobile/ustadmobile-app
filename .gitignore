@@ -40,3 +40,5 @@ setup/android-hybrid/ustadmobileandroid/src
 #setup/android-hybrid/ustadmobileandroid/src
 local.properties
 
+#copied by the android-hybrid configure script
+setup/android-hybrid/ustadmobileandroid/cordova/version

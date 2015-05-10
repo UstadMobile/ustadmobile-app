@@ -48,3 +48,12 @@
     padding: 5px;
 }
 
+/*
+ * Checkbox that indicates when an OPDS entry has been acquired
+ */
+
+.umjs_opdsbrowser_status_acquired .umjs_opdsbrowser_entrystatusarea{
+    background-image: url("../img/check-icon.png");
+    background-repeat: no-repeat;
+    background-position: center;
+}

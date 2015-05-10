@@ -236,17 +236,26 @@ UstadCatalogController.setupDeviceCatalog = function(options, successFn, failFn)
 
     options.show = (options.show === false) ? false : true;
     console.log('setupUserCatalog - makecontrollerbyURL call');
-    UstadCatalogController.scanDir(UstadMobile.getInstance().systemImpl.getSharedContentDirSync(),
-        options, function(deviceOPDS) {
+    
+    var sharedOPDS = null;
+    var userOPDS = null;
+    
+    UstadMobileUtils.waterfall([
+        function(successFnW, failFnW) {
+            UstadCatalogController.scanDir(
+                UstadMobile.getInstance().systemImpl.getSharedContentDirSync(),
+                options, successFnW, failFnW);
+        },
+        function(opdsResult, successFnW, failFnW) {
             var newController = new UstadCatalogController(
                 UstadMobile.getInstance().appController);
-            newController.model.setFeed(deviceOPDS);
+            newController.model.setFeed(opdsResult);
             if(options.show) {
-                console.log('setupUserCatalog - showing');
                 newController.view.show();
             }
-            UstadMobileUtils.runCallback(successFn, [newController], this);
-        }, failFn);
+            UstadMobileUtils.runCallback(successFnW, [newController], this);
+        }
+    ], successFn, failFn);
 };
 
 
@@ -283,13 +292,7 @@ UstadCatalogController.prototype.handleConfirmDownloadAll = function(evt) {
     
     
     UstadCatalogController._addCurrentUserToOpts(dlOptions);
-    
-    /*
-    this.view.setEntryStatus(feedId, entryId, 
-        $UstadJSOPDSBrowser.ACQUISITION_IN_PROGRESS, 
-        {"loaded" : 0, "total" : 100});
-    */
-   
+       
     UstadCatalogController.downloadEntireAcquisitionFeed(this.model.opdsFeed,
         dlOptions, function(result) {
             alert("OK Downloaded entire acquisition catalog");
@@ -323,11 +326,32 @@ UstadCatalogController.prototype.handleClickContainerEntry = function(evt, data)
 */
 
 UstadCatalogController.prototype.handleClickContainerEntry = function(evt, data, successFn, failFn) {
+    var options = {};
+    UstadCatalogController._addCurrentUserToOpts(options);
     var entryClicked = data.entry;
-    var dialogTitle = "Download Entry?";
-    var dialogText = data.entry.title;
-    this.view.showConfirmAcquisitionDialog(dialogTitle, dialogText, {confirmData : {entry : entryClicked}},
-        this.handleConfirmDownloadContainer.bind(this));
+    
+    var entryStatus = UstadCatalogController.getAcquisitionStatusByEntryId(
+        data.entry.id, options);
+    if(entryStatus === $UstadJSOPDSBrowser.ACQUIRED) {
+        UstadCatalogController._addCurrentUserToOpts(options);
+        var containerController = UstadContainerController.makeFromEntry(this.appController,
+            entryClicked, options);
+        var initOpts = {};
+        this.appController.view.showLoading({text : "Opening"});
+        containerController.init(initOpts, (function() {
+            UstadContainerController.setOpenContainer(containerController);
+            this.appController.view.hideLoading();
+            containerController.view.show();
+        }).bind(this), function(err) {
+            UstadMobile.getInstance().appController.view.showAlertPopup("Error",
+                    "Sorry: something went wrong trying to open that. " + err);
+        });
+    }else {
+        var dialogTitle = "Download Entry?";
+        var dialogText = data.entry.title;
+        this.view.showConfirmAcquisitionDialog(dialogTitle, dialogText, {confirmData : {entry : entryClicked}},
+            this.handleConfirmDownloadContainer.bind(this));
+    }  
 };
 
 UstadCatalogController.prototype.handleConfirmDownloadContainer = function(evt) {
@@ -601,18 +625,6 @@ UstadCatalogController.downloadEntireAcquisitionFeed = function(src, options, su
     }, failFn);
 };
 
-/**
- * 
- * @returns {undefined}
- */
-UstadCatalogController.deleteEntriesAcquiredFromFeedById = function(feedId, options, successFn, failFn) {
-    UstadMobileUtils.waterfall([
-        //get the catalog itself
-        function(successFnW, failFnW){
-            
-        }
-    ])
-};
 
 
 /**
@@ -898,6 +910,39 @@ UstadCatalogController.scanDir = function(dir, options, successFn, failFn) {
 };
 
 /**
+ * Register that a download has started
+ * 
+ * @param {Event} evt
+ * @returns {undefined}
+ */
+UstadCatalogController.registerEntryDownload = function(evt) {
+    var downloadObj = evt.target;
+    var entryObj = downloadObj.srcEntry;
+    
+    //for now ignore the user that the download is being carried out as 
+    //should be downloaded either as user or without a user - not as both at the same time!
+    var storageKey = UstadCatalogController._getStorageKeyForEntryDownloadProgress(entryObj.id,
+        {});
+    localStorage.setItem(storageKey, downloadObj.id);
+};
+
+/**
+ * Register that a download is finished
+ * 
+ * @param {Event} evt
+ */
+UstadCatalogController.unregisterEntryDownload = function(evt) {
+    var downloadObj = evt.target;
+    var entryObj = downloadObj.srcEntry;
+    
+    //for now ignore the user that the download is being carried out as 
+    //should be downloaded either as user or without a user - not as both at the same time!
+    var storageKey = UstadCatalogController._getStorageKeyForEntryDownloadProgress(entryObj.id,
+        {});
+    localStorage.removeItem(storageKey);
+};
+
+/**
  * Fetch and download the given container, save required information about it to
  * disk
  * 
@@ -967,7 +1012,7 @@ UstadCatalogController.acquireCatalogEntries = function(entries, srcURLs, option
                 thisEntryHref);
             srcURLs.push(thisEntrySrcURL);
             mimeTypes.push(mimeTypesRequested[0]);
-        }
+        }        
     }
     
     /** This controls where we save the content ; in the user's directory or 
@@ -989,6 +1034,10 @@ UstadCatalogController.acquireCatalogEntries = function(entries, srcURLs, option
             var dlOptions = {};
             if(options.onprogress) {
                 dlOptions.onprogress = options.onprogress;
+            }
+            
+            if(options.opdsEntries.length > 0) {
+                dlOptions.opdsEntries = options.opdsEntries;
             }
             
             dlList.downloadList(srcURLs, destURIs, dlOptions, successFnW, 
@@ -1034,6 +1083,10 @@ UstadCatalogController.acquireCatalogEntries = function(entries, srcURLs, option
 };
 
 
+UstadCatalogController.removeEntryByID = function(entryID, options, successFn, failFn) {
+    
+};
+
 /**
  * 
  * @param {type} entryId
@@ -1077,9 +1130,12 @@ UstadCatalogController.getAcquiredLinkById = function(entryId, options) {
 };
 
 UstadCatalogController.getAcquisitionStatusByEntryId = function(entryId, options) {
-    var storageKey = UstadCatalogController._getStorageKeyForAcquiredEntryID(entryId, options);
-    if(localStorage.getItem(storageKey)) {
+    var storageKeyUser = UstadCatalogController._getStorageKeyForAcquiredEntryID(entryId, options);
+    var storageKeyShared = UstadCatalogController._getStorageKeyForAcquiredEntryID(entryId, null);
+    if(localStorage.getItem(storageKeyUser) || localStorage.getItem(storageKeyShared)) {
         return $UstadJSOPDSBrowser.ACQUIRED;
+    }else if(localStorage.getItem(UstadCatalogController._getStorageKeyForEntryDownloadProgress(entryId))) {
+        return $UstadJSOPDSBrowser.ACQUISITION_IN_PROGRESS;
     }else {
         return $UstadJSOPDSBrowser.NOT_ACQUIRED;
     }
@@ -1093,6 +1149,15 @@ UstadCatalogController.getAcquisitionStatusByEntryId = function(entryId, options
  */
 UstadCatalogController.PREFIX_STORAGE_ENTRYID_TO_FILEURI = 
     "com.ustadmobile.entryid-to-opds-info";
+
+/**
+ * Prefix used to map between an entry id and the progress information about
+ * a download
+ * 
+ * @type String
+ */
+UstadCatalogController.PREFIX_STORAGE_ENTRYID_TO_PROGRESSINFO =
+    "com.ustadmobile.entryid-to-progress-info";
 
 /**
  * Gets the local storage key to find info about a container that has been
@@ -1113,10 +1178,28 @@ UstadCatalogController.PREFIX_STORAGE_ENTRYID_TO_FILEURI =
  * @returns {string} key to user for local storage
  */
 UstadCatalogController._getStorageKeyForAcquiredEntryID = function(entryID, options) {
-    var username = UstadMobileUtils.defaultVal(options.user, "nobody");
+    var username = options && options.user ? options.user : "nobody";
     return UstadCatalogController.PREFIX_STORAGE_ENTRYID_TO_FILEURI +
         ":" + username + ":" + entryID;
 };
+
+
+/**
+ * Gets the local storage key for maintaining a list of all downloads that
+ * are in progress.  
+ * 
+ * Currently there are no seperate storage keys according to the user for download
+ * progress
+ * 
+ * @param {String} entryID the ID of the entry that we want to check on progress of
+ * @param {Object} options misc options
+ * @param {string} [options.user=nobody] the current user
+ */
+UstadCatalogController._getStorageKeyForEntryDownloadProgress = function(entryID, options) {
+    return UstadCatalogController.PREFIX_STORAGE_ENTRYID_TO_PROGRESSINFO + 
+        ":" + "nobody" + ":" + entryID;
+};
+
 
 /**
  * Saves information about the entry that has just been acquired to the disk

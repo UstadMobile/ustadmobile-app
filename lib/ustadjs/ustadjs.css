@@ -55,6 +55,16 @@
     margin: 0px 4px;
 }
 
+/* Entry status area that shows at the bottom left of an entry */
+.umjs_opdsbrowser_entrystatusarea {
+    position: absolute;
+    z-index: 200;
+    bottom: 0;
+    left: 0;
+    width: 24px;
+    height: 24px;
+}
+
 .umjs_opdsbrowser_navfeed .umjs_clearfix:before,
 .umjs_opdsbrowser_navfeed .umjs_clearfix:after {
   display: table;
