@@ -511,9 +511,10 @@ UstadCatalogController.getCatalogByURL = function(url, options, successFn, failF
                 options.httppassword));
         };
     }
-    
+    console.log("Attempting to load catalog from : " + url);
     
     $.ajax(url, ajaxOpts).done(function(opdsStr) {
+        console.log("   AJAX request done: " + url);
         var opdsFeedObj = null;
         try {
             opdsFeedObj = UstadJSOPDSFeed.loadFromXML(opdsStr, url);
@@ -525,6 +526,7 @@ UstadCatalogController.getCatalogByURL = function(url, options, successFn, failF
                 parseErr], this);
         }
     }).fail(function(jqXHR, textStatus, errorThrown) {
+        console.log("   AJAX request failed : " + url + " use cache? " + options.cache);
         if(options.cache) {
             UstadCatalogController.getCachedCatalogByURL(url, options,
                 successFn, failFn);
@@ -832,15 +834,26 @@ UstadCatalogController.generateLocalCatalog = function(catalog, options, success
 UstadCatalogController.getCachedCatalogByID = function(catalogId, options, successFn, failFn) {
     var opdsFilename = UstadCatalogController._getFileNameForOPDSFeedId(
         catalogId, options);
-    var opdsFileURI = UstadMobileUtils.joinPath([
+
+    //where we expect to find user specific catalog cache files (if any user specified)
+    var opdsFileURIUser = UstadMobileUtils.joinPath([
+        UstadCatalogController._getCacheCatalogCacheDir(options),
+        opdsFilename]);
+    
+    //where we expect to find shared cache files
+    var opdsFileURIShared =UstadMobileUtils.joinPath([
         UstadCatalogController._getCacheCatalogCacheDir(),
         opdsFilename]);
-    UstadMobile.getInstance().systemImpl.readStringFromFile(opdsFileURI, {}, function(txtVal) {
-        var feedHREF = UstadCatalogController.getCatalogURLSByID(catalogId, 
-            options);
-        var feedObj = UstadJSOPDSFeed.loadFromXML(txtVal, feedHREF);
-        UstadMobileUtils.runCallback(successFn, [feedObj, {cached:true}], this);
-    }, failFn);
+    
+    UstadMobile.getInstance().systemImpl.fileExists(opdsFileURIUser, function(userFileURIExists) {
+        var opdsFileURI = userFileURIExists ?  opdsFileURIUser : opdsFileURIShared;
+        UstadMobile.getInstance().systemImpl.readStringFromFile(opdsFileURI, {}, function(txtVal) {
+            var feedHREF = UstadCatalogController.getCatalogURLSByID(catalogId, 
+                options);
+            var feedObj = UstadJSOPDSFeed.loadFromXML(txtVal, feedHREF[0]);
+            UstadMobileUtils.runCallback(successFn, [feedObj, {cached:true}], this);
+        }, failFn);
+    });
 };
 
 UstadCatalogController.getCachedCatalogByURL = function(catalogURL, options, successFn, failFn) {
@@ -1116,7 +1129,16 @@ UstadCatalogController.removeEntry = function(entry, options, successFn, failFn)
     
     var acquiredEntryOPDS = UstadCatalogController.getAcquiredEntryInfoById(entryId, 
         options);
+        
+    /**
+     * Some versions of the app saved the href as a relative path and put
+     * content in the shared directory.  Later versions of the app save info
+     * in localstorage with an absolute file path
+     */
     var fileURI = acquiredEntryOPDS.entries[0].getFirstAcquisitionLink();
+    fileURI = UstadJS.resolveURL(UstadMobile.getInstance().systemImpl.getSharedContentDirSync(),
+        fileURI);
+    
     UstadMobile.getInstance().systemImpl.removeFile(fileURI, function() {
         var storageKeyUser = UstadCatalogController._getStorageKeyForAcquiredEntryID(entryId, options);
         var storageKeyShared = UstadCatalogController._getStorageKeyForAcquiredEntryID(entryId, null);

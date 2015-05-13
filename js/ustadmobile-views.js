@@ -318,11 +318,20 @@ UstadCatalogView.prototype.show = function() {
     if(pageDiv.length < 1) {
         this.loadCatalogViewPage();
     }else {
-        $( ":mobile-pagecontainer" ).pagecontainer("change", 
-            "#"+this._pageID, { 
+        $.mobile.changePage(pageDiv,
+            { 
                 changeHash: true, 
                 transition: UstadCatalogView.transitionName
             });
+        
+        /* The below method - e.g. the new non-deprecated way - is broken and will 
+         * not allow to change back to a dynamically injected page after
+         * going to a page loaded from a URL. Hopefully JQM will fix this.
+        $( ":mobile-pagecontainer" ).pagecontainer("change", pageDiv,
+            { 
+                changeHash: true, 
+                transition: UstadCatalogView.transitionName
+            });*/
     }
     
 };
