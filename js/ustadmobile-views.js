@@ -229,6 +229,8 @@ UstadCatalogView.prototype.loadCatalogViewPage = function(options) {
             "defaulticon_navigationfeed" : UstadCatalogView.browserDefaultOpts.defaulticon_navigationfeed,
             "containerselected" : 
                 this.controller.handleClickContainerEntry.bind(this.controller),
+            "containercontextrequested" :
+                this.controller.handleRequestContainerContextMenu.bind(this.controller),
             "feedselected" : 
                 this.controller.handleClickFeedEntry.bind(this.controller),
             "acquisitionstatushandler" : (function(entryId){
@@ -244,6 +246,8 @@ UstadCatalogView.prototype.loadCatalogViewPage = function(options) {
         newPageDiv.html(data);
         newPageDiv.find(".ustad-confirm-popup").attr("id",
             this._pageID + "-confirm-popup");
+        newPageDiv.find(".ustad-container-context-popup").attr("id",
+            this._pageID + "-container-context-popup");
 
         var catalogContainer = newPageDiv.find(".um_catalog_container");
         catalogContainer.empty();
@@ -255,33 +259,44 @@ UstadCatalogView.prototype.loadCatalogViewPage = function(options) {
         catalogContainer.append(catalogEl);
         catalogEl.opdsbrowser(opdsBrowserOpts).opdsbrowser(
             "setupfromfeed", this.controller.model.opdsFeed);
-        if(this.controller.model.opdsFeed.isAcquisitionFeed()) {
-            var footerEl = $("<div/>", {
-                "data-role" : "footer",
-                "data-position" : "fixed",
-                "data-theme" : "b"
-            });
-            
-            var progressBar = $("<progress/>", {
-               "max": 100,
-               "value": 20,
-               "id" : "um-progress-dlall-" + this._pageID,
-               "class" : "um-progress-bar"
-            }).css("display", "block");
-            footerEl.append(progressBar);
-            
-            var downloadButton = $("<div/>", {
-                "class" : "ui-btn um-download-all-btn"
-            });
-            downloadButton.text("Download All");
-            downloadButton.on("click", 
-                this.controller.handleClickDownloadAll.bind(this.controller));
-                
-            footerEl.append(downloadButton);
-            newPageDiv.append(footerEl);
-        }
-
+        
         newPageDiv.appendTo($( ":mobile-pagecontainer" )).enhanceWithin();
+        
+        /*
+         * Dynamic injection only seems to work when done this way according to 
+         * http://api.jquerymobile.com/toolbar/ dynamic fixed toolbar injection;
+         * otherwise the footer will stay permanently on all pages.
+         */
+        $( ":mobile-pagecontainer" ).one('pagecontainershow', (function() {
+            if(this.controller.model.opdsFeed.isAcquisitionFeed()) {
+                var footerEl = $("<div/>", {
+                    "data-role" : "toolbar",
+                    "data-theme" : "b",
+                    "data-id" : "footer-" + this._pageID,
+                    "id": "footer-" + this._pageID
+                });
+                var progressBar = $("<progress/>", {
+                   "max": 100,
+                   "value": 0,
+                   "id" : "um-progress-dlall-" + this._pageID,
+                   "class" : "um-progress-bar"
+                }).css("display", "block");
+                footerEl.append(progressBar);
+
+                var downloadButton = $("<div/>", {
+                    "class" : "ui-btn um-download-all-btn"
+                });
+                downloadButton.text("Download All");
+                downloadButton.on("click", 
+                    this.controller.handleClickDownloadAll.bind(this.controller));
+
+                footerEl.append(downloadButton);
+                footerEl.appendTo($("#" + this._pageID)).toolbar(
+                    {"position" : "fixed", tapToggle : false});
+                $.mobile.resetActivePageHeight();
+             }
+        }).bind(this));
+        
         $( ":mobile-pagecontainer" ).pagecontainer("change", 
             "#"+this._pageID, { 
                 changeHash: true,
@@ -344,6 +359,37 @@ UstadCatalogView.prototype.showAcquisitionFeed = function(opdsObj) {
 };
 
 /**
+ * 
+ * @param {Object} options
+ * @param {Object} [options.evtData] data to pass with the event if an item a menu item is clicked
+ * @returns {undefined}
+ */
+UstadCatalogView.prototype.showContainerContextMenu = function(options) {
+    var contextPopup = $("#" + this._pageID + "-container-context-popup");
+    contextPopup.find(".ui-btn").off("click");
+    
+    var evtData = options.evtData ? options.evtData : {};
+    var deleteButton = contextPopup.find(".ustad_contextmenu_deletebtn");
+    if(evtData.entryStatus && evtData.entryStatus === $UstadJSOPDSBrowser.ACQUIRED) {
+        deleteButton.css("display", "block");
+    }else {
+        deleteButton.css("display", "none");
+    }
+    
+    contextPopup.find(".ustad_contextmenu_deletebtn").on("click", evtData, 
+        this.controller.handleClickDeleteEntry.bind(this.controller));
+    
+    
+    contextPopup.popup("open");
+};
+
+UstadCatalogView.prototype.hideContainerContextMenu = function() {
+    var contextPopup = $("#" + this._pageID + "-container-context-popup");
+    contextPopup.popup("close");
+    contextPopup.find(".ui-btn").off("click");
+};
+
+/**
  * Show an OK/Cancel dialog for the user to confirm if they want to download
  * a given entry
  * 
@@ -389,9 +435,16 @@ UstadCatalogView.prototype.getCatalogWidgetByFeedId = function(feedId) {
     return $(".um_opdsbrowser_container[data-feed-id='" + feedId + "']");
 };
 
-UstadCatalogView.prototype.setEntryStatus = function(feedId, entryId, status, options) {
-    var catalogWidgetEl = this.getCatalogWidgetByFeedId(feedId);
-    catalogWidgetEl.opdsbrowser("updateentrystatus", entryId, status, options);
+/**
+ * Set the acquisition status of an item in this view
+ * 
+ * @param {String} entryId OPDS Entry ID to update status of
+ * @param {String} status e.g. $UstadJSOPDSBrowser.ACQUIRED, $UstadJSOPDSBrowser.NOT_ACQUIRED etc.
+ * @param {Object} [options] currently unused
+ */
+UstadCatalogView.prototype.setEntryStatus = function(entryId, status, options) {
+    $("#" + this._pageID + " .um_opdsbrowser_container").opdsbrowser(
+            "updateentrystatus", entryId, status, options);
 };
 
 /**

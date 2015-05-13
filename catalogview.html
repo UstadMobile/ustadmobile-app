@@ -7,7 +7,7 @@
 </div>
 <!-- #ENDUSTADJQMHEADER -->
 
-<div data-role="content" data-theme="b">          
+<div data-role="content" data-theme="b" class="ui-content">
 
     <div data-role="popup" class="ustad-confirm-popup" data-theme="b" data-dismissible="false" data-overlay-theme="b" style="max-width:400px;">
         <div data-role="header" data-theme="b">
@@ -19,6 +19,21 @@
 
             <a href="#" class="ustad_acquirecontent_popup_cancel ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" data-transition="flow">Cancel</a>
             <a href="#" class="ustad_acquirecontent_popup_ok ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" data-transition="flow">OK</a>
+        </div>
+    </div>
+    
+    <div data-role="popup" class="ustad-container-context-popup" data-theme="b" data-dismissable="true" data-overlay-theme="b" style="min-width: 200px">
+        
+        <a href="#" data-rel="back" data-role="button" data-theme="b" data-icon="delete" data-iconpos="notext" class="ui-btn-right">Close</a>
+        
+        <div role="main" class="ui-content">
+            <div data-role="header" data-theme="b">
+                <h1>Options</h1>
+            </div>
+        </div>
+        
+        <div role="main" class="ui-content">
+            <a href="#" class="ustad_contextmenu_deletebtn ui-btn ui-corner-all ui-shadow ui-btn-b" data-transition="flow">Delete entry</a>
         </div>
     </div>
 

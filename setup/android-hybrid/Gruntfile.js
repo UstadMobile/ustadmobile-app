@@ -44,17 +44,21 @@ module.exports = function(grunt) {
                     'js/ustadmobile-views.js',
                     'js/ustadmobile-models.js',
                     'js/ustadmobile-appzone.js',
+                    'lib/ustadjs/ustadjs.js',
+                    'lib/tincan.js',
+                    'lib/tincan_queue.js',
                     'js/ustadmobile-getpackages.js',
                     'js/ustadmobile-localization.js',
                     'js/ustadmobile-appimpl-cordova.js',
                     'js/ustadmobile-views-cordova.js'
                 ],
-                dest: 'setup/android-hybrid/ustadmobileandroid/assets/www/js/ustadmobile-platform.js'
+                dest: 'setup/android-hybrid/ustadmobileandroid/assets/www/ustadmobile-platform.js'
             }
         }
     });
     
     grunt.loadNpmTasks('grunt-contrib-concat');
+    grunt.loadNpmTasks('grunt-contrib-jshint');
     
     grunt.registerTask("default", ["concat"]);
 };

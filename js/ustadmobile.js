@@ -390,31 +390,31 @@ UstadMobile.prototype = {
         $.support.cors = true;
         
         //Load the scripts appropriate to the implementation and context
-        this.loadInitScripts(function() {        
-            console.log("main ustad mobile init running - scripts loaded");
-            if(UstadMobile.getInstance().getZone() === UstadMobile.ZONE_APP) {
-                UstadMobile.getInstance().checkPaths();
-            }
-            
-            $(document).on( "pagecontainershow", function( event, ui ) {
-                UstadMobile.getInstance().pageInit(event, ui);
-            });
-            
-            console.log("Zone detect: " + UstadMobile.getInstance().getZone());
+        
+        console.log("main ustad mobile init running - scripts loaded");
+        if(UstadMobile.getInstance().getZone() === UstadMobile.ZONE_APP) {
+            UstadMobile.getInstance().checkPaths();
+        }
 
-            if(UstadMobile.getInstance().getZone() === UstadMobile.ZONE_CONTENT) {
-                UstadMobileContentZone.getInstance().init();
-            }else {
-                UstadMobileAppZone.getInstance().init();
-            }
-            
-            UstadMobile.getInstance().initScriptsAllLoaded = true;
-            
-            UstadMobileUtils.runAllFunctions(
-                    UstadMobile.getInstance().pendingRunAfterInitListeners,
-                    [true], UstadMobile.getInstance());
-            
+        $(document).on( "pagecontainershow", function( event, ui ) {
+            UstadMobile.getInstance().pageInit(event, ui);
         });
+
+        console.log("Zone detect: " + UstadMobile.getInstance().getZone());
+
+        if(UstadMobile.getInstance().getZone() === UstadMobile.ZONE_CONTENT) {
+            UstadMobileContentZone.getInstance().init();
+        }else {
+            UstadMobileAppZone.getInstance().init();
+        }
+
+        UstadMobile.getInstance().initScriptsAllLoaded = true;
+
+        UstadMobileUtils.runAllFunctions(
+                UstadMobile.getInstance().pendingRunAfterInitListeners,
+                [true], UstadMobile.getInstance());
+
+
     },
     
     /**
@@ -1325,6 +1325,11 @@ UstadMobileUtils.asyncMapAdvanced = function(fn, argArr, options, successFn, fai
         thisArgArr.push(function() {
             var successArgArr = Array.prototype.slice.call(arguments);
             resultMap.push(successArgArr);
+            
+            if(options.afterrun) {
+                options.afterrun(index, argArr, resultMap);
+            }
+            
             if(index < (numFns-1)) {
                 runItFn(index+1);
             }else {
@@ -2311,6 +2316,8 @@ var UstadMobileResumableDownloadList = function() {
  * @param {Object} options misc options
  * @param {Array<UstadJSOPDSEntry>} [options.opdsEntries] The corresponding OPDS 
  * entries for each download - this can be used to track download status by entry
+ * @param {function} [options.onprogress] progress event handler to take progress event
+ * @param {function} [options.onitemcomplete] event handler that will run when each item on list is done
  * @param {function} successFn success callback provided with array from the result downloading each item
  * @param {function} failFn failure callback called when an error occurs
  */
@@ -2326,6 +2333,10 @@ UstadMobileResumableDownloadList.prototype.downloadList = function(urlList, dest
     
     if(options.onprogress) {
         this.onprogress = options.onprogress;
+    }
+    
+    if(options.onitemcomplete) {
+        this.onitemcomplete = options.onitemcomplete;
     }
     
     UstadMobileUtils.waterfall([
@@ -2371,7 +2382,12 @@ UstadMobileResumableDownloadList.prototype.downloadList = function(urlList, dest
                             this.resumableDownloads[index-1].fileSize;
                     }
                     this.currentDownloadIndex = index;
-                }).bind(this)
+                }).bind(this),
+                afterrun: function(index, args, result) {
+                    if(options.onitemcomplete) {
+                        options.onitemcomplete(index);
+                    }
+                }
             };
             
             UstadMobileUtils.asyncMapAdvanced(fnList, argList, advMapArgs, 

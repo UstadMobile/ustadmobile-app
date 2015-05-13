@@ -5,7 +5,7 @@
 ASSETSDIR=ustadmobileandroid/assets/www
 SRCDIR=../..
 
-DIRLIST="css img js lib locale"
+DIRLIST="css img lib locale"
 for dir in $DIRLIST; do
     if [ -e $ASSETSDIR/$dir ]; then
         rm -rf $ASSETSDIR/$dir
@@ -13,11 +13,6 @@ for dir in $DIRLIST; do
     
     cp -r $SRCDIR/$dir $ASSETSDIR
 done
-
-#build android concatenated script
-cd $SRCDIR
-grunt
-cd setup/android-hybrid
 
 if [ -e $ASSETSDIR/res/umres ]; then
     rm -rf $ASSETSDIR/res/umres;

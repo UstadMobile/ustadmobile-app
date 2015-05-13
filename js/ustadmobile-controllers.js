@@ -287,9 +287,13 @@ UstadCatalogController.prototype.handleConfirmDownloadAll = function(evt) {
     this.view.hideConfirmAcquisitionDialog();
     
     var dlOptions = {
-        onprogress : this.view.updateDownloadAllProgress.bind(this.view)
+        onprogress : this.view.updateDownloadAllProgress.bind(this.view),
+        onitemcomplete: (function(index) {
+            console.log("Item : " + index + " completed ");
+            this.view.setEntryStatus(this.model.opdsFeed.entries[index].id,
+                $UstadJSOPDSBrowser.ACQUIRED, dlOptions);
+        }).bind(this)
     };
-    
     
     UstadCatalogController._addCurrentUserToOpts(dlOptions);
        
@@ -302,28 +306,33 @@ UstadCatalogController.prototype.handleConfirmDownloadAll = function(evt) {
         });
 };
 
-/**
- * This is being reworked to handle individual entry downloads
- *
-UstadCatalogController.prototype.handleClickContainerEntry = function(evt, data) {
-    //here it is time to open the container entry
-    var entry = data.entry;
-    var opts = {};
-    UstadCatalogController._addCurrentUserToOpts(opts);
-    var containerController = UstadContainerController.makeFromEntry(this.appController,
-        entry, opts);
-    var initOpts = {};
-    this.appController.view.showLoading({text : "Opening"});
-    containerController.init(initOpts, (function() {
-        UstadContainerController.setOpenContainer(containerController);
-        this.appController.view.hideLoading();
-        containerController.view.show();
-    }).bind(this), function(err) {
-        UstadMobile.getInstance().appController.view.showAlertPopup("Error",
-                "Sorry: something went wrong trying to open that. " + err);
-    });
+UstadCatalogController.prototype.handleRequestContainerContextMenu = function(evt, data) {
+    var statusOpts = {};
+    UstadCatalogController._addCurrentUserToOpts(statusOpts);
+    data.entryStatus = UstadCatalogController.getAcquisitionStatusByEntryId(
+        data.entry.id, statusOpts);
+    this.view.showContainerContextMenu({evtData : data});
 };
-*/
+
+UstadCatalogController.prototype.handleClickDeleteEntry = function(evt) {
+    var entryClicked = evt.data.entry;
+    this.view.hideContainerContextMenu();
+    var dialogText = "Delete '" + entryClicked.title + "? Are you sure?";
+    setTimeout((function() {
+        this.view.showConfirmAcquisitionDialog("Delete?", dialogText, {}, 
+        (function()  {
+            var removeOptions = {};
+            UstadCatalogController._addCurrentUserToOpts(removeOptions)
+            UstadCatalogController.removeEntry(entryClicked, removeOptions,
+                (function() {
+                    this.view.setEntryStatus(entryClicked.id,
+                        $UstadJSOPDSBrowser.NOT_ACQUIRED);
+                }).bind(this),function(err) {
+                    console.log("ERROR!!!!" + err);
+                });
+        }).bind(this));
+    }).bind(this), 1000);
+};
 
 UstadCatalogController.prototype.handleClickContainerEntry = function(evt, data, successFn, failFn) {
     var options = {};
@@ -375,7 +384,8 @@ UstadCatalogController.prototype.handleConfirmDownloadContainer = function(evt) 
     UstadCatalogController.acquireCatalogEntries([entryClicked],
         [], dlOptions, (function(successEvt) {
             this.view.setDownloadEntryProgressVisible(evt.data.entry.id, false);
-            alert("Downloaded entry OK");
+            this.view.setEntryStatus(evt.data.entry.id, 
+                $UstadJSOPDSBrowser.ACQUIRED);
         }).bind(this), function(err) {
             alert("failed to download entry");
         });
@@ -978,6 +988,7 @@ UstadCatalogController.unregisterEntryDownload = function(evt) {
  * @param {Array<string>} [options.acquiremimetypes] Array in order of preference of acceptable mime types
  * @param {Array<UstadJSOPDSEntry>} [options.opdsEntries]
  * @param {function} [options.onprogress] onprogres event handler
+ * @param {function} [options.onitemcomplete] event handler to run when a particular entry has completed 
  * 
  * acquired containers that provide the same entryIDs
  * 
@@ -1040,6 +1051,10 @@ UstadCatalogController.acquireCatalogEntries = function(entries, srcURLs, option
             var dlOptions = {};
             if(options.onprogress) {
                 dlOptions.onprogress = options.onprogress;
+            }
+            
+            if(options.onitemcomplete) {
+                dlOptions.onitemcomplete = options.onitemcomplete;
             }
             
             if(options.opdsEntries.length > 0) {
@@ -1142,12 +1157,19 @@ UstadCatalogController.getAcquiredContainerURIByEntryId = function(entryId, opti
  * entry (providing the filename in the href, mime type in type, and relationship
  */
 UstadCatalogController.getAcquiredEntryInfoById = function(entryId, options) {
-    var storageKey = UstadCatalogController._getStorageKeyForAcquiredEntryID(entryId, options);
-    var result = localStorage.getItem(storageKey);
-    if(result) {
-        var opdsFeed = UstadJSOPDSFeed.loadFromXML(result, "localstorage/" + 
+    //storage key if looked up for the current user
+    var storageKeyUser = UstadCatalogController._getStorageKeyForAcquiredEntryID(entryId, options);
+    //storage key if looked up for the shared content space
+    var storageKeyShared = UstadCatalogController._getStorageKeyForAcquiredEntryID(entryId, null);
+    
+    var resultUser = localStorage.getItem(storageKeyUser);
+    var resultShared = localStorage.getItem(storageKeyShared);
+    if(resultUser) {
+        return UstadJSOPDSFeed.loadFromXML(resultUser, "localstorage/" + 
             entryId);
-        return opdsFeed;
+    }else if(resultShared) {
+        return UstadJSOPDSFeed.loadFromXML(resultShared, "localstorage/" +
+            entryId);
     }else {
         return null;
     }
@@ -1349,7 +1371,10 @@ UstadContainerController.makeFromEntry = function(appController, opdsEntry, opti
     //getAcquiredEntryInfoById will always have exactly 1 entry with one acquire link
     var entryLink = entryOPDSFeed.entries[0].getLinks(UstadJSOPDSEntry.LINK_ACQUIRE,
         null, {linkRelByPrefix : true})[0];
-    var entryFileURI = entryLink.href;
+    
+    var entryFileURI = UstadJS.resolveURL(
+        UstadMobile.getInstance().systemImpl.getSharedContentDirSync(),
+        entryLink.href);
     
     newController.model.setFileURI(entryFileURI);
     newController.model.setMimeType(entryLink.type);
