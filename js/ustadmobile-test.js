@@ -594,7 +594,7 @@ function testDirListing() {
             
             //make sure that we found a file that we know we downloaded there
             var foundItem = false;
-            var nameToFind = "phonepic-large-failed.png";
+            var nameToFind = "phonepic-large.png";
             for(var i = 0; i < dirList.length; i++) {
                 if(dirList[i].name === nameToFind) {
                     foundItem = true;
