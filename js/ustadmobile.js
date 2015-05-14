@@ -188,6 +188,8 @@ UstadMobile.URL_CLOSEIFRAME = "/closeiframe";
 
 UstadMobile.URL_TINCAN_QUEUE = "/tincan-queue"
 
+UstadMobile.URL_BROWSE = "/browse/";
+
 /**
  * Constant: URL to request page cleanup procedure (e.g. ThreadTimer issue)
  * To run when a page is removed from memory.

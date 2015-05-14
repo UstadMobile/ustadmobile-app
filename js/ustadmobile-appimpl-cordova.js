@@ -77,6 +77,8 @@ UstadMobileAppImplCordova.mainInstance = null;
 
 UstadMobileAppImplCordova.URL_PREFIX_APPFILES = "appfiles/";
 
+
+
 /**
  * Gets an instance of UstadMobileAppImplCordova
  * 
@@ -378,6 +380,23 @@ UstadMobileAppImplCordova.prototype.startHTTPServer = function(successCallback, 
                     });
             }, function(err) {
                 console.log("Error registering handler");
+            });
+        
+        httpdSvr.registerHandler(UstadMobile.URL_BROWSE,
+            function(resultArr) {
+                var responseId = resultArr[0];
+                var uri = resultArr[1];
+                var browseURL = uri.substring(UstadMobile.URL_BROWSE.length);
+                window.open(browseURL, '_system');
+                
+                httpdSvr.sendHandlerResponse(responseId, 
+                    "opened link in browser: " + browseURL, function() {
+                        console.log("AJAX response sent OK");
+                    }, function(err) {
+                        console.log("was an error sending response");
+                    });
+            },function(err) {
+                console.log("Error registering handler for /browse: " + err);
             });
         
         httpdSvr.registerHandler(UstadMobile.URL_TINCAN_QUEUE,

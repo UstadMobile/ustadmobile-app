@@ -157,11 +157,18 @@ UstadContainerViewCordova.prototype.show = function() {
             
             pageList = [];
             
+            var ustadRuntimeArgs = {
+                "FixAttachmentLinks" : true
+            };
+            var pageQuery = "?ustad_runtime=" + encodeURIComponent(
+                JSON.stringify(ustadRuntimeArgs));
+            
             //get the path of where the opf file is 
             for(var i = 0; i < opfEntry.spine.length; i++) {
                 var thisURL = UstadJS.resolveURL(opfURL, 
                     opfEntry.spine[i].href);
-                pageList.push(thisURL);
+                
+                pageList.push(thisURL + pageQuery);
             }
             
             cordova.plugins.ContentViewPager.openPagerView(
