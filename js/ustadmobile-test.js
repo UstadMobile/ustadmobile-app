@@ -146,10 +146,7 @@ var containerChangeFn = function() {
     
     //TODO: Run test that sound plays twice
     //testSoundPlay(audioEl, "Test sound plays second time", 1500, false);
-    
-    
-    testPageLoad(UstadMobile.PAGE_BOOKLIST, "Test loading booklist page");
-    
+        
     testLogin("Test valid user login", validUsername, validPassword, 200);
     
     
