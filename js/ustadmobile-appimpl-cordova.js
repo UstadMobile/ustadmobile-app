@@ -350,7 +350,7 @@ UstadMobileAppImplCordova.prototype.startHTTPServer = function(successCallback, 
             console.log("ERROR: Could not mount : " + err);
         };
         
-        var subDirsToMount = ["js", "jqm", "res", "css"];
+        var subDirsToMount = ["css", "lib", "epubrunner"];
         for(var i = 0; i < subDirsToMount.length; i++) {
             console.log("Request to mount : " + subDirsToMount[i]);
             UstadMobile.getInstance().systemImpl.cordovaHttpd.mountDir(
@@ -396,6 +396,41 @@ UstadMobileAppImplCordova.prototype.startHTTPServer = function(successCallback, 
 
             }
         );
+
+        httpdSvr.registerHandler(UstadMobile.URL_BROWSE,
+            function(resultArr) {
+                var responseId = resultArr[0];
+                var uri = resultArr[1];
+                var browseURL = uri.substring(UstadMobile.URL_BROWSE.length);
+                window.open(browseURL, '_system');
+                
+                httpdSvr.sendHandlerResponse(responseId, 
+                    "opened link in browser: " + browseURL, function() {
+                        console.log("AJAX response sent OK");
+                    }, function(err) {
+                        console.log("was an error sending response");
+                    });
+            },function(err) {
+                console.log("Error registering handler for /browse: " + err);
+            });
+        
+        httpdSvr.registerHandler(UstadMobile.URL_TINCAN_QUEUE,
+            function(resultArr) {
+                var responseId = resultArr[0];
+                var uri = resultArr[1];
+                var stmtStr = resultArr[2]['statement'];
+                UstadMobileAppZone.getInstance().queueTinCanStatement(stmtStr);
+                
+                httpdSvr.sendHandlerResponse(responseId, 
+                    "Didnt really record anything", function() {
+                        console.log("response sent back OK");
+                    }, function(err) {
+                        console.log("was an error sending response");
+                    });
+
+            }
+        );
+
         
         httpdSvr.registerHandler(UstadMobile.URL_PAGECLEANUP, 
             function(resultArr) {
@@ -516,7 +551,7 @@ UstadMobileAppImplCordova.prototype.showContainer = function(opdsFeedEntry, onsh
                 ]);
                 urls.push(thisURL);
             }
-            
+            /*
             cordova.plugins.ContentViewPager.openPagerView(
                 urls, 
                 function() {
@@ -524,13 +559,9 @@ UstadMobileAppImplCordova.prototype.showContainer = function(opdsFeedEntry, onsh
                 },function() {
                     console.log("contentviewpager fail");
                 });
+            */
         });
     });
-    
-    /*
-    UstadMobileBookList.getInstance().openContainerFromBaseURL(epubHREFBaseDir,
-        opdsFeedEntry, onshowCallback, show, onloadCallback, onerrorCallback);
-    */
 }
 
 /**

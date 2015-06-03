@@ -5,7 +5,7 @@
 ASSETSDIR=ustadmobileandroid/assets/www
 SRCDIR=../..
 
-DIRLIST="css img js lib locale"
+DIRLIST="css img js lib locale epubrunner"
 for dir in $DIRLIST; do
     if [ -e $ASSETSDIR/$dir ]; then
         rm -rf $ASSETSDIR/$dir

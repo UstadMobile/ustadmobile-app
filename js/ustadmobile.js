@@ -108,6 +108,8 @@ UstadMobile.HTTP_ATTACHMENT_POSTFIX = "ustad_attachment_download";
  */
 UstadMobile.DOWNLOAD_SUBDIR = "inprogress";
 
+UstadMobile.URL_BROWSE = "/browse/";
+
 /**
  * Constant representing Linux OS
  * @type Number
