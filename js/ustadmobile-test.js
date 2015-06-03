@@ -146,10 +146,7 @@ var containerChangeFn = function() {
     
     //TODO: Run test that sound plays twice
     //testSoundPlay(audioEl, "Test sound plays second time", 1500, false);
-    
-    
-    testPageLoad(UstadMobile.PAGE_BOOKLIST, "Test loading booklist page");
-    
+        
     testLogin("Test valid user login", validUsername, validPassword, 200);
     
     
@@ -597,7 +594,7 @@ function testDirListing() {
             
             //make sure that we found a file that we know we downloaded there
             var foundItem = false;
-            var nameToFind = "phonepic-large-failed.png";
+            var nameToFind = "phonepic-large.png";
             for(var i = 0; i < dirList.length; i++) {
                 if(dirList[i].name === nameToFind) {
                     foundItem = true;
